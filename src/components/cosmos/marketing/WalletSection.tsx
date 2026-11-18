@@ -4,7 +4,7 @@
    de cada archivo va en el boton: nadie baja 75 MB sin enterarse antes. */
 import { IcArrow, IcChevSm } from "@/components/cosmos/shared";
 import { useT, fmt } from "@/lib/i18n/index";
-import { WALLET_LINKS, WALLET_MORE, WALLET_VERSION, ANDROID_SIZE, SWAP_NETWORKS } from "@/components/cosmos/marketing/data";
+import { WALLET_LINKS, WALLET_MORE, WALLET_VERSION, ANDROID_SIZE, NETWORK_VARS } from "@/components/cosmos/marketing/data";
 import { WALLET_ICONS } from "@/components/cosmos/marketing/icons";
 
 /* todo lo que sale del dominio se abre aparte y sin pasarle el referrer */
@@ -59,7 +59,7 @@ export function WalletSection() {
             <div className="section-head reveal">
               <div className="hero-tag">{w.tag}</div>
               <h1 data-num="/01">{w.title}</h1>
-              <p>{fmt(w.lede, { n: SWAP_NETWORKS })}</p>
+              <p>{fmt(w.lede, NETWORK_VARS)}</p>
             </div>
 
             <div className="wallet-ways reveal">

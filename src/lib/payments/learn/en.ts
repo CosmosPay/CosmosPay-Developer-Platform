@@ -13,7 +13,7 @@ export const en = {
   hub: {
     nav: "Guides",
     title: "Stablecoin payment guides",
-    lede: "Guides for businesses that charge in stablecoins with Cosmos Pay: how to accept USDC online and with each network’s payment link standard (SEP-7, Solana Pay, EIP-681), how to add a pay button to your site, how to take donations with an open amount, how to send a payment link on WhatsApp, how to confirm payments on your server, what a stablecoin payment gateway does, how the networks compare, how to swap across {n} networks and how to send USDT0 from Stellar to EVM networks.",
+    lede: "Guides for businesses that charge in stablecoins with Cosmos Pay: how to accept USDC online and with each network’s payment link standard (SEP-7, Solana Pay, EIP-681), how to add a pay button to your site, how to take donations with an open amount, how to send a payment link on WhatsApp, how to confirm payments on your server, what a stablecoin payment gateway does, how the networks compare, how to swap across {swapN} networks and how to send USDT0 from Stellar to EVM networks.",
     meta: "Stablecoin payment guides | Cosmos Pay",
     description: "Guides: accept USDC online and on each network, pay buttons, donations, webhooks, WhatsApp links, cross-chain swaps and USDT0 from Stellar.",
   },
@@ -44,7 +44,7 @@ export const en = {
         payer: {
           title: "What your customer needs",
           body: [
-            "A wallet on the same network that holds the USDC and can open the payment: on Stellar, any wallet that opens SEP-7 links; on Solana, any wallet that reads Solana Pay links; on Monad, any EVM wallet that reads EIP-681 links. Their wallet also pays the network fee.",
+            "A wallet on the same network that holds the USDC and can open the payment: on Stellar, any wallet that opens SEP-7 links; on Solana, any wallet that reads Solana Pay links; on Monad and Arc, any EVM wallet that reads EIP-681 links. Their wallet also pays the network fee.",
             "No account. They open the checkout, scan the QR code or tap the wallet button, and approve the payment in their wallet.",
           ],
         },
@@ -61,14 +61,14 @@ export const en = {
         network: {
           title: "Which network to charge on",
           body: [
-            "Charge on the network where your customers already hold USDC. USDC has a preset on Stellar and Solana, on their main and test networks, and on Monad’s main network. On all three, any other token can be charged by its issuer, mint or contract.",
+            "Charge on the network where your customers already hold USDC. USDC has a preset on Stellar, Solana and Arc, on their main and test networks, and on Monad’s main network. On all four, any other token can be charged by its issuer, mint or contract.",
           ],
           links: { networksGuide: "Stellar vs Solana vs Monad", stellar: "Stellar payments", solana: "Solana payments", monad: "Monad payments" },
         },
         cost: {
           title: "What it costs",
           body: [
-            "Each payment pays your plan’s rate, the same on every network: {starterRate} on Starter, with no monthly fee. The payer’s wallet pays the network fee; on Monad, the fee of the relay that forwards the payment to you is deducted from the payment.",
+            "Each payment pays your plan’s rate, the same on every network: {starterRate} on Starter, with no monthly fee. The payer’s wallet pays the network fee; on Monad and Arc, the fee of the relay that forwards the payment to you is deducted from the payment.",
           ],
           links: { fees: "Pricing and fee calculator", compare: "How our fees compare" },
         },
@@ -76,7 +76,7 @@ export const en = {
       steps: {
         title: "Accept your first USDC payment, step by step",
         items: {
-          sandbox: { title: "Create your account and switch to Sandbox", body: "Sign in to the dashboard and choose Sandbox at the top. What you create there runs on the test networks (Stellar Testnet, Solana Devnet and Monad Testnet) and moves no real money." },
+          sandbox: { title: "Create your account and switch to Sandbox", body: "Sign in to the dashboard and choose Sandbox at the top. What you create there runs on the test networks (Stellar Testnet, Solana Devnet, Monad Testnet and Arc Testnet) and moves no real money." },
           wallet: { title: "Add the wallet that receives the money", body: "In your organization’s settings, add a wallet on the network you will charge on and sign what the dashboard asks for, which proves the wallet is yours." },
           charge: { title: "Create a test charge", body: "In Payments, create a payment link with the network, the amount, the asset and the wallet that receives it. Or create a test API key (it starts with dv_) and call POST /v1/payment-intents/pay from your server. On Stellar Testnet you can charge in XLM, which Friendbot, the Testnet faucet, sends to a test account." },
           pay: { title: "Pay it from a test wallet", body: "Open the checkout page: it says it runs on a test network. Pay from a wallet on that network, and watch the checkout turn to Paid and the link to Succeeded in the dashboard." },
@@ -193,7 +193,7 @@ export const en = {
         fit: {
           title: "How Cosmos Pay fits",
           body: [
-            "Cosmos Pay is a non-custodial stablecoin payment gateway that works with {n} networks: your customers pay from any of them, and swaps move what you receive to any of them. You charge with a payment link, the hosted checkout or the Payments API, and you choose the wallet addresses that receive the money. Cosmos Pay stores no one’s keys.",
+            "Cosmos Pay is a non-custodial stablecoin payment gateway that works with {n} networks: your customers pay on any of them, and swaps move what you receive across the {swapN} networks they reach. You charge with a payment link, the hosted checkout or the Payments API, and you choose the wallet addresses that receive the money. Cosmos Pay stores no one’s keys.",
             "Each payment goes straight to your address or, on networks that need one, to a deposit address made for that payment, which can only forward it to yours (less the relay’s fee): Cosmos Pay holds no key to it. Every payment can be checked on the network, and every paid checkout links its transaction on a public explorer.",
           ],
           links: { security: "How payments are protected", acceptGuide: "How to accept USDC payments online", integrations: "Integration options" },
@@ -211,10 +211,10 @@ export const en = {
       title: "Stellar vs Solana vs Monad for accepting payments",
       meta: "Stellar vs Solana vs Monad for payments | Cosmos Pay",
       description: "How Stellar, Solana and Monad compare for accepting stablecoin payments with Cosmos Pay: link standard, assets, test networks, fees and rates.",
-      summary: "The three networks with a payment link standard of their own, side by side: link format, assets, test networks and fees.",
-      lede: "With Cosmos Pay, a payment on Stellar, Solana or Monad reaches your address and pays the same plan rate. What changes is the link the wallet reads (SEP-7 on Stellar, Solana Pay on Solana, EIP-681 to a deposit address on Monad), how a payment is matched to its link and which assets have a preset. The table compares them as Cosmos Pay supports them; swaps connect all three with the rest of the {n} networks Cosmos Pay works with.",
+      summary: "Three networks with a payment link standard of their own, side by side: link format, assets, test networks and fees.",
+      lede: "With Cosmos Pay, a payment on Stellar, Solana or Monad reaches your address and pays the same plan rate. What changes is the link the wallet reads (SEP-7 on Stellar, Solana Pay on Solana, EIP-681 to a deposit address on Monad), how a payment is matched to its link and which assets have a preset. The table compares them as Cosmos Pay supports them; swaps connect all three with the rest of the {swapN} networks they reach.",
       table: {
-        title: "The three settlement networks, side by side",
+        title: "Three settlement networks, side by side",
         caption: "Stellar, Solana and Monad compared for accepting payments with Cosmos Pay",
         topic: "Topic",
         rows: {
@@ -643,11 +643,11 @@ export const en = {
     },
     crossChain: {
       nav: "Cross-chain swaps",
-      title: "How to swap tokens across {n} networks",
-      meta: "Swap tokens across {n} networks | Cosmos Pay",
-      description: "Swap tokens across {n} networks with Cosmos Pay: the quote, the deposit, fees, refunds and timing.",
+      title: "How to swap tokens across {swapN} networks",
+      meta: "Swap tokens across {swapN} networks | Cosmos Pay",
+      description: "Swap tokens across {swapN} networks with Cosmos Pay: the quote, the deposit, fees, refunds and timing.",
       summary: "Quote a swap, send the deposit and follow it to delivery: cross-chain swaps, refunded on the origin chain if they fail.",
-      lede: "Cosmos Pay swaps tokens between {n} networks. You get a quote, send the input amount to a deposit address before the quote expires, and the output arrives at your address on the other network. If the swap cannot complete, the input is refunded to your address on the network you sent from.",
+      lede: "Cosmos Pay swaps tokens between {swapN} networks. You get a quote, send the input amount to a deposit address before the quote expires, and the output arrives at your address on the other network. If the swap cannot complete, the input is refunded to your address on the network you sent from.",
       sections: {
         how: {
           title: "How a cross-chain swap works",
@@ -697,7 +697,7 @@ export const en = {
         links: { crossChainApi: "Cross-chain swaps API", webhooksGuide: "How to confirm a payment on your server" },
       },
       faq: {
-        networks: { q: "Which networks can I swap between?", a: "{n} networks in all, the whole collection of Cosmos Pay’s swap platform. A pair on one network is a same-chain swap instead." },
+        networks: { q: "Which networks can I swap between?", a: "{swapN} networks in all, the whole collection of Cosmos Pay’s swap platform. A pair on one network is a same-chain swap instead." },
         test: { q: "Can I test a cross-chain swap?", a: "Not on a test network: these swaps run on the main networks only. A test key can list assets and get quotes." },
         refund: { q: "What happens to my money if the swap fails?", a: "It is refunded to the refund address you gave, on the network you sent from." },
         account: { q: "Do I need an account?", a: "Not on the public swaps page. With your own account, the dashboard and the API apply your plan’s rate." },

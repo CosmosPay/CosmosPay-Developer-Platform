@@ -632,7 +632,7 @@ export default {
       },
       networks: {
         title: "Netzwerke",
-        links: ["Zahlungen auf Stellar", "Zahlungen auf Solana", "Zahlungen auf Monad"]
+        links: ["Zahlungen auf Stellar", "Zahlungen auf Solana", "Zahlungen auf Monad", "Zahlungen auf Arc"]
       },
       solutions: {
         title: "Lösungen",
@@ -715,7 +715,7 @@ export default {
         },
         swaps: {
           title: "Swaps",
-          desc: "Hol dir Kurse und führe Swaps in einem Netzwerk oder zwischen {n} Netzwerken aus.",
+          desc: "Hol dir Kurse und führe Swaps in einem Netzwerk oder zwischen {swapN} Netzwerken aus.",
           link: "Swaps-API",
         },
       },
@@ -771,7 +771,7 @@ export default {
         },
         coin: {
           t: "Stablecoin-Abwicklung",
-          d: "Kassiere in USDC, EURC oder jedem anderen Token und erhalte genau dieses Asset. Ein Kunde in einem der {n} Netzwerke kann vorher per Swap in dieses Asset tauschen.",
+          d: "Kassiere in USDC, EURC oder jedem anderen Token und erhalte genau dieses Asset. Ein Kunde in einem der {swapN} Netzwerke kann vorher per Swap in dieses Asset tauschen.",
           long: "Leg den Preis jeder Zahlung in USDC, EURC, der eigenen Coin des Netzwerks oder jedem anderen Token fest, angegeben über Herausgeber, Mint oder Contract. Der Kunde zahlt in diesem Asset, und du erhältst es an deiner Adresse. Jede Zahlung behält ihren Transaktions-Hash, und das Dashboard zeigt deine Guthaben je Asset und das abgewickelte Volumen in USD.",
           points: [
             "USDC, EURC oder ein Token deiner Wahl",
@@ -788,11 +788,11 @@ export default {
         },
         swap: {
           t: "Swaps zwischen Netzwerken",
-          d: "Tausche Token über {n} Netzwerke, mit oder ohne Konto.",
-          long: "Tausche Token in einem Netzwerk oder zwischen {n} Netzwerken, und sende USDT0 aus Stellar in andere Netzwerke. Ein Swap in einem Netzwerk ist eine einzige Transaktion, die die Person signiert; ein Swap zwischen Netzwerken wartet an einer eigens dafür erstellten Einzahlungsadresse, bis er abgewickelt oder erstattet wird. Cosmos Pay verwahrt die Mittel nie. Die öffentliche Swap-Seite und ihre API brauchen kein Konto.",
+          d: "Tausche Token über {swapN} Netzwerke, mit oder ohne Konto.",
+          long: "Tausche Token in einem Netzwerk oder zwischen {swapN} Netzwerken, und sende USDT0 aus Stellar in andere Netzwerke. Ein Swap in einem Netzwerk ist eine einzige Transaktion, die die Person signiert; ein Swap zwischen Netzwerken wartet an einer eigens dafür erstellten Einzahlungsadresse, bis er abgewickelt oder erstattet wird. Cosmos Pay verwahrt die Mittel nie. Die öffentliche Swap-Seite und ihre API brauchen kein Konto.",
           points: [
             "Swaps innerhalb eines Netzwerks",
-            "Swaps zwischen {n} Netzwerken",
+            "Swaps zwischen {swapN} Netzwerken",
             "USDT0 aus Stellar in andere Netzwerke",
             "Eine öffentliche Swap-API ohne Konto",
           ],
@@ -804,7 +804,7 @@ export default {
           points: [
             "Freighter, xBull, LOBSTR und mehr auf Stellar",
             "Phantom und Solflare auf Solana",
-            "Jede EVM-Wallet auf Monad",
+            "Jede EVM-Wallet auf Monad und Arc",
             "Cosmos Pay Wallet für Chrome, Web und Android",
           ],
         },
@@ -814,9 +814,9 @@ export default {
     stats: {
       title: "Einfach. Sicher. Grenzenlos.",
       question: "Was ist Cosmos Pay?",
-      answer: "Cosmos Pay ist eine Plattform für Stablecoin-Zahlungen für Unternehmen in Lateinamerika. Händler kassieren in {n} Netzwerken über Zahlungslinks, einen gehosteten Checkout oder eine API, und das Geld kommt an einer Adresse an, die sie kontrollieren. Dazu kommen Swaps zwischen all diesen Netzwerken und eine nicht verwahrte Wallet.",
+      answer: "Cosmos Pay ist eine Plattform für Stablecoin-Zahlungen für Unternehmen in Lateinamerika. Händler kassieren in {n} Netzwerken über Zahlungslinks, einen gehosteten Checkout oder eine API, und das Geld kommt an einer Adresse an, die sie kontrollieren. Dazu kommen Swaps zwischen {swapN} davon und eine nicht verwahrte Wallet.",
       items: [
-        "Netzwerke, aus denen du Zahlungen erhältst, mit Swaps zwischen ihnen",
+        "Netzwerke, in denen du Zahlungen erhältst",
         "Rückbuchungen: Sobald das Netzwerk eine Zahlung bestätigt, ist sie endgültig",
         "+ {fixed} pro Zahlung bei Starter, ohne Monatsgebühr",
         "bis eine Zahlung auf Stellar abgewickelt ist",
@@ -943,7 +943,7 @@ export default {
       subt: "Volumenbasierte Tarife",
       cta: "Vertrieb kontaktieren",
     },
-    footnote: "* Die Netzwerkgebühr zahlt die Wallet des Zahlenden; auf Monad wird die Gebühr des Einzahlungs-Relays abgezogen und im Checkout angezeigt. Essentials und Growth bringen vollen API-Zugriff, niedrigere Sätze und höhere Limits für Organisationen, Mitglieder und API-Schlüssel.",
+    footnote: "* Die Netzwerkgebühr zahlt die Wallet des Zahlenden; auf Monad und Arc wird die Gebühr des Einzahlungs-Relays abgezogen und im Checkout angezeigt. Essentials und Growth bringen vollen API-Zugriff, niedrigere Sätze und höhere Limits für Organisationen, Mitglieder und API-Schlüssel.",
     compareTitle: "Pläne vergleichen",
     orgsRow: "Organisationen",
     seatsRow: "Mitglieder pro Organisation",
@@ -1019,9 +1019,9 @@ export default {
       items: {
         api: { t: "Zahlungs-API und SDK", d: "Eine mit OpenAPI dokumentierte REST-API und ein TypeScript-SDK, um Zahlungsabsichten und Zahlungslinks zu erstellen, mit signierten Webhooks, sobald eine Zahlung bestätigt ist.", a: "Zur Dokumentation" },
         checkout: { t: "Gehosteter Checkout und Zahlungslinks", d: "Ein Zahlungslink mit QR-Code und eine Checkout-Seite, die wir hosten, in vier Designs und sieben Sprachen. Ein Bezahlbutton oder ein eingebetteter Checkout braucht nur ein Script-Tag.", a: "Integrationsoptionen ansehen" },
-        swaps: { t: "Swaps", d: "Tauschen Sie Token zwischen {n} Netzwerken und senden Sie USDT0 von Stellar aus, ohne Konto.", a: "Swaps öffnen" },
+        swaps: { t: "Swaps", d: "Tauschen Sie Token zwischen {swapN} Netzwerken und senden Sie USDT0 von Stellar aus, ohne Konto.", a: "Swaps öffnen" },
         private: { t: "Private Zahlungen", d: "Zahlungen auf Stellar, deren Betrag hinter einem Zero-Knowledge-Beweis auf der Blockchain verborgen bleibt. Vorerst im Testnet.", a: "So funktionieren sie" },
-        wallet: { t: "Cosmos Pay Wallet", d: "Eine nicht verwahrte Wallet für die {n} Netzwerke, mit denen wir arbeiten: eine Web-App, eine Browser-Erweiterung und Apps für Android, Windows, macOS und Linux. Die Schlüssel werden auf dem Gerät erzeugt und verschlüsselt.", a: "Zur Wallet" },
+        wallet: { t: "Cosmos Pay Wallet", d: "Eine nicht verwahrte Wallet für {swapN} Netzwerke: eine Web-App, eine Browser-Erweiterung und Apps für Android, Windows, macOS und Linux. Die Schlüssel werden auf dem Gerät erzeugt und verschlüsselt.", a: "Zur Wallet" },
       },
     },
     code: {
@@ -1057,12 +1057,12 @@ export default {
   },
   swapsPage: {
     metaTitle: "Token zwischen Netzwerken tauschen, ohne Konto | Cosmos Pay",
-    metaDescription: "Token zwischen {n} Netzwerken tauschen und USDT0 von Stellar in 21 Netzwerke senden, ohne Konto, hier oder per API. Cosmos Pay verwahrt Ihr Geld nie.",
+    metaDescription: "Token zwischen {swapN} Netzwerken tauschen und USDT0 von Stellar in 21 Netzwerke senden, ohne Konto, hier oder per API. Cosmos Pay verwahrt Ihr Geld nie.",
     title: "Zwischen Netzwerken tauschen, ohne Konto",
     lede: "Wählen Sie, womit Sie zahlen und was Sie erhalten. Ihre Wallet signiert, und Cosmos Pay verwahrt Ihr Geld nie.",
     facts: [
       { t: "Ohne Konto", s: "Seite öffnen und tauschen. Die öffentliche API funktioniert genauso." },
-      { t: "{n} Netzwerke", s: "Jedes Netzwerk, das unsere Swaps erreichen, auf einer Chain oder zwischen Chains." },
+      { t: "{swapN} Netzwerke", s: "Jedes Netzwerk, das unsere Swaps erreichen, auf einer Chain oder zwischen Chains." },
       { t: "Ohne Verwahrung", s: "Jeder Swap ist eine Transaktion, die Ihre Wallet signiert, oder eine Einzahlungsadresse, die Sie bezahlen." },
     ],
     commissionLabel: "Provision",
@@ -1399,10 +1399,10 @@ export default {
       delete: "Löschen", deleteConfirm: "Löschen", confirmDelete: "Kann nicht rückgängig gemacht werden.",
       customerSet: "Freier Betrag", allEvents: "Alle Ereignisse", events: "Ereignisse",
       received: "Empfangen", pending: "Ausstehend",
-      custDetail: { noAccount: "Füge die Wallet-Adresse des Kunden hinzu, um seine Zahlungen zu sehen.", title: "Kunde", edit: "Bearbeiten", save: "Änderungen speichern", alias: "Alias", note: "Notiz", account: "Wallet-Adresse", accountPlaceholder: "Stellar-, Solana- oder Monad-Adresse", payments: "Zahlungen", onChain: "On-chain", noPayments: "Noch keine Zahlungen.", wallets: "Wallets", addWallet: "Wallet hinzufügen", network: "Netzwerk", walletLabel: "Name", walletLabelPlaceholder: "Phantom, Treasury…", removeWallet: "Wallet entfernen", invalidAddress: "Das ist keine {network}-Adresse." },
+      custDetail: { noAccount: "Füge die Wallet-Adresse des Kunden hinzu, um seine Zahlungen zu sehen.", title: "Kunde", edit: "Bearbeiten", save: "Änderungen speichern", alias: "Alias", note: "Notiz", account: "Wallet-Adresse", accountPlaceholder: "Stellar-, Solana-, Monad- oder Arc-Adresse", payments: "Zahlungen", onChain: "On-chain", noPayments: "Noch keine Zahlungen.", wallets: "Wallets", addWallet: "Wallet hinzufügen", network: "Netzwerk", walletLabel: "Name", walletLabelPlaceholder: "Phantom, Treasury…", removeWallet: "Wallet entfernen", invalidAddress: "Das ist keine {network}-Adresse." },
     },
     filters: { label: "Liste filtern", status: "Status", network: "Netzwerk", kind: "Typ", allStatuses: "Alle", allNetworks: "Alle Netzwerke", allKinds: "Alle Typen", date: "Datum", dates: { any: "Beliebiges Datum", today: "Heute", "7d": "Letzte 7 Tage", "30d": "Letzte 30 Tage", "90d": "Letzte 90 Tage" }, shown: "{n} von {total}", clear: "Filter zurücksetzen", noMatch: "Nichts passt zu diesen Filtern." },
-    tokens: { custom: "Anderer Token…", ticker: "Token-Symbol", address: { solana: "Token-Mint", monad: "Token-Vertrag" } },
+    tokens: { custom: "Anderer Token…", ticker: "Token-Symbol", address: { solana: "Token-Mint", monad: "Token-Vertrag", arc: "Token-Vertrag" } },
     paylinks: {
       design: { label: "Checkout-Design", hint: "So sieht der gehostete Checkout dieses Links aus. Du kannst es jederzeit ändern.", preview: "Vorschau", saved: "Checkout-Design aktualisiert", saveError: "Das Checkout-Design konnte nicht geändert werden", selected: "Ausgewählt" },
       title: "Zahlungslinks",
@@ -1430,9 +1430,9 @@ export default {
         asset: "Asset", assetIssuer: "Asset-Emittent", assetIssuerHint: "Erforderlich für nicht-native Assets (G…).",
         memo: "Memo", memoHint: "Numerische MEMO_ID; wird automatisch generiert, wenn leer.",
         message: "Nachricht", messageHint: "Wird dem Zahler in seiner Wallet angezeigt (≤ 300 Zeichen).", messageHintCheckout: "Wird dem Zahler auf der Zahlungsseite angezeigt (≤ 300 Zeichen).", mainnetOnly: "Nur Mainnet", mainnetOnlyHint: "Zahlungen in diesem Netzwerk laufen nur im Mainnet. Wechseln Sie zu Produktion, um eine zu erstellen.", depositNetworkHint: "Ihr Kunde zahlt aus jedem Netzwerk, über eine für jede Zahlung erstellte Einzahlungsadresse. Der genaue Betrag kommt in Ihrer {network}-Wallet an.", amountDeposit: "Leer lassen, damit der Zahler den Betrag auf der Zahlungsseite eingibt. Ihre Wallet erhält genau diesen Betrag.", assetsError: "Die Token dieses Netzwerks konnten nicht geladen werden.",
-        chain: "Netzwerk", amountMonad: "Auf Monad erforderlich: Am genauen Betrag wird die Zahlung erkannt.", memoHintOther: "Eine Zahl, die verhindert, dass ein erneuter Versuch einen zweiten Link erstellt; wird erzeugt, wenn leer.", submitting: "Wird erstellt…",
+        chain: "Netzwerk", amountRequired: "Auf {network} erforderlich: Am genauen Betrag wird die Zahlung erkannt.", memoHintOther: "Eine Zahl, die verhindert, dass ein erneuter Versuch einen zweiten Link erstellt; wird erzeugt, wenn leer.", submitting: "Wird erstellt…",
         mainnet: "Mainnet", more: "Weitere Optionen",
-        merchantFee: { title: "Händlergebühr", pct: "Prozentsatz", fixed: "Fester Betrag", wallet: "Wallet, die die Gebühr erhält", paidBy: "Wer sie zahlt", recipient: "Vom Betrag abgezogen", payer: "Vom Zahler, zusätzlich zum Betrag", hint: "Ihre eigene Gebühr, in derselben Zahlung und getrennt von der Provision von Cosmos Pay; sie braucht einen Betrag. Auf Stellar fragt der Checkout den Zahler nach seinem Konto, auf Solana ist die Zahlung eine Solana-Pay-Transaktion, auf Monad teilt die Einzahlungsadresse sie auf.", needsAmount: "Eine Händlergebühr braucht einen Betrag.", sameWallet: "Die Gebühr geht an eine andere Wallet als die Zahlung.", pctMax: "Höchstens 10\u00a0%.", routeHint: "Auf {network} wird Ihre Gebühr innerhalb der netzwerkübergreifenden Route gutgeschrieben, im Token, den der Zahler sendet, auf eine Ihrer NEAR- oder EVM-Wallets. Sie braucht einen Betrag.", routeWallet: "Konto, das die Gebühr erhält" },
+        merchantFee: { title: "Händlergebühr", pct: "Prozentsatz", fixed: "Fester Betrag", wallet: "Wallet, die die Gebühr erhält", paidBy: "Wer sie zahlt", recipient: "Vom Betrag abgezogen", payer: "Vom Zahler, zusätzlich zum Betrag", hint: "Ihre eigene Gebühr, in derselben Zahlung und getrennt von der Provision von Cosmos Pay; sie braucht einen Betrag. Auf Stellar fragt der Checkout den Zahler nach seinem Konto, auf Solana ist die Zahlung eine Solana-Pay-Transaktion, auf Monad und Arc teilt die Einzahlungsadresse sie auf.", needsAmount: "Eine Händlergebühr braucht einen Betrag.", sameWallet: "Die Gebühr geht an eine andere Wallet als die Zahlung.", pctMax: "Höchstens 10\u00a0%.", routeHint: "Auf {network} wird Ihre Gebühr innerhalb der netzwerkübergreifenden Route gutgeschrieben, im Token, den der Zahler sendet, auf eine Ihrer NEAR- oder EVM-Wallets. Sie braucht einen Betrag.", routeWallet: "Konto, das die Gebühr erhält" },
         limits: { title: "Limits für Zahlungen aus anderen Netzwerken", hint: "Erhöhen Sie sie für einen Link, den viele Menschen gleichzeitig bezahlen.", perPayer: "Offene Einzahlungsadressen pro Zahler", perWindow: "Neue Einzahlungsadressen alle {minutes} Minuten", range: "Von {min} bis {max}. Leer bleibt {min}.", invalid: "Eine ganze Zahl von {min} bis {max}." },
         submit: "Link erstellen",
         steps: { amount: "Betrag", destination: "Ziel", fee: "Gebühr", design: "Design" },
@@ -1442,7 +1442,7 @@ export default {
         eyebrow: "Zahlungslink", title: "Zahlungslink bereit",
         scan: "Zum Bezahlen scannen", downloadQr: "QR herunterladen",
         uri: "SEP-7-URI", xdr: "Unsigniertes XDR",
-        uriLabels: { stellar: "SEP-7-URI", solana: "Solana-Pay-URI", monad: "EIP-681-URI" },
+        uriLabels: { stellar: "SEP-7-URI", solana: "Solana-Pay-URI", monad: "EIP-681-URI", arc: "EIP-681-URI" },
         openWallet: "In Wallet öffnen", copyLink: "Link kopieren", copyUri: "URI kopieren",
         fields: { id: "ID", status: "Status", kind: "Typ", network: "Netz", destination: "Ziel", source: "Quelle", amount: "Betrag", asset: "Asset", memo: "Memo", message: "Nachricht", txHash: "Transaktions-ID", created: "Erstellt", merchantFee: "Händlergebühr", paidFrom: "Bezahlt aus", payerEmail: "E-Mail des Zahlers", receipt: "Beleg", depositLimits: "Limits für Zahlungen aus anderen Netzwerken" },
         receipt: { sent: "Per E-Mail gesendet am {time}", pending: "Noch nicht gesendet", skippedNone: "Nicht gesendet: Im Checkout wurde keine E-Mail angegeben", skippedMany: "Nicht gesendet: Mehrere Zahler gaben eine E-Mail an und keiner wies nach, dass die Zahlung von ihm kam" }, payerEmails: { title: "Im Checkout angegebene E-Mails", hint: "Von den Personen eingegeben, die die Zahlungsseite geöffnet haben. Nicht verifiziert.", sent: "Zahlung gemeldet" }, limitsValue: "{perPayer} offen pro Zahler · {perWindow} neu alle {minutes} Minuten", limitsEdit: "Limits bearbeiten", limitsSaved: "Limits aktualisiert", limitsError: "Die Limits konnten nicht geändert werden", limitsSave: "Limits speichern",

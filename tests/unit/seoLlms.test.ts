@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { paymentsLlmsTxt, siteLlmsTxt, type LlmsInput } from '@/lib/seo/llms';
 import { PROTECTED_PAYMENT_FEE_PCT, PLAN_IDS, PLAN_SPECS, PRIVATE_PAYMENT_FEE_PCT, swapFeePct } from '@/lib/plans';
 import { PAYMENTS_PAGE_PATHS } from '@/lib/payments/site-pages';
-import { NETWORK_IDS } from '@/lib/chains';
+import { NETWORK_COUNTS } from '@/lib/chains';
 import { isSlashlessDocsLink } from '@/lib/urls';
 
 const INPUT: LlmsInput = {
@@ -53,12 +53,14 @@ test('the gateway file links every content page at its English (bare) address, a
 
 test('the custody facts hold for every service, and the networks count is the computed one', () => {
   for (const text of Object.values(files)) {
-    assert.match(text, /on Monad each payment goes to a deposit address made for it, which can only forward it/);
+    assert.match(text, /on Monad and Arc each payment goes to a deposit address made for it, which can only forward it/);
     assert.match(text, /Cosmos Pay holds no key to it/);
     assert.doesNotMatch(text, /nobody holds|never pass through/i);
   }
   assert.match(files.site, /a swap between networks waits at a deposit address made for it until it settles or is refunded/);
-  assert.ok(files.site.includes(`across ${NETWORK_IDS.length} networks`));
+  // Swaps count the networks they reach; Cosmos Pay works with every network a payment settles on.
+  assert.ok(files.site.includes(`across ${NETWORK_COUNTS.swapN} networks`));
+  assert.ok(files.site.includes(`as a service on ${NETWORK_COUNTS.n} networks`));
   assert.doesNotMatch(files.site, /\d+\+ networks/);
 });
 

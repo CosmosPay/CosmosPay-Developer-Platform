@@ -10,13 +10,13 @@
    a visitor can check: the networks, the rates, the open docs, the explorer link on every
    paid checkout. Rates are not written here; the page reads them from src/lib/plans.ts. */
 import type { Locale } from "@/lib/payments/i18n";
-import { NETWORK_IDS } from "@/lib/chains";
+import { withNetworkCounts } from "@/lib/chains";
 
 const en = {
   meta: {
     title: "Stablecoin payment gateway for Latin America | Cosmos Pay",
     description:
-      "Stablecoin payments that reach your own address: payment links, a hosted checkout and an API, on {n} networks with swaps between them.",
+      "Stablecoin payments that reach your own address: payment links, a hosted checkout and an API, on {n} networks, with swaps across {swapN} of them.",
   },
   hero: {
     titleA: "Accept",
@@ -72,7 +72,7 @@ const en = {
       settlement: { k: "Money in your account", cards: "Usually one to three business days.", us: "Seconds after the network confirms." },
       hours: { k: "Availability", cards: "Payouts wait for banking days.", us: "Every day, around the clock." },
       borders: { k: "Customers abroad", cards: "International card, wire and currency-conversion fees.", us: "The same link and the same rate in every country." },
-      custody: { k: "Where the money waits", cards: "With the processor until the next payout.", us: "In your own wallet. On Monad, each payment’s deposit address can only forward funds to you. Protected payments wait in a smart contract, never with Cosmos Pay." },
+      custody: { k: "Where the money waits", cards: "With the processor until the next payout.", us: "In your own wallet. On Monad and Arc, each payment’s deposit address can only forward funds to you. Protected payments wait in a smart contract, never with Cosmos Pay." },
       fees: { k: "Fees", cards: "A percentage plus a fixed fee, higher for international cards.", us: "One rate per payment, from {rate}." },
     },
     note: "Card and bank terms vary by provider and country; the table shows the usual case, not a quote.",
@@ -198,7 +198,7 @@ const en = {
   pricing: {
     title: "Pay",
     titleBold: "per payment.",
-    lede: "Each plan has its own rate per payment. Protected payments add 1.95% per payment. The payer’s wallet covers the network fee; on Monad, the deposit relay fee is deducted and shown at checkout. Private payments cost 0.18% per transaction.",
+    lede: "Each plan has its own rate per payment. Protected payments add 1.95% per payment. The payer’s wallet covers the network fee; on Monad and Arc, the deposit relay fee is deducted and shown at checkout. Private payments cost 0.18% per transaction.",
     perPayment: "per payment",
     perSwap: "{rate} per swap",
     perMonth: "per month",
@@ -210,16 +210,16 @@ const en = {
     title: "Questions",
     titleBold: "and answers.",
     what: { q: "What is Cosmos Pay?", a: "Cosmos Pay is a stablecoin payment gateway for businesses in Latin America, working with {n} networks. Create a payment link, a hosted checkout or a payment intent through the API; your customer pays from their own wallet, on any of those networks, and the payment reaches an address you control." },
-    networks: { q: "Which networks does Cosmos Pay work with?", a: "Cosmos Pay works with {n} networks, the whole collection of its swap platform: {networks}. Your customers can pay from any of them, with no account, and you can move what you receive to any of them." },
-    assets: { q: "Which currencies can I charge in?", a: "USDC, EURC, USDT, each network’s own coin or any other token, which you name by its issuer, mint or contract when you create the link. Your customer pays in that asset, and you receive that same asset. A customer who holds another token, on any of the {n} networks Cosmos Pay works with, can swap it into that asset first." },
-    wallet: { q: "Do I need my own crypto wallet?", a: "Yes. With Cosmos Pay, payments reach an address you control (on some networks through a deposit address made for each payment, which can only forward it to yours), and you can move those funds to any of the {n} networks Cosmos Pay works with. You add each wallet to your organization in the dashboard and prove it is yours with a signature, and payment links created there pay only into those wallets. Cosmos Pay never asks for a secret key and stores no one’s keys, so the funds are yours from the first payment and looking after the keys is up to you." },
+    networks: { q: "Which networks does Cosmos Pay work with?", a: "Cosmos Pay works with {n} networks: {networks}. Your customers can pay on any of them, with no account. Its swaps reach {swapN} of those networks, so a customer can also pay from another network than the payment’s, and you can move what you receive between them." },
+    assets: { q: "Which currencies can I charge in?", a: "USDC, EURC, USDT, each network’s own coin or any other token, which you name by its issuer, mint or contract when you create the link. Your customer pays in that asset, and you receive that same asset. A customer who holds another token, on any of the {swapN} networks our swaps reach, can swap it into that asset first." },
+    wallet: { q: "Do I need my own crypto wallet?", a: "Yes. With Cosmos Pay, payments reach an address you control (on some networks through a deposit address made for each payment, which can only forward it to yours), and you can swap those funds to any of the {swapN} networks our swaps reach. You add each wallet to your organization in the dashboard and prove it is yours with a signature, and payment links created there pay only into those wallets. Cosmos Pay never asks for a secret key and stores no one’s keys, so the funds are yours from the first payment and looking after the keys is up to you." },
     account: {
       q: "Do my customers need an account?",
-      a: "No. Your customers need no Cosmos Pay account, only a wallet that holds the asset you charge in, on the payment’s network; if their funds are on another of the {n} networks Cosmos Pay works with, they can swap them first, also without an account. They open the checkout, scan the QR code or tap their wallet’s button, and approve the payment in their wallet: there is nothing to sign up for. The checkout opens in their browser’s language when it is one of the seven it speaks (English, Spanish, Portuguese, French, German, Hindi and Chinese), and their wallet pays the network fee.",
+      a: "No. Your customers need no Cosmos Pay account, only a wallet that holds the asset you charge in, on the payment’s network; if their funds are on another of the {swapN} networks our swaps reach, they can swap them first, also without an account. They open the checkout, scan the QR code or tap their wallet’s button, and approve the payment in their wallet: there is nothing to sign up for. The checkout opens in their browser’s language when it is one of the seven it speaks (English, Spanish, Portuguese, French, German, Hindi and Chinese), and their wallet pays the network fee.",
     },
     wallets: {
       q: "Which wallets can my customers use?",
-      a: "Your customers pay from their own wallet: any wallet that opens standard payment links, such as Freighter, xBull, LOBSTR, Albedo, Rabet, Cosmos Pay Wallet, Phantom, Solflare or any EVM wallet. A customer whose funds are on any of the {n} networks Cosmos Pay works with can swap them first and pay, with no account. Every link also comes with a QR code, so on a computer the customer can scan it with a phone wallet.",
+      a: "Your customers pay from their own wallet: any wallet that opens standard payment links, such as Freighter, xBull, LOBSTR, Albedo, Rabet, Cosmos Pay Wallet, Phantom, Solflare or any EVM wallet. A customer whose funds are on any of the {swapN} networks our swaps reach can swap them first and pay, with no account. Every link also comes with a QR code, so on a computer the customer can scan it with a phone wallet.",
     },
     custody: {
       q: "Does Cosmos Pay hold my money?",
@@ -306,11 +306,12 @@ const en = {
     security: { nav: "Security", title: "Payments you can check on-chain", lede: "Every payment can be checked on the network, your keys stay yours and no other site can frame the payment pages.", meta: "Non-custodial payments, verified on-chain | Cosmos Pay" },
     fees: { nav: "Pricing", title: "Stablecoin payment fees", lede: "A rate per payment by plan, with no monthly fee on Starter. Work out what you keep before you start.", meta: "Stablecoin payment fees and calculator | Cosmos Pay" },
     faq: { nav: "FAQ", title: "Stablecoin payments FAQ", lede: "Wallets, protected payments, refunds, testing and fees: what merchants ask before they start.", meta: "Stablecoin payments FAQ: wallets, fees, refunds | Cosmos Pay" },
-    swaps: { nav: "Swaps", title: "Swap tokens across networks, no account", lede: "Swap tokens across {n} networks and send USDT0 from Stellar, with no account.", meta: "Cross-chain swaps and USDT0 from Stellar | Cosmos Pay" },
+    swaps: { nav: "Swaps", title: "Swap tokens across networks, no account", lede: "Swap tokens across {swapN} networks and send USDT0 from Stellar, with no account.", meta: "Cross-chain swaps and USDT0 from Stellar | Cosmos Pay" },
     compare: { nav: "Compare", title: "How our fees compare", lede: "Cosmos Pay’s rate for each service next to a known provider’s published rate, with a link to their pricing page and the date we read it.", meta: "Stablecoin payment gateway fees compared | Cosmos Pay" },
     stellar: { nav: "Stellar", title: "Accept payments on Stellar", lede: "Cosmos Pay turns each payment into a SEP-7 link and QR code. Your customer pays from their own Stellar wallet, and the money goes straight to your address.", meta: "Stellar payments API: accept USDC and XLM | Cosmos Pay", link: "Stellar payments" },
     solana: { nav: "Solana", title: "Accept payments on Solana", lede: "Cosmos Pay turns each payment into a Solana Pay link and QR code. Your customer pays in USDC or SOL from their own wallet, straight to your address.", meta: "Accept USDC on Solana with Solana Pay | Cosmos Pay", link: "Solana payments" },
     monad: { nav: "Monad", title: "Accept payments on Monad", lede: "Cosmos Pay turns each payment into an EIP-681 link and QR code. Your customer pays from any EVM wallet, and a deposit address forwards it to yours.", meta: "Monad payments: accept USDC and MON | Cosmos Pay", link: "Monad payments" },
+    arc: { nav: "Arc", title: "Accept payments on Arc", lede: "Cosmos Pay turns each Arc payment into an EIP-681 link and QR code. Your customer pays from any EVM wallet, and a deposit address forwards it to yours.", meta: "Arc payments: accept USDC and EURC | Cosmos Pay", link: "Arc payments" },
     more: { integrations: "See every integration option", fees: "Work out your fees", security: "See how payments are protected", faq: "See every question", useCases: "See every use case", compare: "Compare with other providers" },
     notes: ["No monthly fee on Starter", "Try it on testnet with no real money"],
     /* The day the page last changed (src/lib/seo/page-dates.ts), under the lede of /faq, /compare
@@ -395,6 +396,24 @@ const en = {
         fee: { q: "Can I add my own fee to a Monad payment?", a: "Yes. On Monad, the deposit address Cosmos Pay makes for each payment splits the payment between your Monad address and the fee wallet you choose. Your fee is separate from your plan’s rate, which each payment still pays. The relay’s fee for forwarding the payment is deducted from it, and the API reports that fee on the payment as networkFee." },
       },
     },
+    arc: {
+      link: "EIP-681 links (ethereum:) with Arc’s chain ID and their QR code, to an address made for that one payment.",
+      match: "The payment’s own deposit address: each payment gets one.",
+      settle: "The deposit address forwards the payment to your Arc address, less the relay’s fee, which the API reports on the payment as networkFee.",
+      sandbox: "Arc Testnet with a test key (dv_); mainnet with a live key (prod_).",
+      address: "Contract",
+      assetsLede: "The dashboard offers these by name. Arc’s own coin is USDC, charged here through its ERC-20 contract; any other ERC-20 token goes by its contract.",
+      walletsLede: "Any EVM wallet that reads EIP-681 links. The hosted checkout can also add Arc to a browser wallet and send the payment from it, and the customer can send the exact amount by hand to the deposit address it shows.",
+      feesLede: "Each payment pays your plan’s rate. The payer’s wallet pays the Arc network fee for its transfer, in USDC, and the relay’s fee for forwarding it is deducted from the payment.",
+      codeNote: "Arc needs an amount and takes no wallet message. USDC has the same contract on Arc Testnet, so a test key (dv_) creates this same link there.",
+      faq: {
+        wallets: { q: "Which wallets can pay an Arc payment link?", a: "Any EVM wallet that reads EIP-681 links can pay a Cosmos Pay payment link on Arc. The link and its QR code carry Arc’s chain ID and point to a deposit address made for that one payment, and the hosted checkout can add Arc to a browser wallet that does not know it yet, then send the payment from it. The customer can also send the exact amount by hand to the deposit address the checkout shows. The payer’s wallet pays the Arc network fee in USDC." },
+        deposit: { q: "What is the deposit address on Arc?", a: "Each Arc payment through Cosmos Pay gets its own deposit address, made for that one payment, and that address is how the payment is matched to its link. The deposit address can only forward the payment to your Arc address, less the relay’s fee for forwarding it, which the checkout shows and the API reports on the payment as networkFee. Cosmos Pay holds no key to it." },
+        amount: { q: "Why does an Arc payment link need an amount?", a: "The amount is part of how Cosmos Pay recognises an Arc payment, sent to a deposit address made for it, so an Arc payment link needs an amount and the payer cannot choose it. An Arc link also carries no message for the wallet. To let customers choose the amount, as for donations, or to show a message such as an order number in their wallet, create the link on Stellar or Solana instead." },
+        tokens: { q: "Which tokens can I charge in on Arc?", a: "On Arc, Cosmos Pay offers USDC and EURC by name, on mainnet and on Arc Testnet; any other ERC-20 token goes by its contract when you create the link. Arc’s own coin is USDC, so a payment charges USDC through its ERC-20 contract, with 6 decimals, rather than as a separate coin. Your customer pays in the token set on the link, and the deposit address forwards it to your Arc address, less the relay’s fee." },
+        fee: { q: "Can I add my own fee to an Arc payment?", a: "Yes. On Arc, the deposit address Cosmos Pay makes for each payment splits the payment between your Arc address and the fee wallet you choose. Your fee is separate from your plan’s rate, which each payment still pays. The relay’s fee for forwarding the payment is deducted from it, and the API reports that fee on the payment as networkFee." },
+      },
+    },
   },
   comparePage: {
     title: "Our rates next to",
@@ -420,7 +439,7 @@ const en = {
     asOf: "Published rates as each provider’s page showed them on {date}.",
     notes: [
       "BitPay’s page says higher fees apply in high-risk industries, and it lists no monthly fee; Essentials and Growth have one.",
-      "With Cosmos Pay the payer’s wallet pays the network fee; on Monad the relay’s fee for forwarding a payment is deducted from it.",
+      "With Cosmos Pay the payer’s wallet pays the network fee; on Monad and Arc the relay’s fee for forwarding a payment is deducted from it.",
     ],
     /* Beyond the rate, beside Stripe's stablecoin payments (src/lib/payments/compare.ts
        STRIPE_STABLECOINS): only facts its documentation states (product owner, 2026-11-01). */
@@ -433,8 +452,8 @@ const en = {
       theirs: "Stripe stablecoin payments",
       rows: {
         who: { k: "Businesses that can accept it", ours: "Businesses in Latin America and worldwide", theirs: "Businesses in the US; in private preview in the EU, Hong Kong, Mexico and Switzerland" },
-        settle: { k: "Where a payment settles", ours: "Your own wallet, in the stablecoin your customer paid (on Monad, through a deposit address that can only forward it to yours)", theirs: "Your Stripe balance, in your local currency" },
-        networks: { k: "Networks", ours: "{n} networks, with swaps between them", theirs: "USDC on Tempo, Ethereum, Solana, Polygon and Base" },
+        settle: { k: "Where a payment settles", ours: "Your own wallet, in the stablecoin your customer paid (on Monad and Arc, through a deposit address that can only forward it to yours)", theirs: "Your Stripe balance, in your local currency" },
+        networks: { k: "Networks", ours: "{n} networks, with swaps across {swapN} of them", theirs: "USDC on Tempo, Ethereum, Solana, Polygon and Base" },
       },
       asOf: "Stripe’s terms as its documentation stated them on {date}.",
     },
@@ -471,7 +490,7 @@ const es: LandingMessages = {
   meta: {
     title: "Pasarela de pagos cripto: cobrar en USDC y USDT | Cosmos Pay",
     description:
-      "Cobros en stablecoins que llegan a tu propia dirección: enlaces de pago, checkout alojado y API, en {n} redes con swaps entre ellas.",
+      "Cobros en stablecoins que llegan a tu propia dirección: enlaces de pago, checkout alojado y API, en {n} redes, con swaps entre {swapN} de ellas.",
   },
   hero: {
     titleA: "Acepta",
@@ -527,7 +546,7 @@ const es: LandingMessages = {
       settlement: { k: "Dinero en tu cuenta", cards: "Por lo general, de uno a tres días hábiles.", us: "Segundos después de que la red confirma." },
       hours: { k: "Disponibilidad", cards: "Las liquidaciones esperan a los días hábiles.", us: "Todos los días, a toda hora." },
       borders: { k: "Clientes en el exterior", cards: "Comisiones por tarjeta internacional, transferencia y conversión de moneda.", us: "El mismo enlace y la misma tarifa en cada país." },
-      custody: { k: "Dónde espera el dinero", cards: "En el procesador, hasta la próxima liquidación.", us: "En tu propia wallet. En Monad, la dirección de depósito de cada pago solo puede reenviarte los fondos. Los pagos protegidos esperan en un contrato inteligente, nunca en Cosmos Pay." },
+      custody: { k: "Dónde espera el dinero", cards: "En el procesador, hasta la próxima liquidación.", us: "En tu propia wallet. En Monad y Arc, la dirección de depósito de cada pago solo puede reenviarte los fondos. Los pagos protegidos esperan en un contrato inteligente, nunca en Cosmos Pay." },
       fees: { k: "Comisiones", cards: "Un porcentaje más un cargo fijo, mayor para tarjetas internacionales.", us: "Una tarifa por pago, desde {rate}." },
     },
     note: "Las condiciones de tarjetas y bancos varían según el proveedor y el país; la tabla muestra el caso habitual, no una cotización.",
@@ -653,7 +672,7 @@ const es: LandingMessages = {
   pricing: {
     title: "Paga",
     titleBold: "por pago.",
-    lede: "Cada plan tiene su tarifa por pago. Los pagos protegidos suman un 1,95\u00a0% por pago. La wallet de quien paga cubre la comisión de red; en Monad, la comisión del reenvío del depósito se descuenta y se muestra en el checkout. Los pagos privados cuestan 0,18\u00a0% por transacción.",
+    lede: "Cada plan tiene su tarifa por pago. Los pagos protegidos suman un 1,95\u00a0% por pago. La wallet de quien paga cubre la comisión de red; en Monad y Arc, la comisión del reenvío del depósito se descuenta y se muestra en el checkout. Los pagos privados cuestan 0,18\u00a0% por transacción.",
     perPayment: "por pago",
     perSwap: "{rate} por swap",
     perMonth: "al mes",
@@ -665,16 +684,16 @@ const es: LandingMessages = {
     title: "Preguntas",
     titleBold: "y respuestas.",
     what: { q: "¿Qué es Cosmos Pay?", a: "Cosmos Pay es una pasarela de pagos en stablecoins para empresas de Latinoamérica, que trabaja con {n} redes. Crea un enlace de pago, un checkout alojado o un intento de pago con la API; tu cliente paga desde su propia wallet, en cualquiera de esas redes, y el pago llega a una dirección que controlas." },
-    networks: { q: "¿Con qué redes trabaja Cosmos Pay?", a: "Cosmos Pay trabaja con {n} redes, toda la colección de su plataforma de swaps: {networks}. Tus clientes pueden pagar desde cualquiera de ellas, sin cuenta, y tú puedes mover lo que recibes a cualquiera de ellas." },
-    assets: { q: "¿En qué monedas se puede cobrar?", a: "En USDC, EURC, USDT, la moneda propia de cada red o cualquier otro token, que se indica por su emisor, mint o contrato al crear el enlace. El cliente paga en ese activo y el negocio recibe ese mismo activo. Un cliente que tenga otro token, en cualquiera de las {n} redes con las que trabaja Cosmos Pay, puede hacer primero un swap a ese activo." },
-    wallet: { q: "¿Necesito mi propia wallet cripto?", a: "Sí. Con Cosmos Pay, los pagos llegan a una dirección que controlas (en algunas redes, a través de una dirección de depósito creada para cada pago, que solo puede reenviarlo a la tuya), y puedes mover esos fondos a cualquiera de las {n} redes con las que trabaja Cosmos Pay. Agregas cada wallet a tu organización en el dashboard y demuestras que es tuya con una firma, y los enlaces de pago creados ahí solo pagan a esas wallets. Cosmos Pay nunca pide una clave secreta ni guarda las claves de nadie, así que los fondos son tuyos desde el primer pago y cuidar las claves depende de ti." },
+    networks: { q: "¿Con qué redes trabaja Cosmos Pay?", a: "Cosmos Pay trabaja con {n} redes: {networks}. Tus clientes pueden pagar en cualquiera de ellas, sin cuenta. Sus swaps llegan a {swapN} de esas redes, así que un cliente también puede pagar desde otra red distinta de la del pago, y tú puedes mover lo que recibes entre ellas." },
+    assets: { q: "¿En qué monedas se puede cobrar?", a: "En USDC, EURC, USDT, la moneda propia de cada red o cualquier otro token, que se indica por su emisor, mint o contrato al crear el enlace. El cliente paga en ese activo y el negocio recibe ese mismo activo. Un cliente que tenga otro token, en cualquiera de las {swapN} redes a las que llegan nuestros swaps, puede hacer primero un swap a ese activo." },
+    wallet: { q: "¿Necesito mi propia wallet cripto?", a: "Sí. Con Cosmos Pay, los pagos llegan a una dirección que controlas (en algunas redes, a través de una dirección de depósito creada para cada pago, que solo puede reenviarlo a la tuya), y puedes mover esos fondos con un swap a cualquiera de las {swapN} redes a las que llegan nuestros swaps. Agregas cada wallet a tu organización en el dashboard y demuestras que es tuya con una firma, y los enlaces de pago creados ahí solo pagan a esas wallets. Cosmos Pay nunca pide una clave secreta ni guarda las claves de nadie, así que los fondos son tuyos desde el primer pago y cuidar las claves depende de ti." },
     account: {
       q: "¿Mis clientes necesitan una cuenta?",
-      a: "No. Tus clientes no necesitan una cuenta de Cosmos Pay, solo una wallet con el activo en el que cobras, en la red del pago; si sus fondos están en otra de las {n} redes con las que trabaja Cosmos Pay, pueden hacer primero un swap, también sin cuenta. Abren el checkout, escanean el código QR o tocan el botón de su wallet, y aprueban el pago en su wallet: no tienen que registrarse en nada. El checkout se abre en el idioma de su navegador cuando es uno de los siete que habla (inglés, español, portugués, francés, alemán, hindi y chino), y su wallet paga la comisión de red.",
+      a: "No. Tus clientes no necesitan una cuenta de Cosmos Pay, solo una wallet con el activo en el que cobras, en la red del pago; si sus fondos están en otra de las {swapN} redes a las que llegan nuestros swaps, pueden hacer primero un swap, también sin cuenta. Abren el checkout, escanean el código QR o tocan el botón de su wallet, y aprueban el pago en su wallet: no tienen que registrarse en nada. El checkout se abre en el idioma de su navegador cuando es uno de los siete que habla (inglés, español, portugués, francés, alemán, hindi y chino), y su wallet paga la comisión de red.",
     },
     wallets: {
       q: "¿Qué wallets pueden usar mis clientes?",
-      a: "Tus clientes pagan desde su propia wallet: cualquier wallet que abra enlaces de pago estándar, como Freighter, xBull, LOBSTR, Albedo, Rabet, Cosmos Pay Wallet, Phantom, Solflare o cualquier wallet EVM. Un cliente con fondos en cualquiera de las {n} redes con las que trabaja Cosmos Pay puede hacer primero un swap y pagar, sin cuenta. Cada enlace trae también un código QR, así que en una computadora el cliente puede escanearlo con una wallet del teléfono.",
+      a: "Tus clientes pagan desde su propia wallet: cualquier wallet que abra enlaces de pago estándar, como Freighter, xBull, LOBSTR, Albedo, Rabet, Cosmos Pay Wallet, Phantom, Solflare o cualquier wallet EVM. Un cliente con fondos en cualquiera de las {swapN} redes a las que llegan nuestros swaps puede hacer primero un swap y pagar, sin cuenta. Cada enlace trae también un código QR, así que en una computadora el cliente puede escanearlo con una wallet del teléfono.",
     },
     custody: {
       q: "¿Cosmos Pay retiene mi dinero?",
@@ -761,11 +780,12 @@ const es: LandingMessages = {
     security: { nav: "Seguridad", title: "Pagos que se verifican on-chain", lede: "Cada pago se puede verificar en la red, tus claves siguen siendo tuyas y ningún otro sitio puede incrustar las páginas de pago.", meta: "Pagos cripto sin custodia, verificados on-chain | Cosmos Pay" },
     fees: { nav: "Precios", title: "Comisiones por cobrar en stablecoins", lede: "Una tarifa por pago según tu plan, sin cuota mensual en Starter. Calcula cuánto recibes antes de empezar.", meta: "Comisiones de la pasarela de pagos cripto | Cosmos Pay" },
     faq: { nav: "Preguntas", title: "Preguntas frecuentes sobre cobrar en cripto", lede: "Wallets, pagos protegidos, reembolsos, pruebas y comisiones: lo que preguntan los comercios antes de empezar.", meta: "Preguntas frecuentes sobre pagos cripto | Cosmos Pay" },
-    swaps: { nav: "Swaps", title: "Swaps de tokens entre redes, sin cuenta", lede: "Cambia tokens entre {n} redes y envía USDT0 desde Stellar, sin crear una cuenta.", meta: "Swaps cripto entre redes y USDT0 desde Stellar | Cosmos Pay" },
+    swaps: { nav: "Swaps", title: "Swaps de tokens entre redes, sin cuenta", lede: "Cambia tokens entre {swapN} redes y envía USDT0 desde Stellar, sin crear una cuenta.", meta: "Swaps cripto entre redes y USDT0 desde Stellar | Cosmos Pay" },
     compare: { nav: "Comparar", title: "Cómo se comparan nuestras comisiones", lede: "La tarifa de Cosmos Pay en cada servicio junto a la tarifa publicada de un proveedor conocido, con enlace a su página de precios y la fecha de consulta.", meta: "Comisiones de pasarelas cripto comparadas | Cosmos Pay" },
     stellar: { nav: "Stellar", title: "Acepta pagos en Stellar", lede: "Cosmos Pay convierte cada pago en un enlace SEP-7 con código QR. Tu cliente paga desde su wallet de Stellar y el dinero llega directo a tu dirección.", meta: "API de pagos en Stellar: cobra en USDC y XLM | Cosmos Pay", link: "Pagos en Stellar" },
     solana: { nav: "Solana", title: "Acepta pagos en Solana", lede: "Cosmos Pay convierte cada pago en un enlace de Solana Pay con código QR. Tu cliente paga en USDC o SOL desde su propia wallet, directo a tu dirección.", meta: "Acepta USDC en Solana con Solana Pay | Cosmos Pay", link: "Pagos en Solana" },
     monad: { nav: "Monad", title: "Acepta pagos en Monad", lede: "Cosmos Pay convierte cada pago en un enlace EIP-681 con código QR. Tu cliente paga con cualquier wallet EVM y una dirección de depósito te lo reenvía.", meta: "Pagos en Monad: cobra en USDC y MON | Cosmos Pay", link: "Pagos en Monad" },
+    arc: { nav: "Arc", title: "Acepta pagos en Arc", lede: "Cosmos Pay convierte cada pago en Arc en un enlace EIP-681 con código QR. Tu cliente paga con cualquier wallet EVM y una dirección de depósito te lo reenvía.", meta: "Pagos en Arc: cobra en USDC y EURC | Cosmos Pay", link: "Pagos en Arc" },
     more: { integrations: "Ver todas las opciones de integración", fees: "Calcular mis comisiones", security: "Ver cómo protegemos los pagos", faq: "Ver todas las preguntas", useCases: "Ver todos los casos de uso", compare: "Comparar con otros proveedores" },
     notes: ["Sin cuota mensual en Starter", "Prueba en testnet sin dinero real"],
     updated: "Actualizado el {date}",
@@ -848,6 +868,24 @@ const es: LandingMessages = {
         fee: { q: "¿Puedo sumar mi propia comisión a un pago en Monad?", a: "Sí. En Monad, la dirección de depósito que Cosmos Pay crea para cada pago divide el pago entre tu dirección de Monad y la wallet de comisiones que elijas. Tu comisión es aparte de la tarifa de tu plan, que cada pago sigue pagando. La comisión del reenvío se descuenta del pago, y la API la informa en el pago como networkFee." },
       },
     },
+    arc: {
+      link: "Enlaces EIP-681 (ethereum:) con el chain ID de Arc y su código QR, hacia una dirección creada solo para ese pago.",
+      match: "La dirección de depósito propia del pago: cada pago recibe una.",
+      settle: "La dirección de depósito reenvía el pago a tu dirección de Arc, menos la comisión del reenvío, que la API informa en el pago como networkFee.",
+      sandbox: "Arc Testnet con una clave de prueba (dv_); mainnet con una clave de producción (prod_).",
+      address: "Contrato",
+      assetsLede: "El dashboard los ofrece por nombre. La moneda propia de Arc es USDC, que aquí se cobra a través de su contrato ERC-20; cualquier otro token ERC-20 se indica por su contrato.",
+      walletsLede: "Cualquier wallet EVM que lea enlaces EIP-681. El checkout alojado también puede agregar Arc a una wallet del navegador y enviar el pago desde ella, y el cliente puede enviar el monto exacto a mano a la dirección de depósito que muestra.",
+      feesLede: "Cada pago paga la tarifa de tu plan. La wallet de quien paga cubre la comisión de red de Arc de su transferencia, en USDC, y la comisión del reenvío se descuenta del pago.",
+      codeNote: "Arc necesita un monto y no admite mensaje para la wallet. USDC tiene el mismo contrato en Arc Testnet, así que una clave de prueba (dv_) crea ahí este mismo enlace.",
+      faq: {
+        wallets: { q: "¿Qué wallets pueden pagar un enlace de pago en Arc?", a: "Cualquier wallet EVM que lea enlaces EIP-681 puede pagar un enlace de pago de Cosmos Pay en Arc. El enlace y su código QR llevan el chain ID de Arc y apuntan a una dirección de depósito creada solo para ese pago, y el checkout alojado puede agregar Arc a una wallet del navegador que todavía no la conoce y enviar el pago desde ella. El cliente también puede enviar el monto exacto a mano a la dirección de depósito que muestra el checkout. La wallet de quien paga cubre la comisión de red de Arc en USDC." },
+        deposit: { q: "¿Qué es la dirección de depósito en Arc?", a: "Cada pago en Arc con Cosmos Pay recibe su propia dirección de depósito, creada solo para ese pago, y esa dirección es la que lo asocia con su enlace. La dirección de depósito solo puede reenviar el pago a tu dirección de Arc, menos la comisión del reenvío, que el checkout muestra y la API informa en el pago como networkFee. Cosmos Pay no tiene ninguna clave de ella." },
+        amount: { q: "¿Por qué un enlace de pago en Arc necesita un monto?", a: "El monto es parte de cómo Cosmos Pay reconoce un pago en Arc, enviado a una dirección de depósito creada para él, así que un enlace de pago en Arc necesita un monto y quien paga no puede elegirlo. Un enlace de Arc tampoco lleva mensaje para la wallet. Para que tus clientes elijan el monto, como en las donaciones, o para mostrar un mensaje en su wallet, como un número de pedido, crea el enlace en Stellar o Solana." },
+        tokens: { q: "¿En qué tokens puedo cobrar en Arc?", a: "En Arc, Cosmos Pay ofrece por nombre USDC y EURC, en mainnet y en Arc Testnet; cualquier otro token ERC-20 se indica por su contrato al crear el enlace. La moneda propia de Arc es USDC, así que un pago cobra USDC a través de su contrato ERC-20, con 6 decimales, y no como una moneda aparte. Tu cliente paga en el token del enlace, y la dirección de depósito lo reenvía a tu dirección de Arc, menos la comisión del reenvío." },
+        fee: { q: "¿Puedo sumar mi propia comisión a un pago en Arc?", a: "Sí. En Arc, la dirección de depósito que Cosmos Pay crea para cada pago divide el pago entre tu dirección de Arc y la wallet de comisiones que elijas. Tu comisión es aparte de la tarifa de tu plan, que cada pago sigue pagando. La comisión del reenvío se descuenta del pago, y la API la informa en el pago como networkFee." },
+      },
+    },
   },
   comparePage: {
     title: "Nuestras tarifas junto a",
@@ -873,7 +911,7 @@ const es: LandingMessages = {
     asOf: "Tarifas publicadas tal como las mostraba la página de cada proveedor el {date}.",
     notes: [
       "La página de BitPay indica que se aplican comisiones más altas en industrias de alto riesgo y no menciona cuota mensual; Essentials y Growth tienen una.",
-      "Con Cosmos Pay, la wallet de quien paga cubre la comisión de red; en Monad, la comisión del reenvío de un pago se descuenta de él.",
+      "Con Cosmos Pay, la wallet de quien paga cubre la comisión de red; en Monad y Arc, la comisión del reenvío de un pago se descuenta de él.",
     ],
     beyond: {
       title: "Más allá de la tarifa: Cosmos Pay y los pagos con stablecoins de Stripe",
@@ -884,8 +922,8 @@ const es: LandingMessages = {
       theirs: "Pagos con stablecoins de Stripe",
       rows: {
         who: { k: "Negocios que pueden cobrar", ours: "Negocios en Latinoamérica y en todo el mundo", theirs: "Negocios en EE. UU.; en preview privado en la UE, Hong Kong, México y Suiza" },
-        settle: { k: "Dónde se acredita un pago", ours: "Tu propia wallet, en la stablecoin que pagó tu cliente (en Monad, a través de una dirección de depósito que solo puede reenviarlo a la tuya)", theirs: "Tu saldo de Stripe, en tu moneda local" },
-        networks: { k: "Redes", ours: "{n} redes, con swaps entre ellas", theirs: "USDC en Tempo, Ethereum, Solana, Polygon y Base" },
+        settle: { k: "Dónde se acredita un pago", ours: "Tu propia wallet, en la stablecoin que pagó tu cliente (en Monad y Arc, a través de una dirección de depósito que solo puede reenviarlo a la tuya)", theirs: "Tu saldo de Stripe, en tu moneda local" },
+        networks: { k: "Redes", ours: "{n} redes, con swaps entre {swapN} de ellas", theirs: "USDC en Tempo, Ethereum, Solana, Polygon y Base" },
       },
       asOf: "Condiciones de Stripe según su documentación al {date}.",
     },
@@ -921,7 +959,7 @@ const pt: LandingMessages = {
   meta: {
     title: "Gateway de pagamento cripto em USDC e USDT | Cosmos Pay",
     description:
-      "Pagamentos em stablecoins direto no seu endereço: links de pagamento, checkout hospedado e API, em {n} redes com swaps entre elas.",
+      "Pagamentos em stablecoins direto no seu endereço: links de pagamento, checkout hospedado e API, em {n} redes, com swaps entre {swapN} delas.",
   },
   hero: {
     titleA: "Aceite",
@@ -977,7 +1015,7 @@ const pt: LandingMessages = {
       settlement: { k: "Dinheiro na sua conta", cards: "Em geral, de um a três dias úteis.", us: "Segundos depois que a rede confirma." },
       hours: { k: "Disponibilidade", cards: "Os repasses esperam os dias úteis.", us: "Todos os dias, a qualquer hora." },
       borders: { k: "Clientes no exterior", cards: "Tarifas de cartão internacional, transferência e conversão de moeda.", us: "O mesmo link e a mesma tarifa em todos os países." },
-      custody: { k: "Onde o dinheiro fica", cards: "Com o processador até o próximo repasse.", us: "Na sua própria carteira. Na Monad, o endereço de depósito de cada pagamento só pode repassar os fundos para você. Os pagamentos protegidos esperam em um contrato inteligente, nunca com a Cosmos Pay." },
+      custody: { k: "Onde o dinheiro fica", cards: "Com o processador até o próximo repasse.", us: "Na sua própria carteira. Na Monad e na Arc, o endereço de depósito de cada pagamento só pode repassar os fundos para você. Os pagamentos protegidos esperam em um contrato inteligente, nunca com a Cosmos Pay." },
       fees: { k: "Tarifas", cards: "Uma porcentagem mais uma tarifa fixa, maior para cartões internacionais.", us: "Uma tarifa por pagamento, a partir de {rate}." },
     },
     note: "As condições de cartões e bancos variam por provedor e país; a tabela mostra o caso usual, não uma cotação.",
@@ -1103,7 +1141,7 @@ const pt: LandingMessages = {
   pricing: {
     title: "Pague",
     titleBold: "por pagamento.",
-    lede: "Cada plano tem a própria tarifa por pagamento. Os pagamentos protegidos somam 1,95% por pagamento. A carteira de quem paga cobre a taxa de rede; na Monad, a taxa do repasse do depósito é descontada e mostrada no checkout. Os pagamentos privados custam 0,18% por transação.",
+    lede: "Cada plano tem a própria tarifa por pagamento. Os pagamentos protegidos somam 1,95% por pagamento. A carteira de quem paga cobre a taxa de rede; na Monad e na Arc, a taxa do repasse do depósito é descontada e mostrada no checkout. Os pagamentos privados custam 0,18% por transação.",
     perPayment: "por pagamento",
     perSwap: "{rate} por swap",
     perMonth: "por mês",
@@ -1115,16 +1153,16 @@ const pt: LandingMessages = {
     title: "Perguntas",
     titleBold: "e respostas.",
     what: { q: "O que é o Cosmos Pay?", a: "O Cosmos Pay é um gateway de pagamento em stablecoins para empresas da América Latina, que trabalha com {n} redes. Crie um link de pagamento, um checkout hospedado ou uma intenção de pagamento pela API; seu cliente paga com a própria carteira, em qualquer uma dessas redes, e o pagamento chega a um endereço que você controla." },
-    networks: { q: "Com quais redes o Cosmos Pay trabalha?", a: "O Cosmos Pay trabalha com {n} redes, toda a coleção da sua plataforma de swaps: {networks}. Seus clientes podem pagar a partir de qualquer uma delas, sem conta, e você pode mover o que recebe para qualquer uma delas." },
-    assets: { q: "Em quais moedas posso cobrar?", a: "Em USDC, EURC, USDT, a moeda própria de cada rede ou qualquer outro token, que você indica pelo emissor, pelo mint ou pelo contrato ao criar o link. Seu cliente paga nesse ativo, e você recebe o mesmo ativo. Um cliente que tenha outro token, em qualquer uma das {n} redes com que o Cosmos Pay trabalha, pode antes fazer um swap para esse ativo." },
-    wallet: { q: "Preciso da minha própria carteira cripto?", a: "Sim. Com o Cosmos Pay, os pagamentos chegam a um endereço que você controla (em algumas redes, por meio de um endereço de depósito criado para cada pagamento, que só pode repassá-lo ao seu), e você pode mover esses fundos para qualquer uma das {n} redes com que o Cosmos Pay trabalha. Você adiciona cada carteira à sua organização no dashboard e comprova que ela é sua com uma assinatura, e os links de pagamento criados ali só pagam nessas carteiras. O Cosmos Pay nunca pede uma chave secreta nem guarda as chaves de ninguém, então os fundos são seus desde o primeiro pagamento, e cuidar das chaves fica por sua conta." },
+    networks: { q: "Com quais redes o Cosmos Pay trabalha?", a: "O Cosmos Pay trabalha com {n} redes: {networks}. Seus clientes podem pagar em qualquer uma delas, sem conta. Os swaps chegam a {swapN} dessas redes, então um cliente também pode pagar a partir de uma rede diferente da do pagamento, e você pode mover o que recebe entre elas." },
+    assets: { q: "Em quais moedas posso cobrar?", a: "Em USDC, EURC, USDT, a moeda própria de cada rede ou qualquer outro token, que você indica pelo emissor, pelo mint ou pelo contrato ao criar o link. Seu cliente paga nesse ativo, e você recebe o mesmo ativo. Um cliente que tenha outro token, em qualquer uma das {swapN} redes que os nossos swaps alcançam, pode antes fazer um swap para esse ativo." },
+    wallet: { q: "Preciso da minha própria carteira cripto?", a: "Sim. Com o Cosmos Pay, os pagamentos chegam a um endereço que você controla (em algumas redes, por meio de um endereço de depósito criado para cada pagamento, que só pode repassá-lo ao seu), e você pode levar esses fundos com um swap para qualquer uma das {swapN} redes que os nossos swaps alcançam. Você adiciona cada carteira à sua organização no dashboard e comprova que ela é sua com uma assinatura, e os links de pagamento criados ali só pagam nessas carteiras. O Cosmos Pay nunca pede uma chave secreta nem guarda as chaves de ninguém, então os fundos são seus desde o primeiro pagamento, e cuidar das chaves fica por sua conta." },
     account: {
       q: "Meus clientes precisam de uma conta?",
-      a: "Não. Seus clientes não precisam de conta no Cosmos Pay, só de uma carteira com o ativo em que você cobra, na rede do pagamento; se os fundos deles estiverem em outra das {n} redes com que o Cosmos Pay trabalha, podem antes fazer um swap, também sem conta. Eles abrem o checkout, escaneiam o código QR ou tocam no botão da carteira e aprovam o pagamento na própria carteira: não há cadastro. O checkout abre no idioma do navegador deles quando é um dos sete que ele fala (inglês, espanhol, português, francês, alemão, hindi e chinês), e a carteira deles paga a taxa de rede.",
+      a: "Não. Seus clientes não precisam de conta no Cosmos Pay, só de uma carteira com o ativo em que você cobra, na rede do pagamento; se os fundos deles estiverem em outra das {swapN} redes que os nossos swaps alcançam, podem antes fazer um swap, também sem conta. Eles abrem o checkout, escaneiam o código QR ou tocam no botão da carteira e aprovam o pagamento na própria carteira: não há cadastro. O checkout abre no idioma do navegador deles quando é um dos sete que ele fala (inglês, espanhol, português, francês, alemão, hindi e chinês), e a carteira deles paga a taxa de rede.",
     },
     wallets: {
       q: "Quais carteiras meus clientes podem usar?",
-      a: "Seus clientes pagam com a própria carteira: qualquer carteira que abra links de pagamento padrão, como Freighter, xBull, LOBSTR, Albedo, Rabet, Cosmos Pay Wallet, Phantom, Solflare ou qualquer carteira EVM. Um cliente com fundos em qualquer uma das {n} redes com que o Cosmos Pay trabalha pode antes fazer um swap e pagar, sem conta. Cada link também vem com um código QR, então no computador o cliente pode escaneá-lo com uma carteira no celular.",
+      a: "Seus clientes pagam com a própria carteira: qualquer carteira que abra links de pagamento padrão, como Freighter, xBull, LOBSTR, Albedo, Rabet, Cosmos Pay Wallet, Phantom, Solflare ou qualquer carteira EVM. Um cliente com fundos em qualquer uma das {swapN} redes que os nossos swaps alcançam pode antes fazer um swap e pagar, sem conta. Cada link também vem com um código QR, então no computador o cliente pode escaneá-lo com uma carteira no celular.",
     },
     custody: {
       q: "O Cosmos Pay fica com o meu dinheiro?",
@@ -1211,11 +1249,12 @@ const pt: LandingMessages = {
     security: { nav: "Segurança", title: "Pagamentos verificáveis on-chain", lede: "Cada pagamento pode ser verificado na rede, suas chaves continuam suas e nenhum outro site pode incorporar as páginas de pagamento.", meta: "Pagamentos sem custódia, verificados on-chain | Cosmos Pay" },
     fees: { nav: "Preços", title: "Taxas para receber em stablecoins", lede: "Uma tarifa por pagamento conforme o plano, sem mensalidade no Starter. Calcule quanto você recebe antes de começar.", meta: "Taxas do gateway de pagamento cripto | Cosmos Pay" },
     faq: { nav: "Perguntas", title: "Perguntas frequentes sobre receber em cripto", lede: "Carteiras, pagamentos protegidos, reembolsos, testes e tarifas: o que os comerciantes perguntam antes de começar.", meta: "Perguntas frequentes sobre pagamentos cripto | Cosmos Pay" },
-    swaps: { nav: "Swaps", title: "Swaps de tokens entre redes, sem conta", lede: "Troque tokens entre {n} redes e envie USDT0 da Stellar, sem criar conta.", meta: "Swaps cripto entre redes e USDT0 da Stellar | Cosmos Pay" },
+    swaps: { nav: "Swaps", title: "Swaps de tokens entre redes, sem conta", lede: "Troque tokens entre {swapN} redes e envie USDT0 da Stellar, sem criar conta.", meta: "Swaps cripto entre redes e USDT0 da Stellar | Cosmos Pay" },
     compare: { nav: "Comparar", title: "Como nossas tarifas se comparam", lede: "A tarifa da Cosmos Pay em cada serviço ao lado da tarifa publicada de um provedor conhecido, com link para a página de preços dele e a data da consulta.", meta: "Tarifas de gateways cripto comparadas | Cosmos Pay" },
     stellar: { nav: "Stellar", title: "Aceite pagamentos na Stellar", lede: "A Cosmos Pay transforma cada pagamento em um link SEP-7 com QR code. Seu cliente paga com a carteira Stellar e o dinheiro vai direto ao seu endereço.", meta: "API de pagamentos Stellar: receba USDC e XLM | Cosmos Pay", link: "Pagamentos na Stellar" },
     solana: { nav: "Solana", title: "Aceite pagamentos na Solana", lede: "A Cosmos Pay transforma cada pagamento em um link do Solana Pay com QR code. Seu cliente paga em USDC ou SOL com a carteira dele, direto ao seu endereço.", meta: "Receba USDC na Solana com Solana Pay | Cosmos Pay", link: "Pagamentos na Solana" },
     monad: { nav: "Monad", title: "Aceite pagamentos na Monad", lede: "A Cosmos Pay transforma cada pagamento em um link EIP-681 com QR code. Seu cliente paga com qualquer carteira EVM e um endereço de depósito repassa a você.", meta: "Pagamentos na Monad: receba em USDC e MON | Cosmos Pay", link: "Pagamentos na Monad" },
+    arc: { nav: "Arc", title: "Aceite pagamentos na Arc", lede: "A Cosmos Pay transforma cada pagamento na Arc em um link EIP-681 com QR code. Seu cliente paga com uma carteira EVM e um endereço de depósito repassa a você.", meta: "Pagamentos na Arc: receba em USDC e EURC | Cosmos Pay", link: "Pagamentos na Arc" },
     more: { integrations: "Ver todas as opções de integração", fees: "Calcular minhas tarifas", security: "Ver como protegemos os pagamentos", faq: "Ver todas as perguntas", useCases: "Ver todos os casos de uso", compare: "Comparar com outros provedores" },
     notes: ["Sem mensalidade no Starter", "Teste na testnet sem dinheiro real"],
     updated: "Atualizado em {date}",
@@ -1298,6 +1337,24 @@ const pt: LandingMessages = {
         fee: { q: "Posso adicionar minha própria taxa a um pagamento na Monad?", a: "Sim. Na Monad, o endereço de depósito que a Cosmos Pay cria para cada pagamento divide o pagamento entre o seu endereço Monad e a carteira de taxas que você escolher. A sua taxa é separada da tarifa do seu plano, que cada pagamento continua pagando. A taxa do repasse é descontada do pagamento, e a API a informa no pagamento como networkFee." },
       },
     },
+    arc: {
+      link: "Links EIP-681 (ethereum:) com o chain ID da Arc e QR code, para um endereço criado só para aquele pagamento.",
+      match: "O endereço de depósito do próprio pagamento: cada pagamento recebe um.",
+      settle: "O endereço de depósito repassa o pagamento ao seu endereço Arc, menos a taxa do repasse, que a API informa no pagamento como networkFee.",
+      sandbox: "Arc Testnet com uma chave de teste (dv_); mainnet com uma chave de produção (prod_).",
+      address: "Contrato",
+      assetsLede: "O dashboard oferece estes pelo nome. A moeda própria da Arc é o USDC, cobrado aqui pelo contrato ERC-20 dele; qualquer outro token ERC-20 é indicado pelo contrato.",
+      walletsLede: "Qualquer carteira EVM que leia links EIP-681. O checkout hospedado também pode adicionar a Arc a uma carteira do navegador e enviar o pagamento por ela, e o cliente pode enviar o valor exato manualmente para o endereço de depósito que ele mostra.",
+      feesLede: "Cada pagamento paga a tarifa do seu plano. A carteira de quem paga cobre a taxa de rede da Arc da transferência, em USDC, e a taxa do repasse é descontada do pagamento.",
+      codeNote: "A Arc exige um valor e não aceita mensagem para a carteira. O USDC tem o mesmo contrato na Arc Testnet, então uma chave de teste (dv_) cria ali este mesmo link.",
+      faq: {
+        wallets: { q: "Quais carteiras podem pagar um link de pagamento na Arc?", a: "Qualquer carteira EVM que leia links EIP-681 pode pagar um link de pagamento da Cosmos Pay na Arc. O link e o QR code levam o chain ID da Arc e apontam para um endereço de depósito criado só para aquele pagamento, e o checkout hospedado pode adicionar a Arc a uma carteira do navegador que ainda não a conhece e enviar o pagamento por ela. O cliente também pode enviar o valor exato manualmente para o endereço de depósito que o checkout mostra. A carteira de quem paga cobre a taxa de rede da Arc em USDC." },
+        deposit: { q: "O que é o endereço de depósito na Arc?", a: "Cada pagamento na Arc com a Cosmos Pay recebe o próprio endereço de depósito, criado só para aquele pagamento, e é esse endereço que o associa ao link. O endereço de depósito só pode repassar o pagamento ao seu endereço Arc, menos a taxa do repasse, que o checkout mostra e a API informa no pagamento como networkFee. A Cosmos Pay não tem nenhuma chave dele." },
+        amount: { q: "Por que um link de pagamento na Arc precisa de um valor?", a: "O valor faz parte de como a Cosmos Pay reconhece um pagamento na Arc, enviado a um endereço de depósito criado para ele, então um link de pagamento na Arc precisa de um valor e quem paga não pode escolhê-lo. Um link da Arc também não leva mensagem para a carteira. Para que seus clientes escolham o valor, como em doações, ou para mostrar uma mensagem na carteira deles, como o número do pedido, crie o link na Stellar ou na Solana." },
+        tokens: { q: "Em quais tokens posso cobrar na Arc?", a: "Na Arc, a Cosmos Pay oferece pelo nome o USDC e o EURC, na mainnet e na Arc Testnet; qualquer outro token ERC-20 é indicado pelo contrato ao criar o link. A moeda própria da Arc é o USDC, então um pagamento cobra USDC pelo contrato ERC-20 dele, com 6 casas decimais, e não como uma moeda à parte. Seu cliente paga no token do link, e o endereço de depósito o repassa ao seu endereço Arc, menos a taxa do repasse." },
+        fee: { q: "Posso adicionar minha própria taxa a um pagamento na Arc?", a: "Sim. Na Arc, o endereço de depósito que a Cosmos Pay cria para cada pagamento divide o pagamento entre o seu endereço Arc e a carteira de taxas que você escolher. A sua taxa é separada da tarifa do seu plano, que cada pagamento continua pagando. A taxa do repasse é descontada do pagamento, e a API a informa no pagamento como networkFee." },
+      },
+    },
   },
   comparePage: {
     title: "Nossas tarifas ao lado",
@@ -1323,7 +1380,7 @@ const pt: LandingMessages = {
     asOf: "Tarifas publicadas conforme a página de cada provedor em {date}.",
     notes: [
       "A página da BitPay diz que taxas mais altas se aplicam a setores de alto risco e não cita mensalidade; Essentials e Growth têm uma.",
-      "Na Cosmos Pay, a carteira de quem paga cobre a taxa de rede; na Monad, a taxa do repasse de um pagamento é descontada dele.",
+      "Na Cosmos Pay, a carteira de quem paga cobre a taxa de rede; na Monad e na Arc, a taxa do repasse de um pagamento é descontada dele.",
     ],
     beyond: {
       title: "Além da tarifa: Cosmos Pay e os pagamentos com stablecoins da Stripe",
@@ -1334,8 +1391,8 @@ const pt: LandingMessages = {
       theirs: "Pagamentos com stablecoins da Stripe",
       rows: {
         who: { k: "Empresas que podem receber", ours: "Empresas na América Latina e no mundo todo", theirs: "Empresas nos EUA; em preview privado na UE, Hong Kong, México e Suíça" },
-        settle: { k: "Onde o pagamento é liquidado", ours: "Na sua própria carteira, na stablecoin que o cliente pagou (na Monad, por um endereço de depósito que só pode repassá-lo ao seu)", theirs: "No seu saldo da Stripe, na sua moeda local" },
-        networks: { k: "Redes", ours: "{n} redes, com swaps entre elas", theirs: "USDC na Tempo, Ethereum, Solana, Polygon e Base" },
+        settle: { k: "Onde o pagamento é liquidado", ours: "Na sua própria carteira, na stablecoin que o cliente pagou (na Monad e na Arc, por um endereço de depósito que só pode repassá-lo ao seu)", theirs: "No seu saldo da Stripe, na sua moeda local" },
+        networks: { k: "Redes", ours: "{n} redes, com swaps entre {swapN} delas", theirs: "USDC na Tempo, Ethereum, Solana, Polygon e Base" },
       },
       asOf: "Condições da Stripe conforme a documentação dela em {date}.",
     },
@@ -1371,7 +1428,7 @@ const fr: LandingMessages = {
   meta: {
     title: "Passerelle de paiement crypto en USDC | Cosmos Pay",
     description:
-      "Paiements en stablecoins versés à votre adresse : liens de paiement, checkout hébergé et API, sur {n} réseaux avec des swaps entre eux.",
+      "Paiements en stablecoins versés à votre adresse : liens de paiement, checkout hébergé et API, sur {n} réseaux, avec des swaps entre {swapN} d’entre eux.",
   },
   hero: {
     titleA: "Acceptez les",
@@ -1427,7 +1484,7 @@ const fr: LandingMessages = {
       settlement: { k: "Argent sur votre compte", cards: "En général, un à trois jours ouvrés.", us: "Quelques secondes après la confirmation du réseau." },
       hours: { k: "Disponibilité", cards: "Les versements attendent les jours ouvrés.", us: "Tous les jours, à toute heure." },
       borders: { k: "Clients à l’étranger", cards: "Frais de carte internationale, de virement et de conversion de devises.", us: "Le même lien et le même tarif dans chaque pays." },
-      custody: { k: "Où l’argent attend", cards: "Chez le prestataire, jusqu’au prochain versement.", us: "Dans votre propre wallet. Sur Monad, l’adresse de dépôt de chaque paiement ne peut transférer les fonds qu’à vous. Les paiements protégés attendent dans un contrat intelligent, jamais chez Cosmos Pay." },
+      custody: { k: "Où l’argent attend", cards: "Chez le prestataire, jusqu’au prochain versement.", us: "Dans votre propre wallet. Sur Monad et Arc, l’adresse de dépôt de chaque paiement ne peut transférer les fonds qu’à vous. Les paiements protégés attendent dans un contrat intelligent, jamais chez Cosmos Pay." },
       fees: { k: "Frais", cards: "Un pourcentage plus des frais fixes, plus élevés pour les cartes internationales.", us: "Un tarif par paiement, à partir de {rate}." },
     },
     note: "Les conditions des cartes et des banques varient selon le prestataire et le pays ; le tableau montre le cas habituel, pas un devis.",
@@ -1553,7 +1610,7 @@ const fr: LandingMessages = {
   pricing: {
     title: "Payez",
     titleBold: "au paiement.",
-    lede: "Chaque offre a son propre tarif par paiement. Les paiements protégés ajoutent 1,95\u00a0% par paiement. Le wallet du payeur règle les frais de réseau ; sur Monad, les frais du relais de dépôt sont déduits et affichés sur le checkout. Les paiements privés coûtent 0,18\u00a0% par transaction.",
+    lede: "Chaque offre a son propre tarif par paiement. Les paiements protégés ajoutent 1,95\u00a0% par paiement. Le wallet du payeur règle les frais de réseau ; sur Monad et Arc, les frais du relais de dépôt sont déduits et affichés sur le checkout. Les paiements privés coûtent 0,18\u00a0% par transaction.",
     perPayment: "par paiement",
     perSwap: "{rate} par swap",
     perMonth: "par mois",
@@ -1565,16 +1622,16 @@ const fr: LandingMessages = {
     title: "Questions",
     titleBold: "et réponses.",
     what: { q: "Qu’est-ce que Cosmos Pay ?", a: "Cosmos Pay est une passerelle de paiement en stablecoins pour les entreprises d’Amérique latine, qui fonctionne avec {n} réseaux. Créez un lien de paiement, un checkout hébergé ou une intention de paiement via l’API ; votre client paie depuis son propre wallet, sur n’importe lequel de ces réseaux, et le paiement arrive à une adresse que vous contrôlez." },
-    networks: { q: "Avec quels réseaux Cosmos Pay fonctionne-t-il ?", a: "Cosmos Pay fonctionne avec {n} réseaux, toute la collection de sa plateforme de swaps : {networks}. Vos clients peuvent payer depuis n’importe lequel d’entre eux, sans compte, et vous pouvez transférer ce que vous recevez vers n’importe lequel d’entre eux." },
-    assets: { q: "Dans quelles devises puis-je encaisser ?", a: "En USDC, en EURC, en USDT, dans la monnaie propre à chaque réseau ou dans tout autre jeton, que vous indiquez par son émetteur, son mint ou son contrat en créant le lien. Votre client paie dans cet actif, et vous recevez ce même actif. Un client qui détient un autre jeton, sur n’importe lequel des {n} réseaux avec lesquels fonctionne Cosmos Pay, peut d’abord l’échanger contre cet actif par un swap." },
-    wallet: { q: "Ai-je besoin de mon propre wallet crypto ?", a: "Oui. Avec Cosmos Pay, les paiements arrivent à une adresse que vous contrôlez (sur certains réseaux, via une adresse de dépôt créée pour chaque paiement, qui ne peut que le transférer à la vôtre), et vous pouvez transférer ces fonds vers n’importe lequel des {n} réseaux avec lesquels fonctionne Cosmos Pay. Vous ajoutez chaque wallet à votre organisation dans le tableau de bord et prouvez qu’il est à vous par une signature, et les liens de paiement créés là ne paient que vers ces wallets. Cosmos Pay ne demande jamais de clé secrète et ne conserve les clés de personne : les fonds sont à vous dès le premier paiement, et veiller sur vos clés vous revient." },
+    networks: { q: "Avec quels réseaux Cosmos Pay fonctionne-t-il ?", a: "Cosmos Pay fonctionne avec {n} réseaux : {networks}. Vos clients peuvent payer sur n’importe lequel d’entre eux, sans compte. Ses swaps atteignent {swapN} de ces réseaux : un client peut donc aussi payer depuis un autre réseau que celui du paiement, et vous pouvez transférer ce que vous recevez entre eux." },
+    assets: { q: "Dans quelles devises puis-je encaisser ?", a: "En USDC, en EURC, en USDT, dans la monnaie propre à chaque réseau ou dans tout autre jeton, que vous indiquez par son émetteur, son mint ou son contrat en créant le lien. Votre client paie dans cet actif, et vous recevez ce même actif. Un client qui détient un autre jeton, sur n’importe lequel des {swapN} réseaux qu’atteignent nos swaps, peut d’abord l’échanger contre cet actif par un swap." },
+    wallet: { q: "Ai-je besoin de mon propre wallet crypto ?", a: "Oui. Avec Cosmos Pay, les paiements arrivent à une adresse que vous contrôlez (sur certains réseaux, via une adresse de dépôt créée pour chaque paiement, qui ne peut que le transférer à la vôtre), et vous pouvez transférer ces fonds par un swap vers n’importe lequel des {swapN} réseaux qu’atteignent nos swaps. Vous ajoutez chaque wallet à votre organisation dans le tableau de bord et prouvez qu’il est à vous par une signature, et les liens de paiement créés là ne paient que vers ces wallets. Cosmos Pay ne demande jamais de clé secrète et ne conserve les clés de personne : les fonds sont à vous dès le premier paiement, et veiller sur vos clés vous revient." },
     account: {
       q: "Mes clients ont-ils besoin d’un compte ?",
-      a: "Non. Vos clients n’ont pas besoin de compte Cosmos Pay, seulement d’un wallet qui détient l’actif dans lequel vous encaissez, sur le réseau du paiement, et si leurs fonds sont sur un autre des {n} réseaux avec lesquels fonctionne Cosmos Pay, ils peuvent d’abord faire un swap, toujours sans compte. Ils ouvrent le checkout, scannent le QR code ou touchent le bouton de leur wallet, puis approuvent le paiement dans leur wallet : aucune inscription. Le checkout s’ouvre dans la langue de leur navigateur quand c’est l’une des sept qu’il parle (anglais, espagnol, portugais, français, allemand, hindi et chinois), et leur wallet paie les frais de réseau.",
+      a: "Non. Vos clients n’ont pas besoin de compte Cosmos Pay, seulement d’un wallet qui détient l’actif dans lequel vous encaissez, sur le réseau du paiement, et si leurs fonds sont sur un autre des {swapN} réseaux qu’atteignent nos swaps, ils peuvent d’abord faire un swap, toujours sans compte. Ils ouvrent le checkout, scannent le QR code ou touchent le bouton de leur wallet, puis approuvent le paiement dans leur wallet : aucune inscription. Le checkout s’ouvre dans la langue de leur navigateur quand c’est l’une des sept qu’il parle (anglais, espagnol, portugais, français, allemand, hindi et chinois), et leur wallet paie les frais de réseau.",
     },
     wallets: {
       q: "Quels wallets mes clients peuvent-ils utiliser ?",
-      a: "Vos clients paient depuis leur propre wallet : tout wallet qui ouvre les liens de paiement standard, comme Freighter, xBull, LOBSTR, Albedo, Rabet, Cosmos Pay Wallet, Phantom, Solflare ou n’importe quel wallet EVM. Un client dont les fonds sont sur n’importe lequel des {n} réseaux avec lesquels fonctionne Cosmos Pay peut d’abord faire un swap et payer, sans compte. Chaque lien a aussi un QR code : sur un ordinateur, le client peut le scanner avec un wallet sur son téléphone.",
+      a: "Vos clients paient depuis leur propre wallet : tout wallet qui ouvre les liens de paiement standard, comme Freighter, xBull, LOBSTR, Albedo, Rabet, Cosmos Pay Wallet, Phantom, Solflare ou n’importe quel wallet EVM. Un client dont les fonds sont sur n’importe lequel des {swapN} réseaux qu’atteignent nos swaps peut d’abord faire un swap et payer, sans compte. Chaque lien a aussi un QR code : sur un ordinateur, le client peut le scanner avec un wallet sur son téléphone.",
     },
     custody: {
       q: "Cosmos Pay garde-t-il mon argent ?",
@@ -1661,11 +1718,12 @@ const fr: LandingMessages = {
     security: { nav: "Sécurité", title: "Des paiements vérifiables on-chain", lede: "Chaque paiement se vérifie sur le réseau, vos clés restent les vôtres et aucun autre site ne peut intégrer les pages de paiement.", meta: "Paiements non dépositaires vérifiés on-chain | Cosmos Pay" },
     fees: { nav: "Tarifs", title: "Frais des paiements en stablecoins", lede: "Un tarif par paiement selon votre offre, sans abonnement mensuel avec Starter. Calculez ce que vous recevez avant de commencer.", meta: "Frais de paiement en stablecoins et calculateur | Cosmos Pay" },
     faq: { nav: "Questions", title: "FAQ des paiements en stablecoins", lede: "Wallets, paiements protégés, remboursements, tests et frais : ce que les marchands demandent avant de commencer.", meta: "FAQ paiements crypto : wallets, frais | Cosmos Pay" },
-    swaps: { nav: "Swaps", title: "Échangez des jetons entre réseaux, sans compte", lede: "Échangez des jetons entre {n} réseaux et envoyez de l’USDT0 depuis Stellar, sans compte.", meta: "Swaps entre réseaux et USDT0 depuis Stellar | Cosmos Pay" },
+    swaps: { nav: "Swaps", title: "Échangez des jetons entre réseaux, sans compte", lede: "Échangez des jetons entre {swapN} réseaux et envoyez de l’USDT0 depuis Stellar, sans compte.", meta: "Swaps entre réseaux et USDT0 depuis Stellar | Cosmos Pay" },
     compare: { nav: "Comparer", title: "Nos frais comparés", lede: "Le tarif de Cosmos Pay pour chaque service à côté du tarif publié d’un prestataire connu, avec un lien vers sa page de tarifs et la date de lecture.", meta: "Frais des passerelles crypto comparés | Cosmos Pay" },
     stellar: { nav: "Stellar", title: "Acceptez des paiements sur Stellar", lede: "Cosmos Pay transforme chaque paiement en lien SEP-7 avec QR code. Votre client paie depuis son wallet Stellar et l’argent arrive droit à votre adresse.", meta: "API de paiement Stellar : acceptez USDC et XLM | Cosmos Pay", link: "Paiements sur Stellar" },
     solana: { nav: "Solana", title: "Acceptez des paiements sur Solana", lede: "Cosmos Pay transforme chaque paiement en lien Solana Pay avec QR code. Votre client paie en USDC ou en SOL depuis son wallet, droit à votre adresse.", meta: "Acceptez l’USDC sur Solana avec Solana Pay | Cosmos Pay", link: "Paiements sur Solana" },
     monad: { nav: "Monad", title: "Acceptez des paiements sur Monad", lede: "Cosmos Pay transforme chaque paiement en lien EIP-681 avec QR code. Votre client paie avec tout wallet EVM, et une adresse de dépôt vous le transfère.", meta: "Paiements sur Monad : acceptez USDC et MON | Cosmos Pay", link: "Paiements sur Monad" },
+    arc: { nav: "Arc", title: "Acceptez des paiements sur Arc", lede: "Cosmos Pay transforme chaque paiement sur Arc en lien EIP-681 avec QR code. Votre client paie avec tout wallet EVM, et une adresse de dépôt vous le transfère.", meta: "Paiements sur Arc : acceptez USDC et EURC | Cosmos Pay", link: "Paiements sur Arc" },
     more: { integrations: "Voir toutes les options d’intégration", fees: "Calculer mes frais", security: "Voir comment les paiements sont protégés", faq: "Voir toutes les questions", useCases: "Voir tous les cas d’usage", compare: "Comparer avec d’autres prestataires" },
     notes: ["Sans abonnement mensuel avec Starter", "Testez sur le testnet sans argent réel"],
     updated: "Mis à jour le {date}",
@@ -1748,6 +1806,24 @@ const fr: LandingMessages = {
         fee: { q: "Puis-je ajouter mes propres frais à un paiement Monad ?", a: "Oui. Sur Monad, l’adresse de dépôt que Cosmos Pay crée pour chaque paiement répartit le paiement entre votre adresse Monad et le wallet de frais de votre choix. Vos frais sont distincts du tarif de votre offre, que chaque paiement continue de payer. Les frais du relais sont déduits du paiement, et l’API les indique sur le paiement dans networkFee." },
       },
     },
+    arc: {
+      link: "Des liens EIP-681 (ethereum:) avec le chain ID d’Arc et leur QR code, vers une adresse créée pour ce seul paiement.",
+      match: "L’adresse de dépôt propre au paiement : chaque paiement a la sienne.",
+      settle: "L’adresse de dépôt transfère le paiement à votre adresse Arc, moins les frais du relais, que l’API indique sur le paiement dans networkFee.",
+      sandbox: "Arc Testnet avec une clé de test (dv_) ; le mainnet avec une clé de production (prod_).",
+      address: "Contrat",
+      assetsLede: "Le tableau de bord les propose par leur nom. La monnaie propre d’Arc est l’USDC, encaissé ici via son contrat ERC-20 ; tout autre jeton ERC-20 s’indique par son contrat.",
+      walletsLede: "Tout wallet EVM qui lit les liens EIP-681. Le checkout hébergé peut aussi ajouter Arc à un wallet du navigateur et envoyer le paiement depuis celui-ci, et le client peut envoyer le montant exact à la main à l’adresse de dépôt affichée.",
+      feesLede: "Chaque paiement paie le tarif de votre offre. Le wallet du payeur règle les frais de réseau Arc de son transfert, en USDC, et les frais du relais sont déduits du paiement.",
+      codeNote: "Arc exige un montant et n’accepte pas de message pour le wallet. L’USDC a le même contrat sur Arc Testnet : une clé de test (dv_) y crée donc ce même lien.",
+      faq: {
+        wallets: { q: "Quels wallets peuvent payer un lien de paiement Arc ?", a: "Tout wallet EVM qui lit les liens EIP-681 peut payer un lien de paiement Cosmos Pay sur Arc. Le lien et son QR code portent le chain ID d’Arc et pointent vers une adresse de dépôt créée pour ce seul paiement, et le checkout hébergé peut ajouter Arc à un wallet du navigateur qui ne le connaît pas encore, puis envoyer le paiement depuis celui-ci. Le client peut aussi envoyer le montant exact à la main à l’adresse de dépôt affichée sur le checkout. Le wallet du payeur paie les frais de réseau Arc en USDC." },
+        deposit: { q: "Qu’est-ce que l’adresse de dépôt sur Arc ?", a: "Chaque paiement Arc via Cosmos Pay reçoit sa propre adresse de dépôt, créée pour ce seul paiement, et c’est cette adresse qui le rattache à son lien. L’adresse de dépôt ne peut que transférer le paiement à votre adresse Arc, moins les frais du relais, que le checkout affiche et que l’API indique sur le paiement dans networkFee. Cosmos Pay n’en détient aucune clé." },
+        amount: { q: "Pourquoi un lien de paiement Arc exige-t-il un montant ?", a: "Le montant fait partie de la façon dont Cosmos Pay reconnaît un paiement Arc, envoyé à une adresse de dépôt créée pour lui : un lien de paiement Arc exige donc un montant, et le payeur ne peut pas le choisir. Un lien Arc ne porte pas non plus de message pour le wallet. Pour laisser vos clients choisir le montant, comme pour des dons, ou afficher un message dans leur wallet, comme un numéro de commande, créez le lien sur Stellar ou Solana." },
+        tokens: { q: "Dans quels jetons puis-je encaisser sur Arc ?", a: "Sur Arc, Cosmos Pay propose par leur nom l’USDC et l’EURC, sur le mainnet et sur Arc Testnet ; tout autre jeton ERC-20 s’indique par son contrat à la création du lien. La monnaie propre d’Arc est l’USDC : un paiement encaisse donc l’USDC via son contrat ERC-20, avec 6 décimales, et non comme une monnaie à part. Votre client paie dans le jeton du lien, et l’adresse de dépôt le transfère à votre adresse Arc, moins les frais du relais." },
+        fee: { q: "Puis-je ajouter mes propres frais à un paiement Arc ?", a: "Oui. Sur Arc, l’adresse de dépôt que Cosmos Pay crée pour chaque paiement répartit le paiement entre votre adresse Arc et le wallet de frais de votre choix. Vos frais sont distincts du tarif de votre offre, que chaque paiement continue de payer. Les frais du relais sont déduits du paiement, et l’API les indique sur le paiement dans networkFee." },
+      },
+    },
   },
   comparePage: {
     title: "Nos tarifs à côté",
@@ -1773,7 +1849,7 @@ const fr: LandingMessages = {
     asOf: "Tarifs publiés tels que la page de chaque prestataire les affichait le {date}.",
     notes: [
       "La page de BitPay indique des frais plus élevés pour les secteurs à haut risque et ne mentionne aucun abonnement mensuel ; Essentials et Growth en ont un.",
-      "Avec Cosmos Pay, le wallet du payeur règle les frais de réseau ; sur Monad, les frais du relais pour transférer un paiement en sont déduits.",
+      "Avec Cosmos Pay, le wallet du payeur règle les frais de réseau ; sur Monad et Arc, les frais du relais pour transférer un paiement en sont déduits.",
     ],
     beyond: {
       title: "Au-delà du tarif : Cosmos Pay et les paiements en stablecoins de Stripe",
@@ -1784,8 +1860,8 @@ const fr: LandingMessages = {
       theirs: "Paiements en stablecoins de Stripe",
       rows: {
         who: { k: "Entreprises qui peuvent encaisser", ours: "Entreprises en Amérique latine et dans le monde entier", theirs: "Entreprises aux États-Unis ; en accès anticipé privé dans l’UE, à Hong Kong, au Mexique et en Suisse" },
-        settle: { k: "Où un paiement est réglé", ours: "Votre propre wallet, dans le stablecoin payé par votre client (sur Monad, via une adresse de dépôt qui ne peut le transférer qu’à la vôtre)", theirs: "Votre solde Stripe, dans votre devise locale" },
-        networks: { k: "Réseaux", ours: "{n} réseaux, avec des swaps entre eux", theirs: "USDC sur Tempo, Ethereum, Solana, Polygon et Base" },
+        settle: { k: "Où un paiement est réglé", ours: "Votre propre wallet, dans le stablecoin payé par votre client (sur Monad et Arc, via une adresse de dépôt qui ne peut le transférer qu’à la vôtre)", theirs: "Votre solde Stripe, dans votre devise locale" },
+        networks: { k: "Réseaux", ours: "{n} réseaux, avec des swaps entre {swapN} d’entre eux", theirs: "USDC sur Tempo, Ethereum, Solana, Polygon et Base" },
       },
       asOf: "Conditions de Stripe telles que sa documentation les indiquait le {date}.",
     },
@@ -1821,7 +1897,7 @@ const de: LandingMessages = {
   meta: {
     title: "Krypto-Zahlungsgateway für USDC und Stablecoins | Cosmos Pay",
     description:
-      "Stablecoin-Zahlungen an deine eigene Adresse: Zahlungslinks, gehosteter Checkout und API, in {n} Netzwerken mit Swaps zwischen ihnen.",
+      "Stablecoin-Zahlungen an deine eigene Adresse: Zahlungslinks, gehosteter Checkout und API, in {n} Netzwerken, mit Swaps zwischen {swapN} davon.",
   },
   hero: {
     titleA: "Akzeptiere",
@@ -1877,7 +1953,7 @@ const de: LandingMessages = {
       settlement: { k: "Geld auf deinem Konto", cards: "Meist nach ein bis drei Werktagen.", us: "Sekunden nach der Bestätigung durch das Netzwerk." },
       hours: { k: "Verfügbarkeit", cards: "Auszahlungen warten auf Bankarbeitstage.", us: "Jeden Tag, rund um die Uhr." },
       borders: { k: "Kunden im Ausland", cards: "Gebühren für Auslandskarten, Überweisungen und Währungsumrechnung.", us: "Derselbe Link und derselbe Satz in jedem Land." },
-      custody: { k: "Wo das Geld wartet", cards: "Beim Zahlungsdienstleister bis zur nächsten Auszahlung.", us: "In deiner eigenen Wallet. Auf Monad kann die Einzahlungsadresse jeder Zahlung das Geld nur an dich weiterleiten. Geschützte Zahlungen warten in einem Smart Contract, nie bei Cosmos Pay." },
+      custody: { k: "Wo das Geld wartet", cards: "Beim Zahlungsdienstleister bis zur nächsten Auszahlung.", us: "In deiner eigenen Wallet. Auf Monad und Arc kann die Einzahlungsadresse jeder Zahlung das Geld nur an dich weiterleiten. Geschützte Zahlungen warten in einem Smart Contract, nie bei Cosmos Pay." },
       fees: { k: "Gebühren", cards: "Ein Prozentsatz plus eine feste Gebühr, höher für Auslandskarten.", us: "Ein Satz pro Zahlung, ab {rate}." },
     },
     note: "Die Bedingungen von Karten und Banken hängen von Anbieter und Land ab; die Tabelle zeigt den üblichen Fall, kein Angebot.",
@@ -2003,7 +2079,7 @@ const de: LandingMessages = {
   pricing: {
     title: "Zahle",
     titleBold: "pro Zahlung.",
-    lede: "Jeder Tarif hat seinen eigenen Satz pro Zahlung. Geschützte Zahlungen kosten zusätzlich 1,95\u00a0% pro Zahlung. Die Wallet des Zahlers trägt die Netzwerkgebühr; auf Monad wird die Gebühr der Einzahlungsweiterleitung abgezogen und im Checkout angezeigt. Private Zahlungen kosten 0,18\u00a0% pro Transaktion.",
+    lede: "Jeder Tarif hat seinen eigenen Satz pro Zahlung. Geschützte Zahlungen kosten zusätzlich 1,95\u00a0% pro Zahlung. Die Wallet des Zahlers trägt die Netzwerkgebühr; auf Monad und Arc wird die Gebühr der Einzahlungsweiterleitung abgezogen und im Checkout angezeigt. Private Zahlungen kosten 0,18\u00a0% pro Transaktion.",
     perPayment: "pro Zahlung",
     perSwap: "{rate} pro Swap",
     perMonth: "pro Monat",
@@ -2015,16 +2091,16 @@ const de: LandingMessages = {
     title: "Fragen",
     titleBold: "und Antworten.",
     what: { q: "Was ist Cosmos Pay?", a: "Cosmos Pay ist ein Zahlungsgateway für Stablecoins für Unternehmen in Lateinamerika und arbeitet mit {n} Netzwerken. Erstelle einen Zahlungslink, einen gehosteten Checkout oder per API eine Zahlungsabsicht; dein Kunde zahlt aus seiner eigenen Wallet in einem dieser Netzwerke, und die Zahlung kommt an einer Adresse an, die du kontrollierst." },
-    networks: { q: "Mit welchen Netzwerken arbeitet Cosmos Pay?", a: "Cosmos Pay arbeitet mit {n} Netzwerken, der ganzen Sammlung seiner Swap-Plattform: {networks}. Deine Kunden können aus jedem von ihnen zahlen, ohne Konto, und du kannst das Erhaltene in jedes von ihnen weiterbewegen." },
-    assets: { q: "In welchen Währungen kann ich kassieren?", a: "In USDC, EURC, USDT, der eigenen Coin jedes Netzwerks oder jedem anderen Token, den du beim Erstellen des Links über seinen Herausgeber, Mint oder Contract angibst. Dein Kunde zahlt in diesem Asset, und du erhältst dasselbe Asset. Ein Kunde mit einem anderen Token, in einem der {n} Netzwerke, mit denen Cosmos Pay arbeitet, kann ihn vorher per Swap in dieses Asset tauschen." },
-    wallet: { q: "Brauche ich eine eigene Krypto-Wallet?", a: "Ja. Mit Cosmos Pay kommen Zahlungen an einer Adresse an, die du kontrollierst (in manchen Netzwerken über eine für jede Zahlung erstellte Einzahlungsadresse, die sie nur an deine weiterleiten kann), und du kannst dieses Geld in jedes der {n} Netzwerke bewegen, mit denen Cosmos Pay arbeitet. Du fügst jede Wallet im Dashboard deiner Organisation hinzu und beweist mit einer Signatur, dass sie dir gehört, und dort erstellte Zahlungslinks zahlen nur an diese Wallets. Cosmos Pay fragt nie nach einem geheimen Schlüssel und speichert niemandes Schlüssel, also gehört das Geld ab der ersten Zahlung dir, und auf die Schlüssel aufzupassen ist deine Sache." },
+    networks: { q: "Mit welchen Netzwerken arbeitet Cosmos Pay?", a: "Cosmos Pay arbeitet mit {n} Netzwerken: {networks}. Deine Kunden können in jedem von ihnen zahlen, ohne Konto. Die Swaps erreichen {swapN} dieser Netzwerke, deshalb kann ein Kunde auch aus einem anderen Netzwerk als dem der Zahlung zahlen, und du kannst das Erhaltene zwischen ihnen weiterbewegen." },
+    assets: { q: "In welchen Währungen kann ich kassieren?", a: "In USDC, EURC, USDT, der eigenen Coin jedes Netzwerks oder jedem anderen Token, den du beim Erstellen des Links über seinen Herausgeber, Mint oder Contract angibst. Dein Kunde zahlt in diesem Asset, und du erhältst dasselbe Asset. Ein Kunde mit einem anderen Token, in einem der {swapN} Netzwerke, die unsere Swaps erreichen, kann ihn vorher per Swap in dieses Asset tauschen." },
+    wallet: { q: "Brauche ich eine eigene Krypto-Wallet?", a: "Ja. Mit Cosmos Pay kommen Zahlungen an einer Adresse an, die du kontrollierst (in manchen Netzwerken über eine für jede Zahlung erstellte Einzahlungsadresse, die sie nur an deine weiterleiten kann), und du kannst dieses Geld per Swap in jedes der {swapN} Netzwerke bewegen, die unsere Swaps erreichen. Du fügst jede Wallet im Dashboard deiner Organisation hinzu und beweist mit einer Signatur, dass sie dir gehört, und dort erstellte Zahlungslinks zahlen nur an diese Wallets. Cosmos Pay fragt nie nach einem geheimen Schlüssel und speichert niemandes Schlüssel, also gehört das Geld ab der ersten Zahlung dir, und auf die Schlüssel aufzupassen ist deine Sache." },
     account: {
       q: "Brauchen meine Kunden ein Konto?",
-      a: "Nein. Deine Kunden brauchen kein Konto bei Cosmos Pay, nur eine Wallet, die das Asset hält, in dem du kassierst, im Netzwerk der Zahlung; liegt ihr Guthaben in einem anderen der {n} Netzwerke, mit denen Cosmos Pay arbeitet, können sie vorher swappen, ebenfalls ohne Konto. Sie öffnen den Checkout, scannen den QR-Code oder tippen auf den Button ihrer Wallet und bestätigen die Zahlung dort: Eine Registrierung gibt es nicht. Der Checkout öffnet sich in der Sprache ihres Browsers, wenn es eine der sieben ist, die er spricht (Englisch, Spanisch, Portugiesisch, Französisch, Deutsch, Hindi und Chinesisch), und ihre Wallet zahlt die Netzwerkgebühr.",
+      a: "Nein. Deine Kunden brauchen kein Konto bei Cosmos Pay, nur eine Wallet, die das Asset hält, in dem du kassierst, im Netzwerk der Zahlung; liegt ihr Guthaben in einem anderen der {swapN} Netzwerke, die unsere Swaps erreichen, können sie vorher swappen, ebenfalls ohne Konto. Sie öffnen den Checkout, scannen den QR-Code oder tippen auf den Button ihrer Wallet und bestätigen die Zahlung dort: Eine Registrierung gibt es nicht. Der Checkout öffnet sich in der Sprache ihres Browsers, wenn es eine der sieben ist, die er spricht (Englisch, Spanisch, Portugiesisch, Französisch, Deutsch, Hindi und Chinesisch), und ihre Wallet zahlt die Netzwerkgebühr.",
     },
     wallets: {
       q: "Welche Wallets können meine Kunden nutzen?",
-      a: "Deine Kunden zahlen aus ihrer eigenen Wallet: aus jeder Wallet, die Standard-Zahlungslinks öffnet, etwa Freighter, xBull, LOBSTR, Albedo, Rabet, Cosmos Pay Wallet, Phantom, Solflare oder einer beliebigen EVM-Wallet. Ein Kunde, dessen Guthaben in einem der {n} Netzwerke liegt, mit denen Cosmos Pay arbeitet, kann es vorher swappen und zahlen, ohne Konto. Jeder Link hat auch einen QR-Code, den der Kunde am Computer mit einer Wallet auf dem Handy scannen kann.",
+      a: "Deine Kunden zahlen aus ihrer eigenen Wallet: aus jeder Wallet, die Standard-Zahlungslinks öffnet, etwa Freighter, xBull, LOBSTR, Albedo, Rabet, Cosmos Pay Wallet, Phantom, Solflare oder einer beliebigen EVM-Wallet. Ein Kunde, dessen Guthaben in einem der {swapN} Netzwerke liegt, die unsere Swaps erreichen, kann es vorher swappen und zahlen, ohne Konto. Jeder Link hat auch einen QR-Code, den der Kunde am Computer mit einer Wallet auf dem Handy scannen kann.",
     },
     custody: {
       q: "Verwahrt Cosmos Pay mein Geld?",
@@ -2111,11 +2187,12 @@ const de: LandingMessages = {
     security: { nav: "Sicherheit", title: "Zahlungen, die du on-chain prüfen kannst", lede: "Jede Zahlung lässt sich im Netzwerk prüfen, deine Schlüssel bleiben deine und keine andere Website kann die Zahlungsseiten einbetten.", meta: "Nicht verwahrte Zahlungen, on-chain geprüft | Cosmos Pay" },
     fees: { nav: "Preise", title: "Gebühren für Stablecoin-Zahlungen", lede: "Ein Satz pro Zahlung je nach Tarif, ohne Monatsgebühr bei Starter. Rechne aus, was dir bleibt, bevor du startest.", meta: "Gebühren für Stablecoin-Zahlungen und Rechner | Cosmos Pay" },
     faq: { nav: "Fragen", title: "Häufige Fragen zu Stablecoin-Zahlungen", lede: "Wallets, geschützte Zahlungen, Erstattungen, Tests und Gebühren: was Händler vor dem Start fragen.", meta: "FAQ zu Krypto-Zahlungen: Wallets, Gebühren | Cosmos Pay" },
-    swaps: { nav: "Swaps", title: "Token zwischen Netzwerken tauschen, ohne Konto", lede: "Tauschen Sie Token zwischen {n} Netzwerken und senden Sie USDT0 von Stellar, ohne Konto.", meta: "Cross-Chain-Swaps und USDT0 von Stellar | Cosmos Pay" },
+    swaps: { nav: "Swaps", title: "Token zwischen Netzwerken tauschen, ohne Konto", lede: "Tauschen Sie Token zwischen {swapN} Netzwerken und senden Sie USDT0 von Stellar, ohne Konto.", meta: "Cross-Chain-Swaps und USDT0 von Stellar | Cosmos Pay" },
     compare: { nav: "Vergleich", title: "Unsere Gebühren im Vergleich", lede: "Der Satz von Cosmos Pay je Dienst neben dem veröffentlichten Satz eines bekannten Anbieters, mit Link zu dessen Preisseite und dem Datum der Abfrage.", meta: "Krypto-Gateway-Gebühren im Vergleich | Cosmos Pay" },
     stellar: { nav: "Stellar", title: "Zahlungen auf Stellar annehmen", lede: "Cosmos Pay macht jede Zahlung zu einem SEP-7-Link mit QR-Code. Dein Kunde zahlt aus seiner Stellar-Wallet, und das Geld geht direkt an deine Adresse.", meta: "Stellar-Zahlungs-API: USDC und XLM annehmen | Cosmos Pay", link: "Zahlungen auf Stellar" },
     solana: { nav: "Solana", title: "Zahlungen auf Solana annehmen", lede: "Cosmos Pay macht jede Zahlung zu einem Solana-Pay-Link mit QR-Code. Dein Kunde zahlt in USDC oder SOL aus seiner eigenen Wallet, direkt an deine Adresse.", meta: "USDC auf Solana mit Solana Pay annehmen | Cosmos Pay", link: "Zahlungen auf Solana" },
     monad: { nav: "Monad", title: "Zahlungen auf Monad annehmen", lede: "Cosmos Pay macht jede Zahlung zu einem EIP-681-Link mit QR-Code. Dein Kunde zahlt aus jeder EVM-Wallet, eine Einzahlungsadresse leitet sie an dich weiter.", meta: "Monad-Zahlungen: USDC und MON annehmen | Cosmos Pay", link: "Zahlungen auf Monad" },
+    arc: { nav: "Arc", title: "Zahlungen auf Arc annehmen", lede: "Cosmos Pay macht jede Arc-Zahlung zu einem EIP-681-Link mit QR-Code. Dein Kunde zahlt aus jeder EVM-Wallet, eine Einzahlungsadresse leitet sie an dich weiter.", meta: "Arc-Zahlungen: USDC und EURC annehmen | Cosmos Pay", link: "Zahlungen auf Arc" },
     more: { integrations: "Alle Integrationsoptionen ansehen", fees: "Meine Gebühren berechnen", security: "So schützen wir Zahlungen", faq: "Alle Fragen ansehen", useCases: "Alle Anwendungsfälle ansehen", compare: "Mit anderen Anbietern vergleichen" },
     notes: ["Keine Monatsgebühr bei Starter", "Im Testnet ohne echtes Geld testen"],
     updated: "Aktualisiert am {date}",
@@ -2198,6 +2275,24 @@ const de: LandingMessages = {
         fee: { q: "Kann ich einer Monad-Zahlung meine eigene Gebühr hinzufügen?", a: "Ja. Auf Monad teilt die Einzahlungsadresse, die Cosmos Pay für jede Zahlung erstellt, die Zahlung zwischen deiner Monad-Adresse und der Gebühren-Wallet deiner Wahl auf. Deine Gebühr ist unabhängig vom Satz deines Tarifs, den jede Zahlung weiterhin zahlt. Die Relay-Gebühr für die Weiterleitung wird von der Zahlung abgezogen, und die API gibt sie bei der Zahlung als networkFee an." },
       },
     },
+    arc: {
+      link: "EIP-681-Links (ethereum:) mit der Chain-ID von Arc und QR-Code, an eine Adresse, die nur für diese Zahlung angelegt wird.",
+      match: "Die eigene Einzahlungsadresse der Zahlung: Jede Zahlung bekommt eine.",
+      settle: "Die Einzahlungsadresse leitet die Zahlung an deine Arc-Adresse weiter, abzüglich der Relay-Gebühr, die die API bei der Zahlung als networkFee angibt.",
+      sandbox: "Arc Testnet mit einem Testschlüssel (dv_); das Mainnet mit einem Live-Schlüssel (prod_).",
+      address: "Contract",
+      assetsLede: "Das Dashboard bietet diese mit Namen an. Die eigene Coin von Arc ist USDC, hier über seinen ERC-20-Contract kassiert; jeden anderen ERC-20-Token gibst du über seinen Contract an.",
+      walletsLede: "Jede EVM-Wallet, die EIP-681-Links liest. Der gehostete Checkout kann Arc auch zu einer Browser-Wallet hinzufügen und die Zahlung aus ihr senden, und der Kunde kann den genauen Betrag von Hand an die Einzahlungsadresse senden, die er zeigt.",
+      feesLede: "Jede Zahlung kostet den Satz deines Tarifs. Die Wallet des Zahlers trägt die Arc-Netzwerkgebühr ihrer Überweisung, in USDC, und die Relay-Gebühr für die Weiterleitung wird von der Zahlung abgezogen.",
+      codeNote: "Arc braucht einen Betrag und nimmt keine Nachricht für die Wallet. USDC hat im Arc Testnet denselben Contract, deshalb erstellt ein Testschlüssel (dv_) dort genau diesen Link.",
+      faq: {
+        wallets: { q: "Welche Wallets können einen Arc-Zahlungslink bezahlen?", a: "Jede EVM-Wallet, die EIP-681-Links liest, kann einen Zahlungslink von Cosmos Pay auf Arc bezahlen. Der Link und sein QR-Code tragen die Chain-ID von Arc und zeigen auf eine Einzahlungsadresse, die nur für diese eine Zahlung erstellt wurde, und der gehostete Checkout kann Arc zu einer Browser-Wallet hinzufügen, die es noch nicht kennt, und die Zahlung aus ihr senden. Der Kunde kann den genauen Betrag auch von Hand an die Einzahlungsadresse senden, die der Checkout zeigt. Die Wallet des Zahlers zahlt die Arc-Netzwerkgebühr in USDC." },
+        deposit: { q: "Was ist die Einzahlungsadresse auf Arc?", a: "Jede Arc-Zahlung über Cosmos Pay bekommt ihre eigene Einzahlungsadresse, nur für diese eine Zahlung erstellt, und über diese Adresse wird die Zahlung ihrem Link zugeordnet. Die Einzahlungsadresse kann die Zahlung nur an deine Arc-Adresse weiterleiten, abzüglich der Relay-Gebühr, die der Checkout anzeigt und die API bei der Zahlung als networkFee angibt. Cosmos Pay hat keinen Schlüssel dazu." },
+        amount: { q: "Warum braucht ein Arc-Zahlungslink einen Betrag?", a: "Der Betrag gehört dazu, wie Cosmos Pay eine Arc-Zahlung erkennt, die an eine eigens dafür erstellte Einzahlungsadresse geht, deshalb braucht ein Arc-Zahlungslink einen Betrag und der Zahler kann ihn nicht wählen. Ein Arc-Link trägt auch keine Nachricht für die Wallet. Sollen deine Kunden den Betrag wählen, etwa bei Spenden, oder soll ihre Wallet eine Nachricht wie eine Bestellnummer zeigen, erstelle den Link auf Stellar oder Solana." },
+        tokens: { q: "In welchen Token kann ich auf Arc kassieren?", a: "Auf Arc bietet Cosmos Pay USDC und EURC mit Namen an, im Mainnet und im Arc Testnet; jeden anderen ERC-20-Token gibst du beim Erstellen des Links über seinen Contract an. Die eigene Coin von Arc ist USDC, deshalb kassiert eine Zahlung USDC über seinen ERC-20-Contract, mit 6 Dezimalstellen, und nicht als eigene Coin. Dein Kunde zahlt im Token des Links, und die Einzahlungsadresse leitet ihn an deine Arc-Adresse weiter, abzüglich der Relay-Gebühr." },
+        fee: { q: "Kann ich einer Arc-Zahlung meine eigene Gebühr hinzufügen?", a: "Ja. Auf Arc teilt die Einzahlungsadresse, die Cosmos Pay für jede Zahlung erstellt, die Zahlung zwischen deiner Arc-Adresse und der Gebühren-Wallet deiner Wahl auf. Deine Gebühr ist unabhängig vom Satz deines Tarifs, den jede Zahlung weiterhin zahlt. Die Relay-Gebühr für die Weiterleitung wird von der Zahlung abgezogen, und die API gibt sie bei der Zahlung als networkFee an." },
+      },
+    },
   },
   comparePage: {
     title: "Unsere Sätze neben",
@@ -2223,7 +2318,7 @@ const de: LandingMessages = {
     asOf: "Veröffentlichte Sätze, wie die Seite jedes Anbieters sie am {date} zeigte.",
     notes: [
       "Laut der Seite von BitPay gelten in Hochrisikobranchen höhere Gebühren, und eine Monatsgebühr nennt sie nicht; Essentials und Growth haben eine.",
-      "Bei Cosmos Pay trägt die Wallet des Zahlers die Netzwerkgebühr; auf Monad wird die Relay-Gebühr für die Weiterleitung einer Zahlung von ihr abgezogen.",
+      "Bei Cosmos Pay trägt die Wallet des Zahlers die Netzwerkgebühr; auf Monad und Arc wird die Relay-Gebühr für die Weiterleitung einer Zahlung von ihr abgezogen.",
     ],
     beyond: {
       title: "Mehr als die Gebühr: Cosmos Pay und Stripes Stablecoin-Zahlungen",
@@ -2234,8 +2329,8 @@ const de: LandingMessages = {
       theirs: "Stripe Stablecoin-Zahlungen",
       rows: {
         who: { k: "Unternehmen, die annehmen können", ours: "Unternehmen in Lateinamerika und weltweit", theirs: "Unternehmen in den USA; als private Vorschau in der EU, Hongkong, Mexiko und der Schweiz" },
-        settle: { k: "Wohin eine Zahlung geht", ours: "In deine eigene Wallet, im Stablecoin, den dein Kunde gezahlt hat (auf Monad über eine Einzahlungsadresse, die nur an deine weiterleiten kann)", theirs: "Auf dein Stripe-Guthaben, in deiner Landeswährung" },
-        networks: { k: "Netzwerke", ours: "{n} Netzwerke, mit Swaps zwischen ihnen", theirs: "USDC auf Tempo, Ethereum, Solana, Polygon und Base" },
+        settle: { k: "Wohin eine Zahlung geht", ours: "In deine eigene Wallet, im Stablecoin, den dein Kunde gezahlt hat (auf Monad und Arc über eine Einzahlungsadresse, die nur an deine weiterleiten kann)", theirs: "Auf dein Stripe-Guthaben, in deiner Landeswährung" },
+        networks: { k: "Netzwerke", ours: "{n} Netzwerke, mit Swaps zwischen {swapN} davon", theirs: "USDC auf Tempo, Ethereum, Solana, Polygon und Base" },
       },
       asOf: "Stripes Bedingungen, wie seine Dokumentation sie am {date} angab.",
     },
@@ -2271,7 +2366,7 @@ const hi: LandingMessages = {
   meta: {
     title: "स्टेबलकॉइन पेमेंट गेटवे: USDC में भुगतान लें | Cosmos Pay",
     description:
-      "स्टेबलकॉइन भुगतान जो आपके अपने पते पर पहुँचते हैं: {n} नेटवर्क पर पेमेंट लिंक, होस्टेड चेकआउट और API, उनके बीच स्वैप के साथ।",
+      "स्टेबलकॉइन भुगतान जो आपके अपने पते पर पहुँचते हैं: {n} नेटवर्क पर पेमेंट लिंक, होस्टेड चेकआउट और API, और उनमें से {swapN} के बीच स्वैप।",
   },
   hero: {
     titleA: "भुगतान लें",
@@ -2327,7 +2422,7 @@ const hi: LandingMessages = {
       settlement: { k: "खाते में पैसा", cards: "आमतौर पर एक से तीन कार्यदिवस।", us: "नेटवर्क की पुष्टि के कुछ सेकंड बाद।" },
       hours: { k: "उपलब्धता", cards: "पेआउट बैंकिंग दिनों का इंतज़ार करते हैं।", us: "हर दिन, चौबीसों घंटे।" },
       borders: { k: "विदेशी ग्राहक", cards: "इंटरनेशनल कार्ड, वायर ट्रांसफ़र और करेंसी कन्वर्ज़न शुल्क।", us: "हर देश में वही लिंक और वही दर।" },
-      custody: { k: "पैसा कहाँ रुकता है", cards: "अगले पेआउट तक प्रोसेसर के पास।", us: "आपके अपने वॉलेट में। Monad पर, हर भुगतान का डिपॉज़िट पता फ़ंड सिर्फ़ आपको भेज सकता है। सुरक्षित भुगतान स्मार्ट कॉन्ट्रैक्ट में रहते हैं, कभी Cosmos Pay के पास नहीं।" },
+      custody: { k: "पैसा कहाँ रुकता है", cards: "अगले पेआउट तक प्रोसेसर के पास।", us: "आपके अपने वॉलेट में। Monad और Arc पर, हर भुगतान का डिपॉज़िट पता फ़ंड सिर्फ़ आपको भेज सकता है। सुरक्षित भुगतान स्मार्ट कॉन्ट्रैक्ट में रहते हैं, कभी Cosmos Pay के पास नहीं।" },
       fees: { k: "शुल्क", cards: "एक प्रतिशत और साथ में एक तय शुल्क, इंटरनेशनल कार्ड पर ज़्यादा।", us: "हर भुगतान पर एक दर, {rate} से शुरू।" },
     },
     note: "कार्ड और बैंक की शर्तें प्रोवाइडर और देश के हिसाब से बदलती हैं; तालिका आम स्थिति दिखाती है, कोई कोटेशन नहीं।",
@@ -2453,7 +2548,7 @@ const hi: LandingMessages = {
   pricing: {
     title: "प्रति भुगतान",
     titleBold: "शुल्क।",
-    lede: "हर प्लान की प्रति भुगतान अपनी दर है। सुरक्षित भुगतान पर हर भुगतान में 1.95% अतिरिक्त लगता है। नेटवर्क शुल्क भुगतान करने वाले का वॉलेट चुकाता है; Monad पर डिपॉज़िट रिले का शुल्क काटा जाता है और चेकआउट पर दिखाया जाता है। निजी भुगतान की लागत प्रति लेन-देन 0.18% है।",
+    lede: "हर प्लान की प्रति भुगतान अपनी दर है। सुरक्षित भुगतान पर हर भुगतान में 1.95% अतिरिक्त लगता है। नेटवर्क शुल्क भुगतान करने वाले का वॉलेट चुकाता है; Monad और Arc पर डिपॉज़िट रिले का शुल्क काटा जाता है और चेकआउट पर दिखाया जाता है। निजी भुगतान की लागत प्रति लेन-देन 0.18% है।",
     perPayment: "प्रति भुगतान",
     perSwap: "प्रति स्वैप {rate}",
     perMonth: "प्रति माह",
@@ -2465,16 +2560,16 @@ const hi: LandingMessages = {
     title: "सवाल",
     titleBold: "और जवाब।",
     what: { q: "Cosmos Pay क्या है?", a: "Cosmos Pay लैटिन अमेरिका के कारोबारों के लिए एक स्टेबलकॉइन पेमेंट गेटवे है, जो {n} नेटवर्क के साथ काम करता है। पेमेंट लिंक, होस्टेड चेकआउट या API से पेमेंट इंटेंट बनाएँ; आपका ग्राहक इनमें से किसी भी नेटवर्क पर अपने वॉलेट से भुगतान करता है, और भुगतान आपके नियंत्रण वाले पते पर पहुँचता है।" },
-    networks: { q: "Cosmos Pay किन नेटवर्क के साथ काम करता है?", a: "Cosmos Pay {n} नेटवर्क के साथ काम करता है, यानी अपने स्वैप प्लेटफ़ॉर्म का पूरा संग्रह: {networks}। आपके ग्राहक इनमें से किसी से भी भुगतान कर सकते हैं, बिना अकाउंट के, और आप जो पाते हैं उसे इनमें से किसी भी नेटवर्क पर भेज सकते हैं।" },
-    assets: { q: "मैं किन मुद्राओं में भुगतान ले सकता हूँ?", a: "USDC, EURC, USDT, हर नेटवर्क का अपना कॉइन या कोई भी दूसरा टोकन, जिसे लिंक बनाते समय आप उसके इश्यूअर, मिंट या कॉन्ट्रैक्ट से बताते हैं। आपका ग्राहक उसी एसेट में भुगतान करता है, और आपको वही एसेट मिलता है। जिस ग्राहक के पास कोई दूसरा टोकन है, Cosmos Pay के {n} नेटवर्क में से किसी पर भी, वह पहले स्वैप करके उसे इस एसेट में बदल सकता है।" },
-    wallet: { q: "क्या मुझे अपना क्रिप्टो वॉलेट चाहिए?", a: "हाँ। Cosmos Pay के साथ, भुगतान आपके नियंत्रण वाले पते पर पहुँचते हैं (कुछ नेटवर्क पर, हर भुगतान के लिए बने डिपॉज़िट पते के ज़रिए, जो उसे सिर्फ़ आपके पते पर ही भेज सकता है), और आप उन फ़ंड को Cosmos Pay के {n} नेटवर्क में से किसी पर भी ले जा सकते हैं। आप डैशबोर्ड में हर वॉलेट को अपने संगठन में जोड़ते हैं और एक सिग्नेचर से साबित करते हैं कि वह आपका है, और वहाँ बने पेमेंट लिंक सिर्फ़ उन्हीं वॉलेट में भुगतान करते हैं। Cosmos Pay कभी सीक्रेट की नहीं माँगता और किसी की कीज़ नहीं रखता, इसलिए पहले भुगतान से ही फ़ंड आपके होते हैं, और कीज़ को सुरक्षित रखना आपकी ज़िम्मेदारी है।" },
+    networks: { q: "Cosmos Pay किन नेटवर्क के साथ काम करता है?", a: "Cosmos Pay {n} नेटवर्क के साथ काम करता है: {networks}। आपके ग्राहक इनमें से किसी पर भी भुगतान कर सकते हैं, बिना अकाउंट के। इसके स्वैप इनमें से {swapN} नेटवर्क तक पहुँचते हैं, इसलिए ग्राहक भुगतान वाले नेटवर्क के अलावा किसी दूसरे नेटवर्क से भी भुगतान कर सकता है, और आप जो पाते हैं उसे इन नेटवर्क के बीच ले जा सकते हैं।" },
+    assets: { q: "मैं किन मुद्राओं में भुगतान ले सकता हूँ?", a: "USDC, EURC, USDT, हर नेटवर्क का अपना कॉइन या कोई भी दूसरा टोकन, जिसे लिंक बनाते समय आप उसके इश्यूअर, मिंट या कॉन्ट्रैक्ट से बताते हैं। आपका ग्राहक उसी एसेट में भुगतान करता है, और आपको वही एसेट मिलता है। जिस ग्राहक के पास कोई दूसरा टोकन है, हमारे स्वैप जिन {swapN} नेटवर्क तक पहुँचते हैं उनमें से किसी पर भी, वह पहले स्वैप करके उसे इस एसेट में बदल सकता है।" },
+    wallet: { q: "क्या मुझे अपना क्रिप्टो वॉलेट चाहिए?", a: "हाँ। Cosmos Pay के साथ, भुगतान आपके नियंत्रण वाले पते पर पहुँचते हैं (कुछ नेटवर्क पर, हर भुगतान के लिए बने डिपॉज़िट पते के ज़रिए, जो उसे सिर्फ़ आपके पते पर ही भेज सकता है), और आप उन फ़ंड को स्वैप करके उन {swapN} नेटवर्क में से किसी पर भी ले जा सकते हैं जिन तक हमारे स्वैप पहुँचते हैं। आप डैशबोर्ड में हर वॉलेट को अपने संगठन में जोड़ते हैं और एक सिग्नेचर से साबित करते हैं कि वह आपका है, और वहाँ बने पेमेंट लिंक सिर्फ़ उन्हीं वॉलेट में भुगतान करते हैं। Cosmos Pay कभी सीक्रेट की नहीं माँगता और किसी की कीज़ नहीं रखता, इसलिए पहले भुगतान से ही फ़ंड आपके होते हैं, और कीज़ को सुरक्षित रखना आपकी ज़िम्मेदारी है।" },
     account: {
       q: "क्या मेरे ग्राहकों को अकाउंट चाहिए?",
-      a: "नहीं। आपके ग्राहकों को Cosmos Pay अकाउंट की ज़रूरत नहीं, बस भुगतान के नेटवर्क पर एक वॉलेट चाहिए जिसमें वह एसेट हो जिसमें आप भुगतान लेते हैं; अगर उनके फ़ंड Cosmos Pay के {n} नेटवर्क में से किसी दूसरे पर हैं, तो वे पहले स्वैप कर सकते हैं, वह भी बिना अकाउंट के। वे चेकआउट खोलते हैं, QR कोड स्कैन करते हैं या अपने वॉलेट का बटन टैप करते हैं, और अपने वॉलेट में भुगतान को मंज़ूरी देते हैं: किसी चीज़ के लिए साइन अप नहीं करना होता। अगर उनके ब्राउज़र की भाषा चेकआउट की सात भाषाओं (अंग्रेज़ी, स्पेनिश, पुर्तगाली, फ़्रेंच, जर्मन, हिन्दी और चीनी) में से एक है, तो चेकआउट उसी भाषा में खुलता है, और नेटवर्क शुल्क उनका वॉलेट चुकाता है।",
+      a: "नहीं। आपके ग्राहकों को Cosmos Pay अकाउंट की ज़रूरत नहीं, बस भुगतान के नेटवर्क पर एक वॉलेट चाहिए जिसमें वह एसेट हो जिसमें आप भुगतान लेते हैं; अगर उनके फ़ंड उन {swapN} नेटवर्क में से किसी दूसरे पर हैं जिन तक हमारे स्वैप पहुँचते हैं, तो वे पहले स्वैप कर सकते हैं, वह भी बिना अकाउंट के। वे चेकआउट खोलते हैं, QR कोड स्कैन करते हैं या अपने वॉलेट का बटन टैप करते हैं, और अपने वॉलेट में भुगतान को मंज़ूरी देते हैं: किसी चीज़ के लिए साइन अप नहीं करना होता। अगर उनके ब्राउज़र की भाषा चेकआउट की सात भाषाओं (अंग्रेज़ी, स्पेनिश, पुर्तगाली, फ़्रेंच, जर्मन, हिन्दी और चीनी) में से एक है, तो चेकआउट उसी भाषा में खुलता है, और नेटवर्क शुल्क उनका वॉलेट चुकाता है।",
     },
     wallets: {
       q: "मेरे ग्राहक कौन-से वॉलेट इस्तेमाल कर सकते हैं?",
-      a: "आपके ग्राहक अपने वॉलेट से भुगतान करते हैं: कोई भी वॉलेट जो स्टैंडर्ड पेमेंट लिंक खोलता है, जैसे Freighter, xBull, LOBSTR, Albedo, Rabet, Cosmos Pay Wallet, Phantom, Solflare या कोई भी EVM वॉलेट। जिस ग्राहक के फ़ंड Cosmos Pay के {n} नेटवर्क में से किसी पर भी हैं, वह पहले उन्हें स्वैप करके भुगतान कर सकता है, बिना अकाउंट के। हर लिंक के साथ एक QR कोड भी होता है, इसलिए कंप्यूटर पर ग्राहक उसे फ़ोन वाले वॉलेट से स्कैन कर सकता है।",
+      a: "आपके ग्राहक अपने वॉलेट से भुगतान करते हैं: कोई भी वॉलेट जो स्टैंडर्ड पेमेंट लिंक खोलता है, जैसे Freighter, xBull, LOBSTR, Albedo, Rabet, Cosmos Pay Wallet, Phantom, Solflare या कोई भी EVM वॉलेट। जिस ग्राहक के फ़ंड उन {swapN} नेटवर्क में से किसी पर भी हैं जिन तक हमारे स्वैप पहुँचते हैं, वह पहले उन्हें स्वैप करके भुगतान कर सकता है, बिना अकाउंट के। हर लिंक के साथ एक QR कोड भी होता है, इसलिए कंप्यूटर पर ग्राहक उसे फ़ोन वाले वॉलेट से स्कैन कर सकता है।",
     },
     custody: {
       q: "क्या Cosmos Pay मेरा पैसा अपने पास रखता है?",
@@ -2561,11 +2656,12 @@ const hi: LandingMessages = {
     security: { nav: "सुरक्षा", title: "भुगतान जिन्हें आप ऑन-चेन जाँच सकते हैं", lede: "हर भुगतान को नेटवर्क पर जाँचा जा सकता है, आपकी कीज़ आपकी ही रहती हैं और कोई दूसरी साइट पेमेंट पेजों को फ़्रेम नहीं कर सकती।", meta: "नॉन-कस्टोडियल भुगतान, ऑन-चेन सत्यापित | Cosmos Pay" },
     fees: { nav: "प्राइसिंग", title: "स्टेबलकॉइन भुगतान का शुल्क", lede: "प्लान के हिसाब से प्रति भुगतान एक दर, Starter पर कोई मासिक शुल्क नहीं। शुरू करने से पहले जानें कि आपके हाथ में कितना आएगा।", meta: "स्टेबलकॉइन भुगतान शुल्क और कैलकुलेटर | Cosmos Pay" },
     faq: { nav: "FAQ", title: "स्टेबलकॉइन भुगतान: अक्सर पूछे जाने वाले सवाल", lede: "वॉलेट, सुरक्षित भुगतान, रिफ़ंड, टेस्टिंग और शुल्क: शुरू करने से पहले व्यापारी क्या पूछते हैं।", meta: "स्टेबलकॉइन भुगतान FAQ: वॉलेट, शुल्क, रिफ़ंड | Cosmos Pay" },
-    swaps: { nav: "स्वैप", title: "बिना खाते के नेटवर्कों के बीच टोकन स्वैप करें", lede: "बिना खाते के {n} नेटवर्क पर टोकन स्वैप करें और Stellar से USDT0 भेजें।", meta: "क्रॉस-चेन स्वैप और Stellar से USDT0 | Cosmos Pay" },
+    swaps: { nav: "स्वैप", title: "बिना खाते के नेटवर्कों के बीच टोकन स्वैप करें", lede: "बिना खाते के {swapN} नेटवर्क पर टोकन स्वैप करें और Stellar से USDT0 भेजें।", meta: "क्रॉस-चेन स्वैप और Stellar से USDT0 | Cosmos Pay" },
     compare: { nav: "तुलना", title: "हमारे शुल्क की तुलना", lede: "हर सेवा के लिए Cosmos Pay की दर, किसी जाने-माने प्रदाता की प्रकाशित दर के साथ, उसके प्राइसिंग पेज के लिंक और जाँच की तारीख के साथ।", meta: "क्रिप्टो पेमेंट गेटवे शुल्क की तुलना | Cosmos Pay" },
     stellar: { nav: "Stellar", title: "Stellar पर भुगतान लें", lede: "Cosmos Pay हर भुगतान को QR कोड वाले SEP-7 लिंक में बदल देता है। आपका ग्राहक अपने Stellar वॉलेट से भुगतान करता है और पैसा सीधे आपके पते पर पहुँचता है।", meta: "Stellar पेमेंट API: USDC और XLM में भुगतान लें | Cosmos Pay", link: "Stellar पर भुगतान" },
     solana: { nav: "Solana", title: "Solana पर भुगतान लें", lede: "Cosmos Pay हर भुगतान को QR कोड वाले Solana Pay लिंक में बदल देता है। आपका ग्राहक अपने वॉलेट से USDC या SOL में सीधे आपके पते पर भुगतान करता है।", meta: "Solana Pay से Solana पर USDC लें | Cosmos Pay", link: "Solana पर भुगतान" },
     monad: { nav: "Monad", title: "Monad पर भुगतान लें", lede: "Cosmos Pay हर भुगतान को QR कोड वाले EIP-681 लिंक में बदल देता है। ग्राहक किसी भी EVM वॉलेट से भुगतान करता है और एक डिपॉज़िट पता उसे आपके पते पर भेजता है।", meta: "Monad पेमेंट: USDC और MON में भुगतान लें | Cosmos Pay", link: "Monad पर भुगतान" },
+    arc: { nav: "Arc", title: "Arc पर भुगतान लें", lede: "Cosmos Pay हर Arc भुगतान को QR कोड वाले EIP-681 लिंक में बदल देता है। ग्राहक किसी भी EVM वॉलेट से भुगतान करता है और एक डिपॉज़िट पता उसे आपके पते पर भेजता है।", meta: "Arc पेमेंट: USDC और EURC में भुगतान लें | Cosmos Pay", link: "Arc पर भुगतान" },
     more: { integrations: "इंटीग्रेशन के सभी विकल्प देखें", fees: "अपने शुल्क का हिसाब लगाएँ", security: "देखें कि भुगतान कैसे सुरक्षित रहते हैं", faq: "सभी सवाल देखें", useCases: "उपयोग के सभी उदाहरण देखें", compare: "दूसरे प्रदाताओं से तुलना करें" },
     notes: ["Starter पर कोई मासिक शुल्क नहीं", "टेस्टनेट पर बिना असली पैसे के आज़माएँ"],
     updated: "{date} को अपडेट किया गया",
@@ -2648,6 +2744,24 @@ const hi: LandingMessages = {
         fee: { q: "क्या मैं Monad भुगतान में अपना शुल्क जोड़ सकता हूँ?", a: "हाँ। Monad पर Cosmos Pay हर भुगतान के लिए जो डिपॉज़िट पता बनाता है, वह भुगतान को आपके Monad पते और आपके चुने हुए शुल्क वाले वॉलेट के बीच बाँट देता है। आपका शुल्क आपके प्लान की दर से अलग है, जो हर भुगतान चुकाता ही है। आगे भेजने का रिले शुल्क भुगतान से घटाया जाता है, और API उसे भुगतान पर networkFee के रूप में बताती है।" },
       },
     },
+    arc: {
+      link: "Arc की chain ID और QR कोड वाले EIP-681 लिंक (ethereum:), जो सिर्फ़ उसी भुगतान के लिए बने पते पर जाते हैं।",
+      match: "भुगतान का अपना डिपॉज़िट पता: हर भुगतान को एक मिलता है।",
+      settle: "डिपॉज़िट पता भुगतान को आपके Arc पते पर भेज देता है, रिले का शुल्क घटाकर, जिसे API भुगतान पर networkFee के रूप में बताती है।",
+      sandbox: "टेस्ट की (dv_) के साथ Arc Testnet; लाइव की (prod_) के साथ mainnet।",
+      address: "कॉन्ट्रैक्ट",
+      assetsLede: "डैशबोर्ड इन्हें नाम से दिखाता है। Arc का अपना कॉइन USDC है, जिसे यहाँ उसके ERC-20 कॉन्ट्रैक्ट से लिया जाता है; कोई भी दूसरा ERC-20 टोकन उसके कॉन्ट्रैक्ट से बताया जाता है।",
+      walletsLede: "कोई भी EVM वॉलेट जो EIP-681 लिंक पढ़ता है। होस्टेड चेकआउट ब्राउज़र वॉलेट में Arc जोड़कर उसी से भुगतान भी भेज सकता है, और ग्राहक दिखाए गए डिपॉज़िट पते पर सटीक राशि हाथ से भी भेज सकता है।",
+      feesLede: "हर भुगतान पर आपके प्लान की दर लगती है। ट्रांसफ़र का Arc नेटवर्क शुल्क भुगतान करने वाले का वॉलेट USDC में देता है, और आगे भेजने का रिले शुल्क भुगतान से घटा दिया जाता है।",
+      codeNote: "Arc पर राशि ज़रूरी है और वॉलेट के लिए कोई मैसेज नहीं जाता। Arc Testnet पर USDC का कॉन्ट्रैक्ट वही है, इसलिए टेस्ट की (dv_) वहाँ यही लिंक बनाती है।",
+      faq: {
+        wallets: { q: "कौन-से वॉलेट Arc पेमेंट लिंक का भुगतान कर सकते हैं?", a: "कोई भी EVM वॉलेट जो EIP-681 लिंक पढ़ता है, Arc पर Cosmos Pay पेमेंट लिंक का भुगतान कर सकता है। लिंक और उसके QR कोड में Arc की chain ID होती है और वे सिर्फ़ उसी भुगतान के लिए बने डिपॉज़िट पते की ओर ले जाते हैं, और होस्टेड चेकआउट ऐसे ब्राउज़र वॉलेट में Arc जोड़ सकता है जो उसे अभी नहीं जानता, फिर उसी से भुगतान भेज सकता है। ग्राहक चेकआउट पर दिखे डिपॉज़िट पते पर सटीक राशि हाथ से भी भेज सकता है। भुगतान करने वाले का वॉलेट Arc नेटवर्क शुल्क USDC में चुकाता है।" },
+        deposit: { q: "Arc पर डिपॉज़िट पता क्या है?", a: "Cosmos Pay से होने वाले हर Arc भुगतान को अपना डिपॉज़िट पता मिलता है, जो सिर्फ़ उसी भुगतान के लिए बनता है, और इसी पते से भुगतान को उसके लिंक से मिलाया जाता है। डिपॉज़िट पता भुगतान को सिर्फ़ आपके Arc पते पर ही भेज सकता है, आगे भेजने का रिले शुल्क घटाकर, जिसे चेकआउट दिखाता है और API भुगतान पर networkFee के रूप में बताती है। Cosmos Pay के पास उसकी कोई कुंजी नहीं है।" },
+        amount: { q: "Arc पेमेंट लिंक में राशि क्यों ज़रूरी है?", a: "राशि इस बात का हिस्सा है कि Cosmos Pay किसी Arc भुगतान को कैसे पहचानता है, जो उसी के लिए बने डिपॉज़िट पते पर भेजा जाता है, इसलिए Arc पेमेंट लिंक में राशि ज़रूरी है और भुगतान करने वाला उसे नहीं चुन सकता। Arc लिंक में वॉलेट के लिए कोई मैसेज भी नहीं होता। अगर ग्राहकों को राशि चुनने देनी हो, जैसे दान के लिए, या उनके वॉलेट में ऑर्डर नंबर जैसा कोई मैसेज दिखाना हो, तो लिंक Stellar या Solana पर बनाएँ।" },
+        tokens: { q: "Arc पर मैं किन टोकन में भुगतान ले सकता हूँ?", a: "Arc पर Cosmos Pay USDC और EURC नाम से देता है, mainnet पर भी और Arc Testnet पर भी; कोई भी दूसरा ERC-20 टोकन लिंक बनाते समय उसके कॉन्ट्रैक्ट से बताया जाता है। Arc का अपना कॉइन USDC है, इसलिए भुगतान USDC को अलग कॉइन की तरह नहीं, बल्कि उसके ERC-20 कॉन्ट्रैक्ट से, 6 दशमलव के साथ लेता है। आपका ग्राहक लिंक में तय टोकन में भुगतान करता है, और डिपॉज़िट पता उसे रिले शुल्क घटाकर आपके Arc पते पर भेज देता है।" },
+        fee: { q: "क्या मैं Arc भुगतान में अपना शुल्क जोड़ सकता हूँ?", a: "हाँ। Arc पर Cosmos Pay हर भुगतान के लिए जो डिपॉज़िट पता बनाता है, वह भुगतान को आपके Arc पते और आपके चुने हुए शुल्क वाले वॉलेट के बीच बाँट देता है। आपका शुल्क आपके प्लान की दर से अलग है, जो हर भुगतान चुकाता ही है। आगे भेजने का रिले शुल्क भुगतान से घटाया जाता है, और API उसे भुगतान पर networkFee के रूप में बताती है।" },
+      },
+    },
   },
   comparePage: {
     title: "हमारी दरें,",
@@ -2673,7 +2787,7 @@ const hi: LandingMessages = {
     asOf: "प्रकाशित दरें, जैसी हर प्रदाता के पेज पर {date} को दिखीं।",
     notes: [
       "BitPay के पेज के अनुसार ज़्यादा जोखिम वाले उद्योगों पर ज़्यादा शुल्क लगता है, और उसमें कोई मासिक शुल्क नहीं बताया गया; Essentials और Growth में एक है।",
-      "Cosmos Pay में नेटवर्क शुल्क भुगतान करने वाले का वॉलेट देता है; Monad पर किसी भुगतान को आगे भेजने का रिले शुल्क उसी से घटाया जाता है।",
+      "Cosmos Pay में नेटवर्क शुल्क भुगतान करने वाले का वॉलेट देता है; Monad और Arc पर किसी भुगतान को आगे भेजने का रिले शुल्क उसी से घटाया जाता है।",
     ],
     beyond: {
       title: "रेट से आगे: Cosmos Pay और Stripe के स्टेबलकॉइन भुगतान",
@@ -2684,8 +2798,8 @@ const hi: LandingMessages = {
       theirs: "Stripe स्टेबलकॉइन भुगतान",
       rows: {
         who: { k: "कौन-से व्यवसाय भुगतान ले सकते हैं", ours: "लैटिन अमेरिका और दुनिया भर के व्यवसाय", theirs: "अमेरिका के व्यवसाय; EU, हांगकांग, मेक्सिको और स्विट्ज़रलैंड में प्राइवेट प्रीव्यू में" },
-        settle: { k: "भुगतान कहाँ सेटल होता है", ours: "आपके अपने वॉलेट में, उसी स्टेबलकॉइन में जिसमें ग्राहक ने भुगतान किया (Monad पर एक डिपॉज़िट पते के ज़रिए, जो उसे केवल आपके पते पर भेज सकता है)", theirs: "आपके Stripe बैलेंस में, आपकी स्थानीय मुद्रा में" },
-        networks: { k: "नेटवर्क", ours: "{n} नेटवर्क, उनके बीच स्वैप के साथ", theirs: "Tempo, Ethereum, Solana, Polygon और Base पर USDC" },
+        settle: { k: "भुगतान कहाँ सेटल होता है", ours: "आपके अपने वॉलेट में, उसी स्टेबलकॉइन में जिसमें ग्राहक ने भुगतान किया (Monad और Arc पर एक डिपॉज़िट पते के ज़रिए, जो उसे केवल आपके पते पर भेज सकता है)", theirs: "आपके Stripe बैलेंस में, आपकी स्थानीय मुद्रा में" },
+        networks: { k: "नेटवर्क", ours: "{n} नेटवर्क, उनमें से {swapN} के बीच स्वैप के साथ", theirs: "Tempo, Ethereum, Solana, Polygon और Base पर USDC" },
       },
       asOf: "Stripe की शर्तें, जैसी उसके दस्तावेज़ों में {date} को बताई गई थीं।",
     },
@@ -2721,7 +2835,7 @@ const zh: LandingMessages = {
   meta: {
     title: "稳定币支付网关：收取 USDC 和 USDT | Cosmos Pay",
     description:
-      "款项进入您自己地址的稳定币收款：支付链接、托管收银台和 API，覆盖 {n} 个网络，并支持网络之间的兑换。",
+      "款项进入您自己地址的稳定币收款：支付链接、托管收银台和 API，覆盖 {n} 个网络，并支持其中 {swapN} 个网络之间的兑换。",
   },
   hero: {
     titleA: "接受",
@@ -2777,7 +2891,7 @@ const zh: LandingMessages = {
       settlement: { k: "资金到账", cards: "通常需要一到三个工作日。", us: "网络确认后数秒内。" },
       hours: { k: "可用时间", cards: "结算需等待银行工作日。", us: "全年无休，全天候可用。" },
       borders: { k: "海外客户", cards: "国际卡费、电汇费和货币兑换费。", us: "每个国家都使用同一个链接、同一个费率。" },
-      custody: { k: "资金存放在哪里", cards: "在下次结算前由支付处理商持有。", us: "在您自己的钱包中。在 Monad 上，每笔支付的充值地址只能将资金转给您。受保护付款暂存在智能合约中，从不由 Cosmos Pay 持有。" },
+      custody: { k: "资金存放在哪里", cards: "在下次结算前由支付处理商持有。", us: "在您自己的钱包中。在 Monad 和 Arc 上，每笔支付的充值地址只能将资金转给您。受保护付款暂存在智能合约中，从不由 Cosmos Pay 持有。" },
       fees: { k: "费用", cards: "按百分比加固定费用收取，国际卡更高。", us: "每笔支付一个费率，{rate} 起。" },
     },
     note: "银行卡和银行的条款因服务商和国家而异；本表展示的是常见情况，并非报价。",
@@ -2903,7 +3017,7 @@ const zh: LandingMessages = {
   pricing: {
     title: "费用",
     titleBold: "按笔计算。",
-    lede: "每个套餐都有各自的单笔费率。受保护付款每笔额外收取 1.95%。网络费由付款人的钱包支付；在 Monad 上，存款中继的费用会被扣除，并显示在收银台上。隐私支付每笔交易收取 0.18%。",
+    lede: "每个套餐都有各自的单笔费率。受保护付款每笔额外收取 1.95%。网络费由付款人的钱包支付；在 Monad 和 Arc 上，存款中继的费用会被扣除，并显示在收银台上。隐私支付每笔交易收取 0.18%。",
     perPayment: "每笔",
     perSwap: "每次兑换 {rate}",
     perMonth: "每月",
@@ -2915,16 +3029,16 @@ const zh: LandingMessages = {
     title: "常见问题",
     titleBold: "与解答。",
     what: { q: "Cosmos Pay 是什么？", a: "Cosmos Pay 是面向拉丁美洲企业的稳定币支付网关，支持 {n} 个网络。创建支付链接、托管收银台，或通过 API 创建支付意图；客户用自己的钱包，在其中任意一个网络上付款，款项进入您掌控的地址。" },
-    networks: { q: "Cosmos Pay 支持哪些网络？", a: "Cosmos Pay 支持 {n} 个网络，即其兑换平台的全部网络：{networks}。您的客户可以从其中任何一个网络付款，无需账户；您也可以把收到的款项转到其中任何一个网络。" },
-    assets: { q: "可以用哪些币种收款？", a: "USDC、EURC、USDT、各网络的原生币或任何其他代币，创建链接时按发行方、铸币地址（mint）或合约指定即可。客户以该资产付款，您收到的也是同一资产。持有其他代币的客户，无论在 Cosmos Pay 支持的 {n} 个网络中的哪一个，都可以先将其兑换成该资产。" },
-    wallet: { q: "我需要自己的加密钱包吗？", a: "需要。使用 Cosmos Pay 时，支付会进入您掌控的地址（在部分网络上，经由为每笔支付创建的充值地址，该地址只能将款项转至您的地址），您还可以把这些资金转到 Cosmos Pay 支持的 {n} 个网络中的任何一个。您在控制台中将每个钱包添加到组织，并通过签名证明钱包属于您；在控制台创建的支付链接只会付款到这些钱包。Cosmos Pay 从不索要私钥，也不保存任何人的密钥，因此从第一笔支付起资金就归您所有，妥善保管密钥也是您自己的责任。" },
+    networks: { q: "Cosmos Pay 支持哪些网络？", a: "Cosmos Pay 支持 {n} 个网络：{networks}。您的客户可以在其中任何一个网络上付款，无需账户。其兑换覆盖其中 {swapN} 个网络，因此客户也可以从付款所在网络以外的网络付款，您也可以在这些网络之间转移收到的款项。" },
+    assets: { q: "可以用哪些币种收款？", a: "USDC、EURC、USDT、各网络的原生币或任何其他代币，创建链接时按发行方、铸币地址（mint）或合约指定即可。客户以该资产付款，您收到的也是同一资产。持有其他代币的客户，无论在我们的兑换覆盖的 {swapN} 个网络中的哪一个，都可以先将其兑换成该资产。" },
+    wallet: { q: "我需要自己的加密钱包吗？", a: "需要。使用 Cosmos Pay 时，支付会进入您掌控的地址（在部分网络上，经由为每笔支付创建的充值地址，该地址只能将款项转至您的地址），您还可以通过兑换把这些资金转到我们的兑换覆盖的 {swapN} 个网络中的任何一个。您在控制台中将每个钱包添加到组织，并通过签名证明钱包属于您；在控制台创建的支付链接只会付款到这些钱包。Cosmos Pay 从不索要私钥，也不保存任何人的密钥，因此从第一笔支付起资金就归您所有，妥善保管密钥也是您自己的责任。" },
     account: {
       q: "我的客户需要注册账户吗？",
-      a: "不需要。您的客户无需 Cosmos Pay 账户，只需在该笔支付的网络上有一个持有您收款资产的钱包；如果客户的资金在 Cosmos Pay 支持的 {n} 个网络中的其他网络上，也可以先兑换，同样无需账户。他们打开收银台，扫描二维码或点击钱包按钮，然后在钱包中确认支付，无需注册任何账户。如果客户浏览器的语言是收银台支持的七种语言之一（英语、西班牙语、葡萄牙语、法语、德语、印地语和中文），收银台就会以该语言打开；网络手续费由客户的钱包支付。",
+      a: "不需要。您的客户无需 Cosmos Pay 账户，只需在该笔支付的网络上有一个持有您收款资产的钱包；如果客户的资金在我们的兑换覆盖的 {swapN} 个网络中的其他网络上，也可以先兑换，同样无需账户。他们打开收银台，扫描二维码或点击钱包按钮，然后在钱包中确认支付，无需注册任何账户。如果客户浏览器的语言是收银台支持的七种语言之一（英语、西班牙语、葡萄牙语、法语、德语、印地语和中文），收银台就会以该语言打开；网络手续费由客户的钱包支付。",
     },
     wallets: {
       q: "我的客户可以使用哪些钱包？",
-      a: "您的客户用自己的钱包付款：任何能打开标准支付链接的钱包均可，例如 Freighter、xBull、LOBSTR、Albedo、Rabet、Cosmos Pay Wallet、Phantom、Solflare 或任意 EVM 钱包。资金在 Cosmos Pay 支持的 {n} 个网络中任何一个上的客户，都可以先兑换再付款，无需账户。每个链接还附有二维码，因此在电脑上，客户也可以用手机钱包扫码支付。",
+      a: "您的客户用自己的钱包付款：任何能打开标准支付链接的钱包均可，例如 Freighter、xBull、LOBSTR、Albedo、Rabet、Cosmos Pay Wallet、Phantom、Solflare 或任意 EVM 钱包。资金在我们的兑换覆盖的 {swapN} 个网络中任何一个上的客户，都可以先兑换再付款，无需账户。每个链接还附有二维码，因此在电脑上，客户也可以用手机钱包扫码支付。",
     },
     custody: {
       q: "Cosmos Pay 会持有我的资金吗？",
@@ -3011,11 +3125,12 @@ const zh: LandingMessages = {
     security: { nav: "安全", title: "可在链上核查的支付", lede: "每笔支付都可在网络上核查，密钥始终归您所有，其他网站也无法嵌入支付页面。", meta: "非托管支付，链上核验 | Cosmos Pay" },
     fees: { nav: "价格", title: "稳定币支付费用", lede: "按套餐收取单笔费率，Starter 无月费。开始之前，先算算您能收到多少。", meta: "稳定币支付费用与计算器 | Cosmos Pay" },
     faq: { nav: "常见问题", title: "稳定币支付常见问题", lede: "钱包、受保护付款、退款、测试和费用：商家在开始前会问的问题。", meta: "稳定币支付常见问题：钱包、费用、退款 | Cosmos Pay" },
-    swaps: { nav: "兑换", title: "无需账户，跨网络兑换代币", lede: "无需账户，在 {n} 个网络之间兑换代币，并从 Stellar 发送 USDT0。", meta: "跨链兑换与从 Stellar 发送 USDT0 | Cosmos Pay" },
+    swaps: { nav: "兑换", title: "无需账户，跨网络兑换代币", lede: "无需账户，在 {swapN} 个网络之间兑换代币，并从 Stellar 发送 USDT0。", meta: "跨链兑换与从 Stellar 发送 USDT0 | Cosmos Pay" },
     compare: { nav: "费用对比", title: "我们的费用对比", lede: "Cosmos Pay 各项服务的费率与知名服务商的公开费率并列展示，并附上对方定价页面的链接和查阅日期。", meta: "稳定币支付网关费用对比 | Cosmos Pay" },
     stellar: { nav: "Stellar", title: "在 Stellar 上收款", lede: "Cosmos Pay 为每笔支付生成带二维码的 SEP-7 链接。客户用自己的 Stellar 钱包付款，款项直接进入您的地址。", meta: "Stellar 支付 API：收取 USDC 和 XLM | Cosmos Pay", link: "Stellar 支付" },
     solana: { nav: "Solana", title: "在 Solana 上收款", lede: "Cosmos Pay 为每笔支付生成带二维码的 Solana Pay 链接。客户用自己的钱包支付 USDC 或 SOL，款项直接进入您的地址。", meta: "用 Solana Pay 在 Solana 上收取 USDC | Cosmos Pay", link: "Solana 支付" },
     monad: { nav: "Monad", title: "在 Monad 上收款", lede: "Cosmos Pay 为每笔支付生成带二维码的 EIP-681 链接。客户可用任意 EVM 钱包付款，再由充值地址转发到您的地址。", meta: "Monad 支付：收取 USDC 和 MON | Cosmos Pay", link: "Monad 支付" },
+    arc: { nav: "Arc", title: "在 Arc 上收款", lede: "Cosmos Pay 为每笔 Arc 支付生成带二维码的 EIP-681 链接。客户可用任意 EVM 钱包付款，再由充值地址转发到您的地址。", meta: "Arc 支付：收取 USDC 和 EURC | Cosmos Pay", link: "Arc 支付" },
     more: { integrations: "查看全部集成选项", fees: "计算您的费用", security: "了解支付如何受到保护", faq: "查看全部问题", useCases: "查看全部使用场景", compare: "与其他服务商对比" },
     notes: ["Starter 无月费", "在测试网上试用，不涉及真实资金"],
     updated: "更新于 {date}",
@@ -3098,6 +3213,24 @@ const zh: LandingMessages = {
         fee: { q: "可以在 Monad 付款上加收自己的费用吗？", a: "可以。在 Monad 上，Cosmos Pay 为每笔付款创建的充值地址会将付款拆分到您的 Monad 地址和您选择的收费钱包。您的费用独立于您的套餐费率，每笔付款仍按套餐费率计费。转发付款所需的中继费用从付款中扣除，API 会在付款的 networkFee 中列明该费用。" },
       },
     },
+    arc: {
+      link: "带二维码和 Arc chain ID 的 EIP-681 链接（ethereum:），指向专为该笔付款生成的地址。",
+      match: "付款专属的充值地址：每笔付款各有一个。",
+      settle: "充值地址将付款转发到您的 Arc 地址，并扣除中继费用；API 会在付款的 networkFee 中列明该费用。",
+      sandbox: "使用测试密钥（dv_）时为 Arc Testnet；使用正式密钥（prod_）时为主网。",
+      address: "合约",
+      assetsLede: "控制台按名称提供以下资产。Arc 的原生币就是 USDC，这里通过其 ERC-20 合约收取；其他 ERC-20 代币按合约地址指定。",
+      walletsLede: "任何能读取 EIP-681 链接的 EVM 钱包。托管收银台还可以把 Arc 添加到浏览器钱包并直接从中发送付款，客户也可以手动将准确金额发送到收银台显示的充值地址。",
+      feesLede: "每笔支付按您套餐的费率计费。付款方钱包以 USDC 支付其转账的 Arc 网络手续费，转发所需的中继费用从付款中扣除。",
+      codeNote: "Arc 必须指定金额，且不支持钱包留言。USDC 在 Arc Testnet 上使用同一合约，因此测试密钥（dv_）会在那里创建同样的链接。",
+      faq: {
+        wallets: { q: "哪些钱包可以支付 Arc 支付链接？", a: "任何能读取 EIP-681 链接的 EVM 钱包都可以支付 Arc 上的 Cosmos Pay 支付链接。链接及其二维码带有 Arc 的 chain ID，指向专为该笔付款创建的充值地址；托管收银台可以把 Arc 添加到尚未识别它的浏览器钱包，再从该钱包发送付款。客户也可以手动将准确金额发送到收银台显示的充值地址。付款方钱包以 USDC 支付 Arc 网络手续费。" },
+        deposit: { q: "Arc 上的充值地址是什么？", a: "通过 Cosmos Pay 进行的每笔 Arc 付款都有自己的充值地址，专为该笔付款创建，付款正是通过这个地址与其链接匹配的。充值地址只能将付款转发到您的 Arc 地址，并扣除转发所需的中继费用；收银台会显示该费用，API 也会在付款的 networkFee 中列明。Cosmos Pay 不持有该地址的任何密钥。" },
+        amount: { q: "为什么 Arc 支付链接必须指定金额？", a: "金额是 Cosmos Pay 识别 Arc 付款的依据之一（付款会发送到专为其创建的充值地址），因此 Arc 支付链接必须指定金额，付款方不能自行选择。Arc 链接也不携带钱包留言。如果要让客户自行决定金额（例如捐赠），或在客户钱包中显示订单号等留言，请在 Stellar 或 Solana 上创建链接。" },
+        tokens: { q: "在 Arc 上可以用哪些代币收款？", a: "在 Arc 上，Cosmos Pay 在主网和 Arc Testnet 上按名称提供 USDC 和 EURC；其他 ERC-20 代币在创建链接时按合约地址指定。Arc 的原生币就是 USDC，因此付款通过 USDC 的 ERC-20 合约收取（6 位小数），而不是作为单独的原生币。客户以链接设定的代币付款，充值地址扣除中继费用后将其转发到您的 Arc 地址。" },
+        fee: { q: "可以在 Arc 付款上加收自己的费用吗？", a: "可以。在 Arc 上，Cosmos Pay 为每笔付款创建的充值地址会将付款拆分到您的 Arc 地址和您选择的收费钱包。您的费用独立于您的套餐费率，每笔付款仍按套餐费率计费。转发付款所需的中继费用从付款中扣除，API 会在付款的 networkFee 中列明该费用。" },
+      },
+    },
   },
   comparePage: {
     title: "我们的费率",
@@ -3123,7 +3256,7 @@ const zh: LandingMessages = {
     asOf: "公开费率为各服务商页面于 {date} 显示的内容。",
     notes: [
       "BitPay 页面注明高风险行业适用更高费率，且未列出月费；Essentials 和 Growth 有月费。",
-      "使用 Cosmos Pay 时，网络手续费由付款方钱包支付；在 Monad 上，转发付款的中继费用从该笔付款中扣除。",
+      "使用 Cosmos Pay 时，网络手续费由付款方钱包支付；在 Monad 和 Arc 上，转发付款的中继费用从该笔付款中扣除。",
     ],
     beyond: {
       title: "费率之外：Cosmos Pay 与 Stripe 稳定币支付",
@@ -3134,8 +3267,8 @@ const zh: LandingMessages = {
       theirs: "Stripe 稳定币支付",
       rows: {
         who: { k: "可以收款的企业", ours: "拉丁美洲及全球的企业", theirs: "美国企业；欧盟、香港、墨西哥和瑞士为私人预览" },
-        settle: { k: "款项结算到哪里", ours: "您自己的钱包，以客户支付的稳定币结算（在 Monad 上经由一个只能转发到您地址的充值地址）", theirs: "您的 Stripe 余额，以您的本地货币结算" },
-        networks: { k: "网络", ours: "{n} 个网络，支持网络之间的兑换", theirs: "Tempo、Ethereum、Solana、Polygon 和 Base 上的 USDC" },
+        settle: { k: "款项结算到哪里", ours: "您自己的钱包，以客户支付的稳定币结算（在 Monad 和 Arc 上经由一个只能转发到您地址的充值地址）", theirs: "您的 Stripe 余额，以您的本地货币结算" },
+        networks: { k: "网络", ours: "{n} 个网络，支持其中 {swapN} 个网络之间的兑换", theirs: "Tempo、Ethereum、Solana、Polygon 和 Base 上的 USDC" },
       },
       asOf: "Stripe 的条件以其文档在 {date} 的说明为准。",
     },
@@ -3169,17 +3302,17 @@ const zh: LandingMessages = {
 
 export const LANDING: Record<Locale, LandingMessages> = { en, es, pt, fr, de, hi, zh };
 
-/* `{n}` in a page's copy is how many networks cross-chain swaps reach (NETWORK_IDS in
-   src/lib/chains.ts), so the count can never drift from the swap catalogue. It is filled
-   wherever that copy shows: the page header (PageHeader.astro), the <head> description and the
-   structured data (pageMeta). */
+/* `{n}` in a page's copy is how many networks Cosmos Pay works with, `{swapN}` how many its
+   swaps reach (withNetworkCounts in src/lib/chains.ts), so neither count can drift from the
+   networks it names. It is filled wherever that copy shows: the page header (PageHeader.astro),
+   the <head> description and the structured data (pageMeta). */
 export function fillPageCopy(text: string): string {
-  return text.replace(/\{n\}/g, String(NETWORK_IDS.length));
+  return withNetworkCounts(text);
 }
 
 /** The gateway pages whose search title and lede are a `pages` entry: the content pages and one
  *  page per network a payment settles on. */
-export type CopyPage = "integrations" | "useCases" | "security" | "fees" | "faq" | "swaps" | "compare" | "stellar" | "solana" | "monad";
+export type CopyPage = "integrations" | "useCases" | "security" | "fees" | "faq" | "swaps" | "compare" | "stellar" | "solana" | "monad" | "arc";
 
 /** A gateway page's search title and description, as its <head> and its JSON-LD state them: the
  *  home's `meta`, a content or network page's `meta` and lede. tests/unit/metaDescriptions.test.ts
