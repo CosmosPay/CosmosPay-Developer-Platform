@@ -183,7 +183,7 @@ These were said more than once; breaking one is a bug, whatever the task was.
 | :--- | :--- | :--- |
 | `cosmospay.lat` | `site` | `src/pages/site/`: landing, `/pricing`, `/swaps`, `/tos`, `/about` |
 | `dev.cosmospay.lat` | `dev` | everything else in `src/pages/`: `/login`, dashboard, onboarding, invite, kyc, `/docs`, `/swagger`, `/api/*` |
-| `payments.cosmospay.lat` | `payments` | `src/pages/payments/`: `/` home, the content pages `/integrations`, `/use-cases`, `/security`, `/fees`, `/compare`, `/faq`, the network pages `/stellar`, `/solana`, `/monad`, the guides `/learn` and `/learn/{slug}`, `/{id}` hosted checkout, `/pay` SEP-7 handler, `/contact` (the contact form's POST), `/preview/{design}` |
+| `payments.cosmospay.lat` | `payments` | `src/pages/payments/`: `/` home, the content pages `/integrations`, `/use-cases`, `/security`, `/fees`, `/compare`, `/faq`, the network pages `/stellar`, `/solana`, `/monad`, `/arc`, the guides `/learn` and `/learn/{slug}`, `/{id}` hosted checkout, `/pay` SEP-7 handler, `/contact` (the contact form's POST), `/preview/{design}` |
 
 One build, one process, one Better Auth. `src/middleware.ts` applies `routeRequest` from
 `src/lib/hosts.ts` (fully covered by `tests/unit/hosts.test.ts`) before any database work:
@@ -781,10 +781,11 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
 
 ### Payment links on every network
 
-- **A payment link settles on any network of `NETWORK_IDS`** (35, the swap platform's; the
-  community server's `CROSS_CHAIN_NETWORK_IDS`). Stellar, Solana and Monad have their own wallet
-  links (SEP-7, Solana Pay, EIP-681) and test networks (Solana devnet and Monad testnet in the
-  sandbox); every other network is paid through a **deposit address made for each payment**, on
+- **A payment link settles on any network of `PAYMENT_NETWORK_IDS`** (36): the 35 of `NETWORK_IDS`
+  (the swap platform's; the community server's `CROSS_CHAIN_NETWORK_IDS`) plus **Arc**, Circle's EVM
+  chain, which no swap reaches and is not in `NETWORK_IDS`. Stellar, Solana, Monad and Arc are the
+  chains with their own wallet links (SEP-7, Solana Pay, EIP-681 for Monad and Arc) and test networks
+  (Solana devnet, Monad testnet and Arc Testnet in the sandbox); every other network is paid through a **deposit address made for each payment**, on
   mainnet only (the sandbox lists them, off, saying why), for an amount in one of the tokens the
   Payments API lists there, with no merchant fee (default taken 2026-11-16, open for the owner). The payer pays from
   any network and token; the merchant receives exactly the amount on the link's network. A mainnet
@@ -793,8 +794,8 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   as a `Select` of every network by name (none first for being ours), the amount with its asset
   dropdown in one well (as the swap widget; on the other networks the real cross-chain asset list,
   never sampled), the destination, and memo / message under "more options"; transaction intents
-  (a known payer) are Stellar's only, Monad and the other networks need an amount, Monad takes no
-  wallet message. The schema (`src/schemas/payment-intents.ts`, tested) checks each network's
+  (a known payer) are Stellar's only, Monad, Arc and the other networks need an amount, Monad and Arc
+  take no wallet message. The schema (`src/schemas/payment-intents.ts`, tested) checks each network's
   address shape and decimals; the Payments API checks the rest.
 - **The hosted checkout pays from another network** (`CrossChainStep.astro` in every design,
   `src/lib/payments/deposits.ts`, keyless `/v1/payment-links/{id}/deposit-assets`, `/quote`,
@@ -807,12 +808,29 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   no provider. Mock mode never fakes it: the token list is the real one, a quote or a deposit answers
   that mock mode cannot make one.
 - **`src/lib/chains.ts` is the network vocabulary** for every screen and route: names, native coins,
-  test-network names (the three), address shapes for all 35 (mirroring the server's rules),
-  explorers (transactions and accounts, per network; mainnet only off the three) and the token
+  test-network names (the four chains'), address shapes for all 36 (mirroring the server's rules),
+  explorers (transactions and accounts, per network; mainnet only off the four) and the token
   presets. Presets are only addresses we verified: Solana USDC (mainnet `EPjF…Dt1v`, devnet
-  Circle's `4zMM…ncDU`) and Monad mainnet USDC (`0x7547…b603`, from NEAR Intents' list); Monad's
-  test network has none. Other tokens go by ticker and mint / contract (`TokenSelect`).
-  `payment-link.ts` re-exports its chain list and explorer from there.
+  Circle's `4zMM…ncDU`), Monad mainnet USDC (`0x7547…b603`, from NEAR Intents' list; Monad's test
+  network has none) and Arc's USDC (`0x3600…0000`, the ERC-20 interface to its gas coin, one address
+  on both networks) and EURC (`0xbEf5…21c1`, testnet `0x89B5…D72a`), all 6 decimals. Other tokens go
+  by ticker and mint / contract (`TokenSelect`). `payment-link.ts` re-exports its chain list and
+  explorer from there.
+- **Arc is a native payment chain, never a swap or deposit network** (product owner, 2026-11-18,
+  "implementala como se viene haciendo"). `CHAINS` has it beside Stellar, Solana and Monad;
+  `DEX_CHAINS` (the swap screens, `SWAP_CHAINS`, the swap catalogue) does not, nor `NETWORK_IDS`,
+  the deposit routes (`isSwapNetwork`, `takesDeposits`, `EVM_NETWORK_IDS`) or the public swap
+  pages, and `parsePaymentLink` never takes `crossChainPayment` there. `EVM_CHAINS` (Monad, Arc)
+  share the EIP-681 link, EIP-191 proofs and the deposit address per payment. Its gas coin is USDC
+  (18 decimals), charged through the 6-decimal interface: `offersNativeCoin("arc")` is false, so
+  no screen offers it beside the USDC preset, and the Payments API stores that interface for an
+  Arc link with no asset, `USDC` or `native`. An EIP-681 link must carry its chain's id for the
+  link's tier (`isWalletUri`: 5042 / 5042002 on Arc, 143 / 10143 on Monad), and
+  `EVM_CHAIN_PARAMS` is what a wallet gets to add the chain (`wallet_addEthereumChain`). On a
+  Monad or Arc link the hosted checkout shows a "Pay with <wallet>" button per EVM wallet the
+  browser announces (EIP-6963, through the SDK's wallets module, loaded only there): it switches
+  the wallet to the link's chain, adding it when unknown, sends what the EIP-681 link says and
+  reports the account and hash as the session's proof.
 
 ### Customers and their wallets
 
@@ -852,7 +870,7 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   | :--- | :--- | :--- | :--- |
   | Stellar | SEP-53, or the proof transaction signed as an XDR | Freighter | the signed XDR, any wallet |
   | Solana, Fogo | Ed25519 over the message | Phantom, Solflare | no |
-  | Monad and every EVM network | EIP-191 `personal_sign`, signer recovered | any injected EVM wallet | no |
+  | Monad, Arc and every EVM network | EIP-191 `personal_sign`, signer recovered | any injected EVM wallet | no |
   | Tron | TIP-191 `signMessageV2` (`tip191`) | TronLink | the signature |
   | TON | TON Connect `ton_proof` over the nonce, for this host (`tonproof`): the state init must hash to the address and hold the key | any TON Connect JS bridge (Tonkeeper, MyTonWallet...) | no |
   | NEAR | NEP-413 with the nonce and this host as recipient, and the key must be a full-access key of the account (`view_access_key`; an implicit account not on chain yet is its key's) (`nep413`) | MyNearWallet's sign-message page in a popup | public key and signature |
@@ -1005,7 +1023,7 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   three paths), `/use-cases` (businesses, the comparison with cards), `/security`, `/fees`
   (plans and calculator; `/pricing` is the company site's), `/compare` and `/faq`. A sticky section bar
   (`Subnav.astro`) under the general nav links them (`SECTION_PAGES`) and ends with the main call to action.
-  **One page per network a payment settles on** (`NETWORK_PAGES`: `/stellar`, `/solana`, `/monad`,
+  **One page per network a payment settles on** (`NETWORK_PAGES`: `/stellar`, `/solana`, `/monad`, `/arc`,
   `NetworkPage.astro`), answer first: the link standard, the wallets, how a payment is matched,
   where the money goes, the test network, the presets (read from `stellar-assets.ts` and
   `chains.ts` through `src/lib/payments/network-pages.ts`, never written), the plans' rates, the
@@ -1249,7 +1267,8 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
 - **Cosmos Pay works with every network of its swap platform, never "three networks"** (product
   owner, 2026-11-03): copy, the FAQ first, presents the whole collection (`NETWORK_IDS`), not
   Stellar, Solana and Monad as if they were the only networks Cosmos Pay serves. The FAQ counts it
-  with `{n}` and names it with `{networks}` (both filled in `landingContent`, the names joined with
+  with `{n}` and names it with `{networks}` (both filled in `landingContent` from
+  `PAYMENT_NETWORK_IDS`, Arc included, the names joined with
   `Intl.ListFormat` in the page's language), and its second question, "Which networks does Cosmos
   Pay work with?", lists them all. **No settlement exception in presenting copy** (product owner,
   the same day, when the hero and the FAQ still said "Stellar, Solana, Monad and every network our
@@ -1268,7 +1287,7 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   **The rule covers every surface** (product owner, 2026-11-03: "en todo"): the payments landing,
   the company site, the dashboard, the guides, the search titles and descriptions, llms.txt, the
   JSON-LD (`schema.ts`), the terms and the docs home. **Every string of the gateway's catalog can
-  carry `{n}`**: `landingContent` fills it across the whole catalog (`withNetworkCount`), except the
+  carry `{n}` and `{swapN}`**: `landingContent` fills them across the whole catalog (`withNetworkCount`), except the
   step counters (`counter` keys, whose `{n}` is the step). On the company site `{n}` is filled only
   where the component passes it (Solutions, the API cards, `/swaps`' facts, About's
   `facts.networksValue` and `products.items[].d`; every guide string through `guideCopy`; llms.ts
@@ -1291,7 +1310,8 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   video they run for everyone, reduced motion included (the product owner's call). **Logos are official artwork only**, full colour, in
   `public/media/brands`: USDC, XLM, SOL from cryptocurrency-icons; Freighter, LOBSTR, xBull,
   Albedo, Rabet from the Stellar Wallets Kit; Phantom and Solflare from their Solana
-  wallet-adapter icons; Monad and EURC from Trust Wallet's assets. Single-colour marks (Stellar,
+  wallet-adapter icons; Monad and EURC from Trust Wallet's assets; Arc's network icon from Circle's
+  Brand Kit (its terms are in `src/assets/logos/networks/SOURCES.md`). Single-colour marks (Stellar,
   the Cosmos isotype) are inline in currentColor (`Mark.astro`) so they follow the theme. Never
   draw an approximation of someone else's logo. **Every token and network logo** (the landing's
   swap row, the dashboard's `TokenMark` everywhere an asset shows) comes from the generated manifest
