@@ -23,7 +23,7 @@ test('there is one gateway page per network a payment settles on, and every page
   for (const chain of CHAINS) assert.ok(isNetworkPage(chain) && PAYMENTS_PAGES.includes(chain), chain);
   assert.ok(SECTION_PAGES.every((p) => !isNetworkPage(p)));
   assert.equal(new Set(PAYMENTS_PAGES).size, PAYMENTS_PAGES.length);
-  assert.deepEqual(NETWORK_PAGES.map(pagePath), ['/stellar', '/solana', '/monad']);
+  assert.deepEqual(NETWORK_PAGES.map(pagePath), ['/stellar', '/solana', '/monad', '/arc']);
 });
 
 test('the sample request is the Payments API spec’s create-pay request', () => {
@@ -40,8 +40,10 @@ test('the sample request is the Payments API spec’s create-pay request', () =>
     assert.ok(curl.startsWith(`curl ${spec.servers[0].url}${CREATE_PAY_PATH} `), chain);
     assert.deepEqual(JSON.parse(curl.slice(curl.indexOf("-d '") + 4, curl.lastIndexOf("'"))), body, `${chain}: the curl body is the JSON body`);
   }
-  // Monad takes no wallet message and needs an amount (the spec's msg and amount descriptions).
+  // Monad and Arc take no wallet message and need an amount (the spec's msg and amount descriptions).
   assert.ok(!('msg' in payLinkBody('monad')));
+  assert.ok(!('msg' in payLinkBody('arc')));
+  assert.equal(payLinkBody('arc').assetIssuer, '0x3600000000000000000000000000000000000000');
   assert.match(dto.properties.msg ? JSON.stringify(dto.properties.msg) : '', /Not supported on Monad/);
 });
 
@@ -55,7 +57,7 @@ test('the presets are the verified ones, mainnet first, each address linked to i
   for (const [code, issuer] of [['USDC', 'Circle'], ['EURC', 'Circle'], ['USDT0', 'Tether']]) {
     assert.ok(stellar.some((r) => r.tier === 'public' && r.code === code && r.issuer === issuer), code);
   }
-  for (const chain of ['solana', 'monad'] as const) {
+  for (const chain of ['solana', 'monad', 'arc'] as const) {
     const rows = networkPresets(chain);
     for (const tier of ['public', 'testnet'] as const) {
       const tokens = rows.filter((r) => r.tier === tier && r.address);
@@ -64,6 +66,9 @@ test('the presets are the verified ones, mainnet first, each address linked to i
   }
   // Monad's test network has no USDC preset; the page says so.
   assert.ok(!networkPresets('monad').some((r) => r.tier === 'testnet' && r.code === 'USDC'));
+  // Arc's coin is USDC, charged through its contract: no separate row for the network's own coin.
+  assert.deepEqual(networkPresets('arc').map((r) => `${r.tier}:${r.code}`), ['public:USDC', 'public:EURC', 'testnet:USDC', 'testnet:EURC']);
+  assert.ok(networkPresets('arc').every((r) => r.address !== null));
   for (const chain of CHAINS) {
     for (const r of networkPresets(chain)) {
       if (r.address) assert.match(r.explorer ?? '', /^https:\/\//, `${chain} ${r.code}`);

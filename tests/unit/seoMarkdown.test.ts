@@ -10,7 +10,7 @@ import { LANDING } from '@/lib/payments/landing-i18n';
 import { LEARN, guideCopy } from '@/lib/payments/learn/index';
 import { GUIDES, PAYMENTS_PAGE_PATHS } from '@/lib/payments/site-pages';
 import { messages } from '@/lib/i18n/messages/index';
-import { NETWORK_IDS, networkName } from '@/lib/chains';
+import { NETWORK_COUNTS, PAYMENT_NETWORK_IDS, networkName } from '@/lib/chains';
 import { landingContent } from '@/lib/payments/landing-content';
 import type { Locale } from '@/lib/payments/i18n';
 import { isSlashlessDocsLink } from '@/lib/urls';
@@ -183,7 +183,7 @@ test('the plans and every service rate come from src/lib/plans.ts', () => {
   }
   const stats = md('site', '/');
   assert.ok(stats.includes(`- ${PLAN_SPECS.starter.perTx.split(' + ')[0]} + ${PLAN_SPECS.starter.perTx.split(' + ')[1]} per payment on Starter`));
-  assert.ok(stats.includes(`- ${NETWORK_IDS.length} networks to get paid from, with swaps between them`));
+  assert.ok(stats.includes(`- ${NETWORK_COUNTS.n} networks to get paid on`));
   assert.ok(stats.includes('- 0 chargebacks: once the network confirms a payment, it is final'));
 });
 
@@ -213,21 +213,22 @@ test('each page carries what its page shows: every question, fact and guide, in 
   for (const lang of AREA_LANGS.payments) {
     const t = LANDING[lang as keyof typeof LANDING];
     const faq = md('payments', '/faq', lang);
-    // The questions as the page shows them: {n} and {networks} filled from NETWORK_IDS.
+    // The questions as the page shows them: {n}, {swapN} and {networks} filled from src/lib/chains.ts.
     const shown = landingContent(lang as Locale).faq;
     const order = ['what', 'networks', 'wallet', 'account', 'wallets', 'assets', 'custody', 'service', 'protected', 'zk', 'expiry', 'refunds', 'testing', 'designs'] as const;
     let at = 0;
     order.forEach((key, i) => {
       const { q, a } = shown[i];
-      assert.ok(!/\{(n|networks)\}/.test(q + a), `${lang} faq ${key}: a placeholder left`);
+      assert.ok(!/\{(n|swapN|networks)\}/.test(q + a), `${lang} faq ${key}: a placeholder left`);
       const found = faq.indexOf(`### ${q}\n\n${a}`, at);
       assert.ok(found > at, `${lang} faq ${key}`);
       at = found;
     });
-    // The networks answer names the swap platform's whole collection, not Stellar, Solana and
-    // Monad alone (product owner, 2026-11-03).
-    for (const id of NETWORK_IDS) assert.ok(shown[1].a.includes(networkName(id)), `${lang} faq networks names ${id}`);
-    assert.ok(shown[1].a.includes(String(NETWORK_IDS.length)), `${lang} faq networks counts them`);
+    // The networks answer names every network Cosmos Pay works with, Arc included, not Stellar,
+    // Solana and Monad alone (product owner, 2026-11-03), and counts the ones swaps reach.
+    for (const id of PAYMENT_NETWORK_IDS) assert.ok(shown[1].a.includes(networkName(id)), `${lang} faq networks names ${id}`);
+    assert.ok(shown[1].a.includes(String(NETWORK_COUNTS.n)), `${lang} faq networks counts them`);
+    assert.ok(shown[1].a.includes(String(NETWORK_COUNTS.swapN)), `${lang} faq networks counts the ones swaps reach`);
     const keys = Object.keys(t.faq).filter((k) => k !== 'title' && k !== 'titleBold');
     assert.equal(keys.length, order.length, 'a new question needs its place in landing-content.ts');
     const security = md('payments', '/security', lang);
@@ -242,7 +243,10 @@ test('each page carries what its page shows: every question, fact and guide, in 
   assert.ok(stellar.includes('GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN'), 'the USDC preset, from stellar-assets.ts');
   const swaps = md('payments', '/swaps');
   assert.ok(swaps.includes('curl "https://api.cosmospay.lat/cosmos-api/v1/public-key?env=prod"'));
-  assert.ok(swaps.includes(`${NETWORK_IDS.length} networks`));
+  assert.ok(swaps.includes(`${NETWORK_COUNTS.swapN} networks`));
+  const arc = md('payments', '/arc');
+  assert.match(arc, /curl https:\/\/api\.cosmospay\.lat\/cosmos-api\/v1\/payment-intents\/pay/);
+  assert.ok(arc.includes('0x3600000000000000000000000000000000000000') && arc.includes('https://explorer.testnet.arc.io/address/0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a'), "Arc's presets, linked to their explorers");
   const terms = md('site', '/tos', 'es');
   assert.ok(terms.includes('## Términos y Condiciones de Uso') && terms.includes('Última actualización: 2026-11-03'));
   const about = md('site', '/about');

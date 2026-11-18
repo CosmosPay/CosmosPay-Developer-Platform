@@ -1155,7 +1155,7 @@
 /* on /faq the heading is for assistive tech only, so the list opens the column */
 .pl-sr + .pl-faq-nets { margin-top: 0; }
 
-/* ---- the network pages (/stellar, /solana, /monad) ---- */
+/* ---- the network pages (/stellar, /solana, /monad, /arc) ---- */
 /* how a payment works there: one fact per row, the term beside its text */
 .pl-net-facts { margin: 0; }
 .pl-net-facts > div { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2.2fr); gap: 6px 32px; padding: 22px 0; border-top: 1px solid var(--line); }

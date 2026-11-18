@@ -1,5 +1,5 @@
 ---
-// One page per network a payment settles on (src/pages/payments/{stellar,solana,monad}.astro,
+// One page per network a payment settles on (src/pages/payments/{stellar,solana,monad,arc}.astro,
 // registered in src/lib/payments/site-pages.ts): answer first (the header's lede, and under it the
 // day the page last changed: src/lib/seo/page-dates.ts), then how a
 // payment works there, the assets with a preset, what it costs (the plans' rates, from
@@ -38,7 +38,7 @@ const meta = pageMeta(d.t, chain);
 const name = CHAIN_NAMES[chain];
 // The questions as the page shows them, rates filled in from plans.ts.
 const questions = Object.values(d.t.networks[chain].faq).map((f) => ({ q: f.q, a: f.a.replace("{rate}", `${PRIVATE_PAYMENT_FEE_PCT}%`) }));
-const ART: Record<Chain, string> = { stellar: "3d-instant", solana: "3d-final", monad: "3d-yours" };
+const ART: Record<Chain, string> = { stellar: "3d-instant", solana: "3d-final", monad: "3d-yours", arc: "3d-link" };
 const byline = updatedByline("payments", `/${chain}`, lang, d.t.pages.updated);
 ---
 
