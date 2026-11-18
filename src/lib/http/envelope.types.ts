@@ -9,6 +9,10 @@ export const ApiStatus = {
   CONFLICT: 'conflict',
   UNPROCESSABLE: 'unprocessable',
   INTERNAL_ERROR: 'internal_error',
+  /* A refusal the dashboard acts on: the plan's limit (it offers the plan dialog). */
+  PLAN_LIMIT: 'plan_limit',
+  /* A feature this deployment has not been configured for (503). */
+  NOT_CONFIGURED: 'not_configured',
 } as const;
 
 export type ApiStatus = (typeof ApiStatus)[keyof typeof ApiStatus];
