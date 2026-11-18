@@ -8,7 +8,7 @@
    WHAT IT COVERS. Every symbol NEAR Intents' 1Click lists (GET /v0/tokens, minus the
    blockchains the Payments API does not offer: qtc, adi), the standard assets the dashboard
    offers on Stellar, Solana and Monad, the P2P ramps' main assets on each of their networks
-   (RAMP_TOKENS: the Payments API's P2P_MAIN_TOKENS) and those networks (Celo, World Chain, Blast), every network id in NETWORK_NAMES and OFT_NETWORK_NAMES
+   (RAMP_TOKENS: the Payments API's P2P_MAIN_TOKENS) and those networks (Celo, World Chain, Blast), every network id in PAYMENT_NETWORK_NAMES (NETWORK_NAMES and Arc) and OFT_NETWORK_NAMES
    (src/lib/chains.ts: the networks only USDT0 reaches), and Pollar's mark for the landing's
    wallets marquee. Logos are keyed by normalized symbol
    (uppercase, a trailing "(...)" tag and a leading "$" removed), so one symbol on several chains
@@ -331,11 +331,14 @@ const MISSING_NOTES = {
    src/lib/chains.ts). */
 const EXTRA_SYMBOLS = ['XLM', 'USDC', 'EURC', 'USDT0', 'USDB', 'SOL', 'MON'];
 
-/* Every network id in NETWORK_NAMES, then OFT_NETWORK_NAMES. */
+/* Every network id a payment settles on (PAYMENT_NETWORK_IDS: NETWORK_NAMES and Arc), then
+   OFT_NETWORK_NAMES. */
 const NETWORK_SOURCES = {
   stellar: brand('/media/brands/xlm.svg'),
   solana: brand('/media/brands/sol.svg'),
   monad: brand('/media/brands/monad.webp'),
+  // Arc settles payments natively and no swap reaches it (PAYMENT_NETWORK_IDS, not NETWORK_IDS).
+  arc: zip('https://6778953.fs1.hubspotusercontent-na1.net/hubfs/6778953/Brand/Arc/Arc_Logos.zip', 'Arc_Logos/Arc Network Icon/Arc_network.svg', "no licence stated: Circle's Brand Use Policy allows no commercial use beyond what the law otherwise allows, and Arc's partner toolkit allows the logo to teams building on Arc; trademark of its owner, used only to identify the network", 'Circle Brand Kit (circle.com/pressroom#brandkit, where arc.io/brand-guidelines-and-partner-toolkit points), the Arc network icon on its own navy disc, the asset Circle names for referencing the Arc network'),
   eth: tw('ethereum/info/logo.png'),
   base: tw('base/info/logo.png'),
   arb: tw('arbitrum/info/logo.png'),
@@ -692,9 +695,10 @@ async function main() {
     brandLines.push(`- \`${file}\`: ${describe(result.source)}`);
   }
 
-  // Network coverage against the app's own lists: NEAR Intents' networks and the ones only USDT0 reaches.
-  const { NETWORK_IDS, OFT_NETWORK_NAMES } = await import(pathToFileURL(join(ROOT, 'src', 'lib', 'chains.ts')).href);
-  const networkIds = [...NETWORK_IDS, ...Object.keys(OFT_NETWORK_NAMES)];
+  // Network coverage against the app's own lists: every network a payment settles on (NEAR Intents'
+  // networks and Arc) and the ones only USDT0 reaches.
+  const { PAYMENT_NETWORK_IDS, OFT_NETWORK_NAMES } = await import(pathToFileURL(join(ROOT, 'src', 'lib', 'chains.ts')).href);
+  const networkIds = [...PAYMENT_NETWORK_IDS, ...Object.keys(OFT_NETWORK_NAMES)];
   for (const id of networkIds) if (!networkLogos[id]) missing.push(`network:${id} (no source)`);
 
   const missingTokens = missing.filter((m) => !m.includes(':'));
@@ -754,7 +758,7 @@ export const TOKEN_LOGOS: Record<string, string> = {
 ${entries(tokens)}
 };
 
-/* Keyed by the network ids of NETWORK_NAMES and OFT_NETWORK_NAMES (src/lib/chains.ts). */
+/* Keyed by the network ids of PAYMENT_NETWORK_NAMES and OFT_NETWORK_NAMES (src/lib/chains.ts). */
 export const NETWORK_LOGOS: Record<string, string> = {
 ${entries(networks)}
 };

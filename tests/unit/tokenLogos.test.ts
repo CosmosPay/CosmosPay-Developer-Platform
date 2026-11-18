@@ -2,13 +2,13 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { NETWORK_IDS, OFT_NETWORK_NAMES } from '@/lib/chains';
+import { OFT_NETWORK_NAMES, PAYMENT_NETWORK_IDS } from '@/lib/chains';
 import { NETWORK_LOGOS, TOKEN_LOGOS, networkLogo, normalizeSymbol, tokenLogo } from '@/lib/token-logos';
 
 const PUBLIC_DIR = fileURLToPath(new URL('../../public', import.meta.url));
 const LOGOS_DIR = fileURLToPath(new URL('../../src/assets/logos/', import.meta.url));
 
-/* Networks in NETWORK_NAMES or OFT_NETWORK_NAMES with no official artwork, by id, each with a
+/* Networks a payment settles on, or in OFT_NETWORK_NAMES, with no official artwork, by id, each with a
    comment giving the reason. Empty today: every network has one. */
 const NETWORKS_WITHOUT_LOGO: readonly string[] = [];
 
@@ -27,7 +27,7 @@ test('every logo in the manifest is a file under src/assets/logos or public/medi
 });
 
 test('every network the app names has a logo', () => {
-  for (const id of NETWORK_IDS) {
+  for (const id of PAYMENT_NETWORK_IDS) {
     if (NETWORKS_WITHOUT_LOGO.includes(id)) continue;
     assert.ok(networkLogo(id), `no logo for network ${id}`);
   }
