@@ -52,7 +52,7 @@ Authorization: Bearer <API key>
 
 1. A person creates the key. They sign in to the developer platform at ${dev} (sign-in goes through Authentik, Cosmos Pay's identity provider), open the organization the key will act for and create it under API keys; that takes the organization's permission to create keys. Nothing issues a key to an agent on its own.
 2. Never ask a person for their password, a sign-in code or their session, and never sign in for them. Ask them to create a key with the scopes your task needs and to hand it to you through a secret store or an environment variable.
-3. The prefix names the network: \`dv_\` keys are test keys (Stellar testnet, Solana devnet, Monad testnet) and \`prod_\` keys are live keys (mainnet). The key decides the network, not the request.
+3. The prefix names the network: \`dv_\` keys are test keys (Stellar testnet, Solana devnet, Monad testnet, Arc Testnet) and \`prod_\` keys are live keys (mainnet). The key decides the network, not the request.
 4. Each key carries its own scopes, \`resource:action\` (for example \`payments:read\` and \`payments:write\`), or the admin role, which skips the scope check. Ask for the fewest scopes the task needs.
 5. The full key is shown once, when it is created (and again when it is rotated). Keep it on a server: never in a browser, a URL, a log or a reply.
 

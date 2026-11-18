@@ -8,7 +8,7 @@
    names ever appear. Add your own as plain strings, e.g.:
      export const CLIENTS = ["Acme", "Globex", "Initech"];
    To show logos instead of names, swap the <Marquee> render in Hero.tsx. */
-import { NETWORK_IDS } from "@/lib/chains";
+import { NETWORK_COUNTS } from "@/lib/chains";
 import { PLAN_SPECS } from "@/lib/plans";
 import { CHECKOUT_THEMES } from "@/lib/payments/checkout-themes";
 import { LOCALES } from "@/lib/i18n/locales";
@@ -49,14 +49,16 @@ export const SOL_META = [
   { i: "wallet" },
 ];
 /* Every figure on the home is a product fact the code backs, never a volume, an uptime or a
-   customer count: the networks Cosmos Pay works with (NETWORK_IDS: customers pay from any of them,
-   with swaps between them; product owner, 2026-11-03: never "three networks"), the chargebacks a
+   customer count: the networks Cosmos Pay works with (every network a payment settles on; product
+   owner, 2026-11-03: never "three networks"), the chargebacks a
    confirmed payment can get (none: it is final), Starter's rate (plans.ts) and the settlement
    time on Stellar. The labels come from the catalog; `{fixed}` in them is Starter's fixed part. */
 const [STARTER_PCT, STARTER_FIXED] = PLAN_SPECS.starter.perTx.split(" + ");
-export const SWAP_NETWORKS = NETWORK_IDS.length;
+/* `{n}` in the site's copy is how many networks Cosmos Pay works with, `{swapN}` how many its swaps
+   reach (src/lib/chains.ts): every component that fills one passes both. */
+export const NETWORK_VARS = NETWORK_COUNTS;
 export const STAT_VALUES = [
-  { n: String(SWAP_NETWORKS), u: "" },
+  { n: String(NETWORK_COUNTS.n), u: "" },
   { n: "0", u: "" },
   { n: STARTER_PCT, u: "" },
   { n: "~5", u: "s" },

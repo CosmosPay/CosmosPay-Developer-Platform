@@ -20,6 +20,9 @@ test('the organization wallets that can take it: NEAR, and EVM ones on any EVM n
   assert.equal(isRouteFeeWallet('monad', EVM), true);
   assert.equal(isRouteFeeWallet('tron', 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t'), false);
   assert.equal(isRouteFeeWallet('sui', '0x' + 'a'.repeat(64)), false);
+  // Arc is not on the route: its wallets never take a route's fee.
+  assert.ok(!EVM_NETWORK_IDS.includes('arc' as never));
+  assert.equal(isRouteFeeWallet('arc', EVM), false);
 });
 
 test('a link takes deposits on a deposit network, or on mainnet without a merchant fee', () => {
@@ -27,4 +30,6 @@ test('a link takes deposits on a deposit network, or on mainnet without a mercha
   assert.equal(takesDeposits('stellar', true, false), true);
   assert.equal(takesDeposits('stellar', false, false), false);
   assert.equal(takesDeposits('solana', true, true), false);
+  // The cross-chain route does not reach Arc, so an Arc link never takes a payment from elsewhere.
+  assert.equal(takesDeposits('arc', true, false), false);
 });

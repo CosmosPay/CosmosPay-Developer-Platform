@@ -3,7 +3,7 @@
 import { useCopy, IcArrow, IcChevSm, IcCheck, IcCopy, DOCS, docsHref } from "@/components/cosmos/shared";
 import { CodeTokens } from "@/components/cosmos/ui/CodeTokens";
 import { useT, fmt } from "@/lib/i18n/index";
-import { API_SNIPPET, API_CARD_DOCS, API_CARD_KEYS, SDK_DOCS, SDK_KEYS, SWAP_NETWORKS } from "@/components/cosmos/marketing/data";
+import { API_SNIPPET, API_CARD_DOCS, API_CARD_KEYS, SDK_DOCS, SDK_KEYS, NETWORK_VARS } from "@/components/cosmos/marketing/data";
 import { API_ICONS, SDK_ICONS } from "@/components/cosmos/marketing/icons";
 
 // Deep links into the docs site (served by the developer platform at /docs): each SDK button to its
@@ -32,7 +32,7 @@ export function ApiSection() {
             <div className="api-card reveal" key={key} style={{ transitionDelay: `${i * 0.08}s` }}>
               <div className="ic">{API_ICONS[key]}</div>
               <h3>{a.cards[key].title}</h3>
-              <p>{fmt(a.cards[key].desc, { n: SWAP_NETWORKS })}</p>
+              <p>{fmt(a.cards[key].desc, NETWORK_VARS)}</p>
               <a className="docs-link" href={CARD_HREF[key]}>{a.cards[key].link} <IcChevSm /></a>
             </div>
           ))}

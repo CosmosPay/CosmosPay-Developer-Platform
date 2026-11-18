@@ -57,9 +57,9 @@ _openapi:
           Requires the `customers:read` scope.
         heading: list-the-consumers-customers-with-payment-stats
       - content: >-
-          A customer holds up to 20 `wallets` on Stellar, Solana or Monad (the
-          deprecated `account` counts as one of them), and a wallet named twice
-          counts once. Payments settled from any of them count toward the
+          A customer holds up to 20 `wallets` on Stellar, Solana, Monad or Arc
+          (the deprecated `account` counts as one of them), and a wallet named
+          twice counts once. Payments settled from any of them count toward the
           customer. A wallet another of your customers already holds is `409
           customer_wallet_taken`.
 
@@ -92,9 +92,9 @@ _openapi:
           Requires the `customers:write` scope.
         heading: delete-a-customer
       - content: >-
-          A customer holds any number of wallets (up to 20), on Stellar, Solana
-          or Monad; payments paid from any of them count toward it. A wallet the
-          customer already holds answers as it is.
+          A customer holds any number of wallets (up to 20), on Stellar, Solana,
+          Monad or Arc; payments paid from any of them count toward it. A wallet
+          the customer already holds answers as it is.
 
 
           Requires the `customers:write` scope.

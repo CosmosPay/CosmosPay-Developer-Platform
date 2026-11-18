@@ -2,10 +2,10 @@
    The proof itself (the challenge, the signature) is checked by the route; this layer refuses
    what is malformed. `z` comes from @/lib/openapi/zod so these schemas can be documented (CLAUDE.md). */
 import { z } from "@/lib/openapi/zod";
-import { NETWORK_IDS, isNetworkAddress, networkAddressMessage, type NetworkId } from "@/lib/chains";
+import { PAYMENT_NETWORK_IDS, isNetworkAddress, networkAddressMessage, type NetworkId } from "@/lib/chains";
 import { WALLET_LABEL_MAX, WALLET_PROVIDER_IDS, WALLET_PROVIDERS, addedByAddress } from "@/lib/org-wallets";
 
-const chainSchema = z.enum(NETWORK_IDS as [NetworkId, ...NetworkId[]]);
+const chainSchema = z.enum(PAYMENT_NETWORK_IDS as [NetworkId, ...NetworkId[]]);
 /* Long enough for a Cardano base address or a Zcash unified one. */
 const addressSchema = z.string().trim().min(1).max(1100);
 const PROOF_MAX_JSON = 8000;

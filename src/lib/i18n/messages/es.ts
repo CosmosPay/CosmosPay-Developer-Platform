@@ -632,7 +632,7 @@ export default {
       },
       networks: {
         title: "Redes",
-        links: ["Pagos en Stellar", "Pagos en Solana", "Pagos en Monad"]
+        links: ["Pagos en Stellar", "Pagos en Solana", "Pagos en Monad", "Pagos en Arc"]
       },
       solutions: {
         title: "Soluciones",
@@ -712,7 +712,7 @@ export default {
         },
         swaps: {
           title: "Swaps",
-          desc: "Cotizá y ejecutá swaps en una misma red o entre {n} redes.",
+          desc: "Cotizá y ejecutá swaps en una misma red o entre {swapN} redes.",
           link: "API de swaps",
         },
       },
@@ -768,7 +768,7 @@ export default {
         },
         coin: {
           t: "Liquidación en stablecoins",
-          d: "Cobrá en USDC, EURC o cualquier otro token, y recibí ese mismo activo. Un cliente en cualquiera de las {n} redes puede hacer primero un swap a ese activo.",
+          d: "Cobrá en USDC, EURC o cualquier otro token, y recibí ese mismo activo. Un cliente en cualquiera de las {swapN} redes puede hacer primero un swap a ese activo.",
           long: "Poné el precio de cada pago en USDC, EURC, la moneda propia de la red o cualquier otro token, indicado por su emisor, mint o contrato. El cliente paga en ese activo y vos lo recibís en tu dirección. Cada pago guarda su hash de transacción, y el panel muestra tus saldos por activo y el volumen liquidado en USD.",
           points: ["USDC, EURC o el token que indiques", "Un hash de transacción por cada pago", "Saldos por activo en el panel", "Volumen liquidado en USD"],
         },
@@ -780,11 +780,11 @@ export default {
         },
         swap: {
           t: "Swaps entre redes",
-          d: "Intercambiá tokens entre {n} redes, con cuenta o sin ella.",
-          long: "Hacé swaps de tokens en una misma red o entre {n} redes, y mandá USDT0 desde Stellar a otras redes. Un swap en una red es una sola transacción que firma la persona; uno entre redes espera en una dirección de depósito creada para ese swap hasta que se liquida o se reembolsa. Cosmos Pay nunca retiene los fondos. La página pública de swaps y su API no piden cuenta.",
+          d: "Intercambiá tokens entre {swapN} redes, con cuenta o sin ella.",
+          long: "Hacé swaps de tokens en una misma red o entre {swapN} redes, y mandá USDT0 desde Stellar a otras redes. Un swap en una red es una sola transacción que firma la persona; uno entre redes espera en una dirección de depósito creada para ese swap hasta que se liquida o se reembolsa. Cosmos Pay nunca retiene los fondos. La página pública de swaps y su API no piden cuenta.",
           points: [
             "Swaps dentro de una misma red",
-            "Swaps entre {n} redes",
+            "Swaps entre {swapN} redes",
             "USDT0 desde Stellar a otras redes",
             "Una API pública de swaps, sin cuenta",
           ],
@@ -796,7 +796,7 @@ export default {
           points: [
             "Freighter, xBull, LOBSTR y más en Stellar",
             "Phantom y Solflare en Solana",
-            "Cualquier wallet EVM en Monad",
+            "Cualquier wallet EVM en Monad y Arc",
             "Cosmos Pay Wallet para Chrome, la web y Android",
           ],
         },
@@ -806,9 +806,9 @@ export default {
     stats: {
       title: "Simple. Seguro. Sin límites.",
       question: "¿Qué es Cosmos Pay?",
-      answer: "Cosmos Pay es una plataforma de pagos en stablecoins para negocios de Latinoamérica. Los comercios cobran en {n} redes, con enlaces de pago, un checkout alojado o una API, y el dinero llega a una dirección que ellos controlan. También ofrece swaps entre todas esas redes, y una wallet sin custodia.",
+      answer: "Cosmos Pay es una plataforma de pagos en stablecoins para negocios de Latinoamérica. Los comercios cobran en {n} redes, con enlaces de pago, un checkout alojado o una API, y el dinero llega a una dirección que ellos controlan. También ofrece swaps entre {swapN} de ellas, y una wallet sin custodia.",
       items: [
-        "redes para cobrar, con swaps entre ellas",
+        "redes para cobrar",
         "contracargos: cuando la red confirma un pago, es definitivo",
         "+ {fixed} por pago en Starter, sin cuota mensual",
         "para liquidar un pago en Stellar",
@@ -935,7 +935,7 @@ export default {
       subt: "Tarifas basadas en el volumen",
       cta: "Contactar con ventas",
     },
-    footnote: "* La comisión de red la paga la wallet de quien paga; en Monad, la comisión del relay de depósito se descuenta y se muestra en el checkout. Essentials y Growth suman acceso total a la API, tarifas más bajas y límites más altos de organizaciones, miembros y claves de API.",
+    footnote: "* La comisión de red la paga la wallet de quien paga; en Monad y Arc, la comisión del relay de depósito se descuenta y se muestra en el checkout. Essentials y Growth suman acceso total a la API, tarifas más bajas y límites más altos de organizaciones, miembros y claves de API.",
     compareTitle: "Comparar planes",
     orgsRow: "Organizaciones",
     seatsRow: "Miembros por organización",
@@ -1006,9 +1006,9 @@ export default {
       items: {
         api: { t: "API de pagos y SDK", d: "Una API REST documentada con OpenAPI y un SDK de TypeScript para crear intentos de pago y enlaces de pago, con webhooks firmados cuando un pago se confirma.", a: "Leé la documentación" },
         checkout: { t: "Checkout alojado y enlaces de pago", d: "Un enlace de pago con su código QR y una página de checkout que alojamos nosotros, en cuatro diseños y siete idiomas. Un botón de pago o un checkout integrado se suman con una sola etiqueta script.", a: "Mirá las formas de integrar" },
-        swaps: { t: "Swaps", d: "Intercambiá tokens entre {n} redes y enviá USDT0 desde Stellar, sin cuenta.", a: "Abrir swaps" },
+        swaps: { t: "Swaps", d: "Intercambiá tokens entre {swapN} redes y enviá USDT0 desde Stellar, sin cuenta.", a: "Abrir swaps" },
         private: { t: "Pagos privados", d: "Pagos en Stellar cuyo monto queda oculto en la cadena detrás de una prueba de conocimiento cero. Por ahora, en testnet.", a: "Cómo funcionan" },
-        wallet: { t: "Cosmos Pay Wallet", d: "Una wallet sin custodia para las {n} redes con las que trabajamos: una app web, una extensión de navegador y apps para Android, Windows, macOS y Linux. Las claves se generan y se cifran en el dispositivo.", a: "Conseguí la wallet" },
+        wallet: { t: "Cosmos Pay Wallet", d: "Una wallet sin custodia para {swapN} redes: una app web, una extensión de navegador y apps para Android, Windows, macOS y Linux. Las claves se generan y se cifran en el dispositivo.", a: "Conseguí la wallet" },
       },
     },
     code: {
@@ -1044,12 +1044,12 @@ export default {
   },
   swapsPage: {
     metaTitle: "Swaps de tokens entre redes, sin cuenta | Cosmos Pay",
-    metaDescription: "Cambia tokens entre {n} redes y envía USDT0 desde Stellar a 21 redes, sin cuenta, aquí o con la API pública. Cosmos Pay nunca custodia tus fondos.",
+    metaDescription: "Cambia tokens entre {swapN} redes y envía USDT0 desde Stellar a 21 redes, sin cuenta, aquí o con la API pública. Cosmos Pay nunca custodia tus fondos.",
     title: "Cambia entre redes, sin crear cuenta",
     lede: "Elige con qué pagas y qué recibes. Tu wallet firma y Cosmos Pay nunca custodia tus fondos.",
     facts: [
       { t: "Sin cuenta", s: "Abres la página y haces el swap. La API pública funciona igual." },
-      { t: "{n} redes", s: "Todas las redes a las que llegan nuestros swaps, dentro de una misma cadena o entre cadenas." },
+      { t: "{swapN} redes", s: "Todas las redes a las que llegan nuestros swaps, dentro de una misma cadena o entre cadenas." },
       { t: "Sin custodia", s: "Cada swap es una transacción que firma tu wallet o una dirección de depósito que pagas." },
     ],
     commissionLabel: "Comisión",
@@ -1386,10 +1386,10 @@ export default {
       delete: "Eliminar", deleteConfirm: "Eliminar", confirmDelete: "Esto no se puede deshacer.",
       customerSet: "Importe libre", allEvents: "Todos los eventos", events: "Eventos",
       received: "Recibido", pending: "Pendiente",
-      custDetail: { noAccount: "Añade la dirección de la wallet del cliente para ver los pagos que hizo.", title: "Cliente", edit: "Editar", save: "Guardar cambios", alias: "Alias", note: "Nota", account: "Dirección de wallet", accountPlaceholder: "Dirección en Stellar, Solana o Monad", payments: "Pagos", onChain: "On-chain", noPayments: "Aún no hay pagos.", wallets: "Wallets", addWallet: "Agregar wallet", network: "Red", walletLabel: "Nombre", walletLabelPlaceholder: "Phantom, tesorería…", removeWallet: "Quitar wallet", invalidAddress: "No es una dirección de {network}." },
+      custDetail: { noAccount: "Añade la dirección de la wallet del cliente para ver los pagos que hizo.", title: "Cliente", edit: "Editar", save: "Guardar cambios", alias: "Alias", note: "Nota", account: "Dirección de wallet", accountPlaceholder: "Dirección en Stellar, Solana, Monad o Arc", payments: "Pagos", onChain: "On-chain", noPayments: "Aún no hay pagos.", wallets: "Wallets", addWallet: "Agregar wallet", network: "Red", walletLabel: "Nombre", walletLabelPlaceholder: "Phantom, tesorería…", removeWallet: "Quitar wallet", invalidAddress: "No es una dirección de {network}." },
     },
     filters: { label: "Filtrar la lista", status: "Estado", network: "Red", kind: "Tipo", allStatuses: "Todos", allNetworks: "Todas las redes", allKinds: "Todos los tipos", date: "Fecha", dates: { any: "Cualquier fecha", today: "Hoy", "7d": "Últimos 7 días", "30d": "Últimos 30 días", "90d": "Últimos 90 días" }, shown: "{n} de {total}", clear: "Quitar filtros", noMatch: "Nada coincide con estos filtros." },
-    tokens: { custom: "Otro token…", ticker: "Símbolo del token", address: { solana: "Mint del token", monad: "Contrato del token" } },
+    tokens: { custom: "Otro token…", ticker: "Símbolo del token", address: { solana: "Mint del token", monad: "Contrato del token", arc: "Contrato del token" } },
     paylinks: {
       design: { label: "Diseño de checkout", hint: "Cómo se ve el checkout alojado de este enlace. Puedes cambiarlo cuando quieras.", preview: "Vista previa", saved: "Diseño de checkout actualizado", saveError: "No se pudo cambiar el diseño de checkout", selected: "Seleccionado" },
       title: "Enlaces de pago",
@@ -1417,9 +1417,9 @@ export default {
         asset: "Activo", assetIssuer: "Emisor del activo", assetIssuerHint: "Obligatorio para activos no nativos (G…).",
         memo: "Memo", memoHint: "MEMO_ID numérico. Se genera automáticamente si se deja vacío.",
         message: "Mensaje", messageHint: "Se muestra al pagador en su billetera (≤ 300 caracteres).", messageHintCheckout: "Se muestra al pagador en la página de pago (≤ 300 caracteres).", mainnetOnly: "Solo mainnet", mainnetOnlyHint: "Los pagos en esta red funcionan solo en mainnet. Cambia a Producción para crear uno.", depositNetworkHint: "Tu cliente paga desde cualquier red, mediante una dirección de depósito creada para cada pago. El monto exacto llega a tu wallet de {network}.", amountDeposit: "Déjalo vacío para que el pagador escriba el monto en la página de pago. Tu wallet recibe exactamente ese monto.", assetsError: "No se pudieron cargar los tokens de esta red.",
-        chain: "Red", amountMonad: "Obligatorio en Monad: el monto exacto es lo que identifica el pago.", memoHintOther: "Un número que evita que un reintento cree un segundo enlace; se genera si lo dejas vacío.", submitting: "Creando…",
+        chain: "Red", amountRequired: "Obligatorio en {network}: el monto exacto es lo que identifica el pago.", memoHintOther: "Un número que evita que un reintento cree un segundo enlace; se genera si lo dejas vacío.", submitting: "Creando…",
         mainnet: "Mainnet", more: "Más opciones",
-        merchantFee: { title: "Comisión del comercio", pct: "Porcentaje", fixed: "Monto fijo", wallet: "Wallet que recibe la comisión", paidBy: "Quién la paga", recipient: "Se descuenta del monto", payer: "La paga el pagador, encima del monto", hint: "Tu propia comisión, en el mismo pago y aparte de la de Cosmos Pay; necesita un monto. En Stellar el checkout le pide al pagador su cuenta, en Solana el pago es una transacción de Solana Pay y en Monad la reparte la dirección de depósito.", needsAmount: "La comisión del comercio necesita un monto.", sameWallet: "La comisión va a otra wallet que el pago.", pctMax: "Hasta 10\u00a0%.", routeHint: "En {network} tu comisión se acredita dentro de la ruta entre redes, en el token que envía el pagador, a una de tus wallets NEAR o EVM. Necesita un monto.", routeWallet: "Cuenta que recibe la comisión" },
+        merchantFee: { title: "Comisión del comercio", pct: "Porcentaje", fixed: "Monto fijo", wallet: "Wallet que recibe la comisión", paidBy: "Quién la paga", recipient: "Se descuenta del monto", payer: "La paga el pagador, encima del monto", hint: "Tu propia comisión, en el mismo pago y aparte de la de Cosmos Pay; necesita un monto. En Stellar el checkout le pide al pagador su cuenta, en Solana el pago es una transacción de Solana Pay y en Monad y Arc la reparte la dirección de depósito.", needsAmount: "La comisión del comercio necesita un monto.", sameWallet: "La comisión va a otra wallet que el pago.", pctMax: "Hasta 10\u00a0%.", routeHint: "En {network} tu comisión se acredita dentro de la ruta entre redes, en el token que envía el pagador, a una de tus wallets NEAR o EVM. Necesita un monto.", routeWallet: "Cuenta que recibe la comisión" },
         limits: { title: "Límites para pagos desde otras redes", hint: "Súbelos para un enlace que paga mucha gente a la vez.", perPayer: "Direcciones de depósito abiertas por pagador", perWindow: "Direcciones de depósito nuevas cada {minutes} minutos", range: "De {min} a {max}. Vacío deja {min}.", invalid: "Un número entero de {min} a {max}." },
         submit: "Crear enlace",
         steps: { amount: "Monto", destination: "Destino", fee: "Comisión", design: "Diseño" },
@@ -1429,7 +1429,7 @@ export default {
         eyebrow: "Enlace de pago", title: "Enlace de pago listo",
         scan: "Escanea para pagar", downloadQr: "Descargar QR",
         uri: "URI SEP-7", xdr: "XDR sin firmar",
-        uriLabels: { stellar: "URI SEP-7", solana: "URI de Solana Pay", monad: "URI EIP-681" },
+        uriLabels: { stellar: "URI SEP-7", solana: "URI de Solana Pay", monad: "URI EIP-681", arc: "URI EIP-681" },
         openWallet: "Abrir en la billetera", copyLink: "Copiar enlace", copyUri: "Copiar URI",
         fields: { id: "ID", status: "Estado", kind: "Tipo", network: "Red", destination: "Destino", source: "Origen", amount: "Importe", asset: "Activo", memo: "Memo", message: "Mensaje", txHash: "ID de transacción", created: "Creado", merchantFee: "Comisión del comercio", paidFrom: "Pagado desde", payerEmail: "Email del pagador", receipt: "Comprobante", depositLimits: "Límites para pagos desde otras redes" },
         receipt: { sent: "Enviado por email el {time}", pending: "Aún no enviado", skippedNone: "No enviado: no se dio ningún email en el checkout", skippedMany: "No enviado: varios pagadores dieron un email y ninguno probó que el pago era suyo" }, payerEmails: { title: "Emails dados en el checkout", hint: "Los escribió quien abrió la página de pago. Sin verificar.", sent: "Reportó el pago" }, limitsValue: "{perPayer} abiertas por pagador · {perWindow} nuevas cada {minutes} minutos", limitsEdit: "Editar límites", limitsSaved: "Límites actualizados", limitsError: "No se pudieron cambiar los límites", limitsSave: "Guardar límites",

@@ -1,22 +1,22 @@
-/* network-pages.ts: what the gateway's network pages (/stellar, /solana, /monad) show that is
+/* network-pages.ts: what the gateway's network pages (/stellar, /solana, /monad, /arc) show that is
    not copy: the assets offered by name on each network (the dashboard's presets, every address
    verified: src/lib/stellar-assets.ts and src/lib/chains.ts), the wallets named for it (a subset
    of the home's wallet marquee, src/components/payments/landing/data.ts) and the request that
    creates a payment link there (the Payments API's CreatePayPaymentIntentDto in
    docs/openapi.json). The words are in src/lib/payments/landing-i18n.ts (`network`, `networks`).
    Pure, so tests/unit/paymentsNetworkPages.test.ts checks it against the spec and the presets. */
-import { NATIVE_CODES, TOKEN_PRESETS, explorerAccountUrl, type Chain, type Tier } from "@/lib/chains";
+import { NATIVE_CODES, TOKEN_PRESETS, explorerAccountUrl, isEvmChain, offersNativeCoin, type Chain, type Tier } from "@/lib/chains";
 import { standardAssets } from "@/lib/stellar-assets";
 
 /** The Payments API's base URL, as docs/openapi.json's `servers` names it. */
 export const PAYMENTS_API_SERVER = "https://api.cosmospay.lat/cosmos-api";
-/** The route that creates a payment link on any of the three networks. */
+/** The route that creates a payment link on any of the networks with a wallet link of their own. */
 export const CREATE_PAY_PATH = "/v1/payment-intents/pay";
 
 export interface PresetRow {
   tier: Tier;
   code: string;
-  /** The issuer (Stellar), mint (Solana) or contract (Monad); null for the network's own coin. */
+  /** The issuer (Stellar), mint (Solana) or contract (Monad, Arc); null for the network's own coin. */
   address: string | null;
   /** Who issues it, where the presets say (Circle, Tether); null otherwise. */
   issuer: string | null;
@@ -26,7 +26,8 @@ export interface PresetRow {
 
 const TIERS: readonly Tier[] = ["public", "testnet"];
 
-/** The assets the dashboard offers by name on a network, mainnet first, its own coin first. */
+/** The assets the dashboard offers by name on a network, mainnet first, its own coin first (none
+ *  on Arc, whose coin is the USDC its first preset charges). */
 export function networkPresets(chain: Chain): PresetRow[] {
   return TIERS.flatMap((tier): PresetRow[] => {
     if (chain === "stellar") {
@@ -38,7 +39,7 @@ export function networkPresets(chain: Chain): PresetRow[] {
         explorer: explorerAccountUrl("stellar", tier, a.issuer),
       }));
     }
-    const native: PresetRow = { tier, code: NATIVE_CODES[chain], address: null, issuer: null, explorer: null };
+    const native: PresetRow[] = offersNativeCoin(chain) ? [{ tier, code: NATIVE_CODES[chain], address: null, issuer: null, explorer: null }] : [];
     const tokens = TOKEN_PRESETS[chain][tier].map((p): PresetRow => ({
       tier,
       code: p.code,
@@ -46,17 +47,18 @@ export function networkPresets(chain: Chain): PresetRow[] {
       issuer: null,
       explorer: explorerAccountUrl(chain, tier, p.issuer),
     }));
-    return [native, ...tokens];
+    return [...native, ...tokens];
   });
 }
 
 /* The wallets each page names, as the gateway's FAQ names them ("Which wallets can my customers
-   use?"); their logos come from the home's wallet marquee. Monad's page names none: any EVM wallet
-   that reads EIP-681 links pays there. */
+   use?"); their logos come from the home's wallet marquee. Monad's and Arc's pages name none: any
+   EVM wallet that reads EIP-681 links pays there. */
 export const NETWORK_WALLETS: Record<Chain, readonly string[]> = {
   stellar: ["Cosmos Pay Wallet", "Freighter", "LOBSTR", "xBull", "Albedo", "Rabet"],
   solana: ["Phantom", "Solflare"],
   monad: [],
+  arc: [],
 };
 
 /* What a sample request names as the merchant's address: an obvious placeholder in each
@@ -65,6 +67,7 @@ const SAMPLE_DESTINATION: Record<Chain, string> = {
   stellar: "G…YOUR_STELLAR_ACCOUNT",
   solana: "YOUR_SOLANA_ADDRESS",
   monad: "0x…YOUR_MONAD_ADDRESS",
+  arc: "0x…YOUR_ARC_ADDRESS",
 };
 
 /** The mainnet USDC preset of a network, the asset every sample charges in. */
@@ -76,8 +79,8 @@ export function mainnetUsdc(chain: Chain): PresetRow {
 
 /**
  * The body that creates a payment link for 25 USDC on a network: the fields
- * CreatePayPaymentIntentDto defines. Monad takes no wallet message (`msg`), so its sample has
- * none; an amount is required there and given everywhere.
+ * CreatePayPaymentIntentDto defines. Monad and Arc take no wallet message (`msg`), so their
+ * samples have none; an amount is required there and given everywhere.
  */
 export function payLinkBody(chain: Chain): Record<string, string> {
   const usdc = mainnetUsdc(chain);
@@ -87,7 +90,7 @@ export function payLinkBody(chain: Chain): Record<string, string> {
     amount: "25",
     assetCode: usdc.code,
     assetIssuer: usdc.address ?? "",
-    ...(chain === "monad" ? {} : { msg: "Order #1001" }),
+    ...(isEvmChain(chain) ? {} : { msg: "Order #1001" }),
   };
 }
 

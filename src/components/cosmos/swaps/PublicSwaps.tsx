@@ -26,7 +26,7 @@ import { Sk } from "@/components/cosmos/dashboard/components/Skeleton";
 import { orgSwapApi, publicSwapApi, type SwapRecordKind } from "@/lib/swap-api";
 import { isUsdt0OnStellar, type Usdt0Route } from "@/lib/usdt0";
 import { planSwapFeeBps, swapFeePct, swapFeeRange } from "@/lib/plans";
-import { NETWORK_IDS } from "@/lib/chains";
+import { NETWORK_COUNTS } from "@/lib/chains";
 import { publicSwapCalls, usdt0OtherNetworks } from "@/lib/public-swaps";
 import { docsLink } from "@/lib/urls";
 
@@ -81,8 +81,8 @@ export default function PublicSwaps({ lang, apiBase, docsUrl, showHeader = false
   const [pick, setPick] = useState<SwapPick | null>(null);
   // The public consumer's commission, and the range a plan brings it down to.
   const rates = { pct: swapFeePct("community"), ...swapFeeRange() };
-  // `{n}` in the facts: how many networks cross-chain swaps reach, never a written count.
-  const nets = { n: NETWORK_IDS.length };
+  // `{swapN}` in the facts: how many networks cross-chain swaps reach, never a written count.
+  const nets = NETWORK_COUNTS;
   const base = apiBase.replace(/\/+$/, "");
 
   useEffect(() => {

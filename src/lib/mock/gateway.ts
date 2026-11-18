@@ -16,7 +16,7 @@ import { hex, nowIso, qrImage } from "@/lib/mock/fixtures";
 import { MOCK_PUBLIC_ORG } from "@/lib/mock/shared";
 import type { MockEnv } from "@/lib/mock/http";
 import type { PaymentIntent } from "@/lib/cosmos";
-import { isChain } from "@/lib/chains";
+import { isChain, isSwapNetwork } from "@/lib/chains";
 
 export const MOCK_GATEWAY_PREFIX = "/mock-gateway";
 
@@ -57,11 +57,11 @@ function publicLink(intent: PaymentIntent, env: MockEnv) {
   const extra = intent as PaymentIntent & { networkFee?: string | null; expiresAt?: string | null };
   const fee = intent.merchantFee ?? null;
   const payerAccountRequired = intent.chain === "stellar" && !!fee && intent.amount !== null;
-  // Every network but Stellar, Solana and Monad is paid through a deposit address only; on those
-  // three a mainnet link with no fee can be paid from another network too (a Monad one only with
-  // an amount).
+  // Every network but Stellar, Solana, Monad and Arc is paid through a deposit address only; on
+  // the first three a mainnet link with no fee can be paid from another network too (a Monad one
+  // only with an amount). Never on Arc, which the cross-chain route does not reach.
   const native = isChain(intent.chain);
-  const crossChainPayment = !native || (env === "prod" && !fee && (intent.chain !== "monad" || intent.amount !== null));
+  const crossChainPayment = !native || (isSwapNetwork(intent.chain) && env === "prod" && !fee && (intent.chain !== "monad" || intent.amount !== null));
   const qr = intent.qr?.startsWith("data:image/png;base64,") ? intent.qr : qrImage(intent.id);
   return {
     id: intent.id,

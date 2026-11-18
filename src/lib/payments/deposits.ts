@@ -20,11 +20,13 @@
    parsePaymentLink checks the link, before the page writes any of it (as text, or as an attribute
    validated first: the QR, the wallet link, the explorer). Every function returns a value for
    every outcome and never throws. */
-import { NETWORK_IDS, isNetwork, isNetworkAddress, networkName, type NetworkId } from "@/lib/chains";
+/* Every network here is one the cross-chain route reaches (the swap platform's): Arc never is,
+   so a deposit's origin and destination are checked against those alone. */
+import { NETWORK_IDS, isNetworkAddress, isSwapNetwork, networkName, type SwapNetworkId } from "@/lib/chains";
 
 /** A token the payer can pay with (the community server's CrossChainAsset). */
 export interface DepositAsset {
-  chain: NetworkId;
+  chain: SwapNetworkId;
   chainName: string;
   symbol: string;
   assetId: string;
@@ -35,7 +37,7 @@ export interface DepositAsset {
 
 /** How one main origin fares for the link's amount (the server's PaymentRouteCheck). */
 export interface DepositRoute {
-  chain: NetworkId;
+  chain: SwapNetworkId;
   /** The token's symbol on that network. */
   asset: string;
   available: boolean;
@@ -77,8 +79,8 @@ export interface ChainTransaction {
 
 /** What the payer sends from where, and where it ends (the server's DepositQuote). */
 export interface DepositQuote {
-  origin: { chain: NetworkId; asset: string; assetId: string; contract: string | null; amount: string; minimum: string; amountUsd: string | null };
-  destination: { chain: NetworkId; asset: string; contract: string | null; amount: string; amountUsd: string | null };
+  origin: { chain: SwapNetworkId; asset: string; assetId: string; contract: string | null; amount: string; minimum: string; amountUsd: string | null };
+  destination: { chain: SwapNetworkId; asset: string; contract: string | null; amount: string; amountUsd: string | null };
   /** Cosmos Pay's commission, in the origin token, already inside `origin.amount`. */
   fee: { bps: number; amount: string; asset: string };
   timeEstimateSeconds: number;
@@ -89,13 +91,13 @@ export interface PaymentDeposit {
   id: string;
   paymentLinkId: string;
   status: DepositStatus;
-  originChain: NetworkId;
+  originChain: SwapNetworkId;
   originAsset: string;
   originContract: string | null;
   /** Send exactly this; any surplus is refunded to `refundTo`. */
   amountIn: string;
   minAmountIn: string;
-  destinationChain: NetworkId;
+  destinationChain: SwapNetworkId;
   destinationAsset: string;
   destinationContract: string | null;
   amountOut: string;
@@ -156,7 +158,7 @@ export function httpsUrl(value: unknown): string | null {
 }
 
 function parseAsset(v: unknown): DepositAsset | null {
-  if (!record(v) || !isNetwork(v.chain)) return null;
+  if (!record(v) || !isSwapNetwork(v.chain)) return null;
   if (!str(v.symbol) || !TOKEN_TEXT.test(v.symbol) || !str(v.assetId) || !TOKEN_TEXT.test(v.assetId)) return null;
   if (!count(v.decimals) || v.decimals > 36) return null;
   if (!strOrNull(v.contract) || (v.contract !== null && !TOKEN_TEXT.test(v.contract))) return null;
@@ -207,7 +209,7 @@ export function parseDepositRoutes(body: unknown): DepositRoute[] {
   const list = record(b) && Array.isArray(b.routes) ? b.routes : [];
   const routes: DepositRoute[] = [];
   for (const r of list) {
-    if (!record(r) || !isNetwork(r.chain) || !str(r.asset) || !TOKEN_TEXT.test(r.asset) || typeof r.available !== "boolean") continue;
+    if (!record(r) || !isSwapNetwork(r.chain) || !str(r.asset) || !TOKEN_TEXT.test(r.asset) || typeof r.available !== "boolean") continue;
     routes.push({ chain: r.chain, asset: r.asset, available: r.available, reason: r.available ? null : oneLine(r.reason) || null });
   }
   return routes;
@@ -219,7 +221,7 @@ export function routeRefusal(routes: readonly DepositRoute[], asset: Pick<Deposi
 }
 
 /** The networks a list of tokens spans, by name. */
-export function depositNetworks(assets: readonly DepositAsset[]): NetworkId[] {
+export function depositNetworks(assets: readonly DepositAsset[]): SwapNetworkId[] {
   return [...new Set(assets.map((a) => a.chain))].sort((a, b) => networkName(a).localeCompare(networkName(b), "en"));
 }
 
@@ -234,9 +236,9 @@ export function parseDepositQuote(body: unknown): DepositQuote | null {
   const o = b.origin;
   const d = b.destination;
   const f = b.fee;
-  if (!isNetwork(o.chain) || !str(o.asset) || !TOKEN_TEXT.test(o.asset) || !str(o.assetId) || !strOrNull(o.contract)) return null;
+  if (!isSwapNetwork(o.chain) || !str(o.asset) || !TOKEN_TEXT.test(o.asset) || !str(o.assetId) || !strOrNull(o.contract)) return null;
   if (!decimal(o.amount) || !decimal(o.minimum) || !strOrNull(o.amountUsd)) return null;
-  if (!isNetwork(d.chain) || !str(d.asset) || !TOKEN_TEXT.test(d.asset) || !strOrNull(d.contract) || !decimal(d.amount) || !strOrNull(d.amountUsd)) return null;
+  if (!isSwapNetwork(d.chain) || !str(d.asset) || !TOKEN_TEXT.test(d.asset) || !strOrNull(d.contract) || !decimal(d.amount) || !strOrNull(d.amountUsd)) return null;
   if (!count(f.bps) || !decimal(f.amount) || !str(f.asset)) return null;
   if (!count(b.timeEstimateSeconds)) return null;
   const usd = (v: string | null) => (v !== null && DECIMAL.test(v) ? v : null);
@@ -269,7 +271,7 @@ export function parsePaymentDeposit(body: unknown): PaymentDeposit | null {
   if (!record(b)) return null;
   if (!isPaymentDepositId(b.id) || !isPaymentDepositId(b.paymentLinkId)) return null;
   if (!str(b.status) || !(DEPOSIT_STATUSES as readonly string[]).includes(b.status)) return null;
-  if (!isNetwork(b.originChain) || !isNetwork(b.destinationChain)) return null;
+  if (!isSwapNetwork(b.originChain) || !isSwapNetwork(b.destinationChain)) return null;
   if (!str(b.originAsset) || !TOKEN_TEXT.test(b.originAsset) || !str(b.destinationAsset) || !TOKEN_TEXT.test(b.destinationAsset)) return null;
   if (!strOrNull(b.originContract) || !strOrNull(b.destinationContract)) return null;
   for (const key of ["amountIn", "minAmountIn", "amountOut", "feeAmount"] as const) if (!decimal(b[key])) return null;
@@ -488,7 +490,7 @@ export function recordPayer(
 }
 
 export interface DepositChoice {
-  originChain: NetworkId;
+  originChain: SwapNetworkId;
   /** The token, by its contract or `native`. */
   originAsset: string;
   /** The payer's own address on `originChain`, where a refund goes. */

@@ -5,7 +5,7 @@
    - Stellar: SEP-53 (Freighter's signMessage), Ed25519 over SHA-256("Stellar Signed Message:\n" + text),
      or the proof transaction signed in any wallet (src/lib/wallets/wallet-proof-xdr.ts).
    - Solana and Fogo: Ed25519 over the text's UTF-8 bytes (Phantom's and Solflare's signMessage).
-   - Monad and every other EVM network (EIP-191 personal_sign), secp256k1 over keccak-256 of the
+   - Monad, Arc and every other EVM network (EIP-191 personal_sign), secp256k1 over keccak-256 of the
      prefixed text; the signer's address is recovered from the signature and compared.
    - Tron TIP-191, TON ton_proof, NEAR NEP-413 (and the account's full-access keys), Sui personal
      message, Aptos and Movement AIP-62 (and the account's authentication key), Starknet SNIP-12

@@ -13,6 +13,7 @@
    (the upstream JSON inside the envelope). Per environment, shared by the organizations. */
 import { Account, Asset, Networks, Operation, StrKey, TransactionBuilder } from "@stellar/stellar-sdk";
 import type { CrossChainSwap, PaymentIntent, Swap } from "@/lib/cosmos";
+import { TOKEN_PRESETS } from "@/lib/chains";
 import {
   badRequest,
   conflict,
@@ -116,6 +117,7 @@ function explorerOn(chain: string, hash: string): string {
     base: "https://basescan.org/tx/",
     arb: "https://arbiscan.io/tx/",
     monad: "https://monadscan.com/tx/",
+    arc: "https://explorer.arc.io/tx/",
     btc: "https://mempool.space/tx/",
     near: "https://nearblocks.io/txns/",
   };
@@ -253,7 +255,7 @@ interface Owned {
 
 interface AdminPaymentIntent extends Owned {
   kind: "TX" | "PAY";
-  chain: "stellar" | "solana" | "monad";
+  chain: "stellar" | "solana" | "monad" | "arc";
   status: PayStatus;
   network: Network;
   source: string | null;
@@ -362,7 +364,7 @@ interface AdminCustomer extends Owned {
   name: string;
   alias: string | null;
   email: string | null;
-  wallets: { id: string; chain: "stellar" | "solana" | "monad"; address: string; label: string | null; createdAt: string }[];
+  wallets: { id: string; chain: "stellar" | "solana" | "monad" | "arc"; address: string; label: string | null; createdAt: string }[];
   updatedAt: string;
 }
 
@@ -497,6 +499,7 @@ const SOLANA_DEVNET_USDC = "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU";
 const SOLANA_USDT = "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB";
 const SOLANA_JUP = "JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN";
 const MONAD_USDC = "0x754704bc059f8c67012fed69bc8a327a5aafb603";
+const ARC_USDC = TOKEN_PRESETS.arc.public[0].issuer;
 
 function seedPaymentIntents(r: Rng, consumers: ConsumerSeed[]): AdminPaymentIntent[] {
   const rows: AdminPaymentIntent[] = [];
@@ -506,7 +509,7 @@ function seedPaymentIntents(r: Rng, consumers: ConsumerSeed[]): AdminPaymentInte
     for (let i = 0; i < count; i++) {
       const key = `admin-pi:${network}:${i}`;
       const c = pickConsumer(r, consumers);
-      const chain = weighted(r, [["stellar", 60], ["solana", 25], ["monad", 15]] as const);
+      const chain = weighted(r, [["stellar", 58], ["solana", 24], ["monad", 12], ["arc", 6]] as const);
       const status = statusAt(r, i, PAY_STATUSES);
       const hours = i * (network === "public" ? 9.5 : 11) + r.next() * 6;
       const createdAt = hoursAgo(hours);
@@ -529,6 +532,11 @@ function seedPaymentIntents(r: Rng, consumers: ConsumerSeed[]): AdminPaymentInte
         if (asset === "native") amount = r.amount(0.1, 40, 4);
         destination = solanaAddress(`admin-dest:${c.id}:solana`);
         uri = `solana:${destination}?amount=${amount}${assetIssuer ? `&spl-token=${assetIssuer}` : ""}&reference=${solanaAddress(`${key}:ref`)}`;
+      } else if (chain === "arc") {
+        // USDC through its ERC-20 interface (6 decimals), to the payment's deposit address.
+        assetIssuer = ARC_USDC;
+        destination = evmAddress(`admin-deposit:${key}`);
+        uri = `ethereum:${ARC_USDC}@${network === "public" ? 5042 : 5042002}/transfer?address=${destination}&uint256=${Math.round(Number(amount) * 1e6)}`;
       } else {
         asset = network === "public" && r.chance(0.7) ? "USDC" : "native";
         assetIssuer = asset === "USDC" ? MONAD_USDC : null;
@@ -785,7 +793,7 @@ function seedCustomers(r: Rng, consumers: ConsumerSeed[]): AdminCustomer[] {
     const wallets: AdminCustomer["wallets"] = [];
     const n = weighted(r, [[0, 2], [1, 6], [2, 3], [3, 1]] as const);
     for (let w = 0; w < n; w++) {
-      const chain = w === 0 ? "stellar" : r.pick(["stellar", "solana", "monad"] as const);
+      const chain = w === 0 ? "stellar" : r.pick(["stellar", "solana", "monad", "arc"] as const);
       const address = chain === "stellar" ? stellarAccount(`${key}:w${w}`) : chain === "solana" ? solanaAddress(`${key}:w${w}`) : evmAddress(`${key}:w${w}`);
       wallets.push({ id: cuid(`${key}:wallet:${w}`), chain, address, label: w === 0 ? "Main" : r.chance(0.5) ? "Ops" : null, createdAt });
     }

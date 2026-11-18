@@ -154,9 +154,10 @@ _openapi:
           which is what makes signing it safe.
 
 
-          On Solana and Monad (`chain`), a `chain: {chain}` line follows the
-          first one. Solana signs the bytes with ed25519 (`signMessage`; base64
-          or base58); Monad with EIP-191 `personal_sign` (0x-hex).
+          On Solana, Monad and Arc (`chain`), a `chain: {chain}` line follows
+          the first one. Solana signs the bytes with ed25519 (`signMessage`;
+          base64 or base58); Monad and Arc with EIP-191 `personal_sign`
+          (0x-hex).
 
 
           Requires the `payments:write` scope. The shared public key may call
@@ -182,8 +183,8 @@ _openapi:
           ```
 
 
-          On Solana and Monad a `chain: {chain}` line follows the first one, and
-          the bytes are signed as for sign-in.
+          On Solana, Monad and Arc a `chain: {chain}` line follows the first
+          one, and the bytes are signed as for sign-in.
 
 
           Requires the `payments:write` scope. The shared public key may call

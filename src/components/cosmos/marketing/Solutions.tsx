@@ -3,12 +3,13 @@
 import { useState } from "react";
 import { Modal, IcArrow, IcCheck, ctaProps } from "@/components/cosmos/shared";
 import { useT, fmt } from "@/lib/i18n/index";
-import { SOL_EX, SOL_META, SWAP_NETWORKS } from "@/components/cosmos/marketing/data";
+import { SOL_EX, SOL_META, NETWORK_VARS } from "@/components/cosmos/marketing/data";
 import { IcExpand, SOL_ICONS } from "@/components/cosmos/marketing/icons";
 import { CodeTokens } from "@/components/cosmos/ui/CodeTokens";
 
-/* `{n}` in an item's copy is the number of networks cross-chain swaps reach (NETWORK_IDS). */
-const VARS = { n: SWAP_NETWORKS };
+/* `{n}` in an item's copy is the number of networks Cosmos Pay works with, `{swapN}` the number
+   its swaps reach. */
+const VARS = NETWORK_VARS;
 
 function PayMock() {
   const t = useT();

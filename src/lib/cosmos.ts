@@ -9,7 +9,7 @@
    those same headers ourselves, scoping every payment intent to the signed-in
    user's consumer (`cosmos_<userId>`), exactly as a real API key would. */
 import { COSMOS_API_URL, COSMOS_GATEWAY_SECRET } from "astro:env/server";
-import type { NetworkId } from "@/lib/chains";
+import type { Chain, NetworkId } from "@/lib/chains";
 import type { PaymentDeposit } from "@/lib/payments/deposits";
 import { keyPrefix } from "@/utils/apisix";
 import { isSafeUpstreamPath } from "@/lib/upstream-path";
@@ -243,7 +243,7 @@ export async function proxyCosmosRequest(opts: {
 export interface PaymentIntent {
   id: string;
   kind: "TX" | "PAY";
-  /** Where it settles (any network of NETWORK_IDS); `network` is the tier (public or testnet). */
+  /** Where it settles (any network a payment settles on, Arc included); `network` is the tier (public or testnet). */
   chain: NetworkId;
   status: "PENDING" | "SUBMITTED" | "SUCCEEDED" | "FAILED" | "CANCELLED" | "EXPIRED";
   network: string;
@@ -470,7 +470,7 @@ export const cosmosProducts = {
 /* ---- Customers (merchant-managed, with derived payment stats). ---- */
 export interface CustomerWallet {
   id: string;
-  chain: "stellar" | "solana" | "monad";
+  chain: Chain;
   address: string;
   label: string | null;
   createdAt: string;

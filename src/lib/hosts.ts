@@ -5,7 +5,7 @@
  *   cosmospay.lat           "site"      /, /pricing, /tos, /about  (pages under src/pages/site/)
  *   dev.cosmospay.lat       "dev"       /login, /dashboard, /api…  (the rest of src/pages/)
  *   payments.cosmospay.lat  "payments"  /, its content pages (/integrations, /use-cases, /security,
- *                                       /fees, /compare, /faq, /stellar, /solana, /monad: every
+ *                                       /fees, /compare, /faq, /stellar, /solana, /monad, /arc: every
  *                                       page in src/lib/payments/site-pages.ts), /pay, /contact (the
  *                                       contact form's POST),
  *                                       /{payment link id}, /preview/{design}
