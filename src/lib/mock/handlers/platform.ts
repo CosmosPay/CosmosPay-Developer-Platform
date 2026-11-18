@@ -12,8 +12,10 @@ import { TICKET_PRIORITIES, TICKET_STATUSES } from "@/lib/support-status";
 import { COSMOS_SCOPES } from "@/lib/cosmos-scopes";
 import { isNetwork, isNetworkAddress, type NetworkId } from "@/lib/chains";
 import { addedByAddress, CHALLENGE_TTL_MS, normalizeWalletAddress, walletProofMessage } from "@/lib/org-wallets";
-import { DISCORD_KEY_DESCRIPTION, DISCORD_KEY_SCOPES, INSTALL_TTL_MS, discordKeyName } from "@/lib/discord-link";
-import { DEFAULT_LINK_ASSET, normalizeLinkAsset, outcomeLocation } from "@/lib/discord-link-shared";
+import { DISCORD_KEY_DESCRIPTION, DISCORD_KEY_SCOPES, INSTALL_TTL_MS, authorizeUrl, discordKeyName, isInstallState, newInstallState } from "@/lib/discord-link";
+import { DEFAULT_LINK_ASSET, isBotRefusalCode, normalizeLinkAsset, outcomeLocation, type LinkOutcome } from "@/lib/discord-link-shared";
+import { deleteBotLink, exchangeDiscordCode, postBotLink, readDiscordUser } from "@/lib/discord-http";
+import { mockDiscordLive } from "@/lib/mock/discord-live";
 import { ApiStatus, jsonError } from "@/lib/http";
 import {
   badRequest,
@@ -180,6 +182,18 @@ interface PlatformState {
   users: UserRec[];
   /** Invitations addressed to the sample account (shown in its own dashboard). */
   myInvitations: (InvitationRec & { orgId: string; orgName: string })[];
+  /** The live Discord link's open install requests, by state (src/lib/mock/discord-live.ts). */
+  discordInstalls?: Record<string, DiscordInstallRec>;
+  /** The servers linked through the live Discord link, whose bot hears an unlink. */
+  discordLiveGuilds?: string[];
+}
+
+interface DiscordInstallRec {
+  orgId: string;
+  walletId: string;
+  environment: "dev" | "prod";
+  asset: string;
+  expiresAt: number;
 }
 
 /* Other people on the team and in the admin's user list. */
@@ -741,7 +755,8 @@ const orgRoutes: MockRoute[] = [
 
 /* The Discord link. Install answers the address the callback would end on, having linked a sample
    server at once (no Discord here), so the flow and its notice can be walked through; the callback
-   itself answers as for a request it does not know. */
+   itself answers as for a request it does not know. With the live settings
+   (src/lib/mock/discord-live.ts) both go through the real Discord application and the real bot. */
 const planLimit = (message: string) => jsonError({ message, code: 403, status: ApiStatus.PLAN_LIMIT });
 /* A store kept from before the Discord link (a hot reload) has no list yet. */
 const discordState = () => {
@@ -774,6 +789,17 @@ const discordRoutes: MockRoute[] = [
     }
     const wallet = org.wallets.find((w) => w.id === walletId);
     if (!wallet) return badRequest("That wallet is not one of the organization's.");
+    const live = mockDiscordLive();
+    if (live) {
+      // The real Discord application, then the real bot (the callback below).
+      if (environment !== live.environment) {
+        return badRequest(`COSMOS_MOCK_DISCORD_KEY is a ${live.environment === "dev" ? "sandbox" : "production"} key: link from ${live.environment === "dev" ? "Sandbox" : "Production"}.`);
+      }
+      const id = newInstallState();
+      const expiresAt = Date.now() + INSTALL_TTL_MS;
+      s.discordInstalls = { ...s.discordInstalls, [id]: { orgId: org.id, walletId, environment, asset, expiresAt } };
+      return created({ url: authorizeUrl({ clientId: live.config.clientId, redirectUri: live.config.redirectUri, state: id }), expiresAt: new Date(expiresAt).toISOString() }, "Continue in Discord");
+    }
     const at = nowIso();
     const guildName = `${COMPANIES[s.discordLinks.length % COMPANIES.length]} community`;
     const keyId = `cosmos_${uuid(`key:${org.id}:discord:${at}:${Math.random()}`)}`;
@@ -797,7 +823,7 @@ const discordRoutes: MockRoute[] = [
     notify("apikey.created", "API key created", `Linked the Discord server “${guildName}”`, { id: keyId, environment, role: "user" });
     return created({ url: outcomeLocation({ linked: true }), expiresAt: new Date(Date.now() + INSTALL_TTL_MS).toISOString() }, "Continue in Discord");
   }),
-  route("DELETE", "/api/organizations/:id/discord/:linkId", (req) => {
+  route("DELETE", "/api/organizations/:id/discord/:linkId", async (req) => {
     const org = findOrg(req.params.id);
     if (!org) return notFound("Organization not found");
     const s = discordState();
@@ -806,17 +832,97 @@ const discordRoutes: MockRoute[] = [
     if (!hasPermission(org, `${link.environment === "prod" ? "apiKeysLive" : "apiKeysTest"}:delete`)) {
       return forbidden("You don't have permission to revoke this kind of API key in this organization.");
     }
+    const live = mockDiscordLive();
+    if (live && s.discordLiveGuilds?.includes(link.guildId)) {
+      // The key is the environment's, not minted here: only the bot lets go of it.
+      const bot = await deleteBotLink(live.config, link.guildId);
+      if (!bot.ok) console.warn(`[mock] discord: the bot did not unlink server ${link.guildId}: ${bot.log}`);
+      s.discordLiveGuilds = s.discordLiveGuilds.filter((g) => g !== link.guildId);
+    }
     s.discordLinks = s.discordLinks.filter((l) => l.id !== link.id);
     s.apiKeys = s.apiKeys.filter((k) => k.id !== link.apiKeyId);
     notify("apikey.deleted", "API key revoked", `Unlinked the Discord server “${link.guildName}”`, { id: link.apiKeyId, environment: link.environment });
     return ok({ id: link.id, apiKeyId: link.apiKeyId }, "Discord server unlinked");
   }),
-  route("GET", "/api/integrations/discord/callback", (req) =>
-    new Response(null, {
-      status: 302,
-      headers: { Location: outcomeLocation({ linked: false, reason: req.url.searchParams.get("error") ? "denied" : "expired", detail: null }), "Cache-Control": "no-store" },
-    })),
+  route("GET", "/api/integrations/discord/callback", async (req) => {
+    const query = req.url.searchParams;
+    const unknown: LinkOutcome = { linked: false, reason: query.get("error") ? "denied" : "expired", detail: null };
+    const live = mockDiscordLive();
+    if (!live) return outcome(unknown);
+    // As the real callback (src/pages/api/integrations/discord/callback.ts), minus the database,
+    // the session and the key it would mint: the request is used up whatever happens next.
+    const s = discordState();
+    const state = query.get("state");
+    const request = isInstallState(state) ? s.discordInstalls?.[state] : undefined;
+    if (!request || !state) return outcome(unknown);
+    const { [state]: _used, ...open } = s.discordInstalls ?? {};
+    s.discordInstalls = open;
+    if (request.expiresAt < Date.now()) return outcome({ linked: false, reason: "expired", detail: null });
+    if (query.get("error")) return outcome({ linked: false, reason: "denied", detail: null });
+    const code = query.get("code");
+    if (!code || code.length > 512) return outcome({ linked: false, reason: "discord_error", detail: null });
+    const org = findOrg(request.orgId);
+    const wallet = org?.wallets.find((w) => w.id === request.walletId);
+    if (!org || !wallet) return outcome({ linked: false, reason: "wallet_missing", detail: null });
+
+    const token = await exchangeDiscordCode(live.config, code);
+    if (!token.ok) {
+      console.error(`[mock] discord: ${token.log}`);
+      return outcome({ linked: false, reason: "discord_error", detail: null });
+    }
+    const guild = token.guild;
+    const discordUser = await readDiscordUser(token.accessToken);
+    const bot = await postBotLink(live.config, {
+      guildId: guild.id,
+      apiKey: live.apiKey,
+      chain: wallet.chain,
+      address: wallet.address,
+      asset: request.asset,
+      linkedBy: { discordUserId: discordUser.id, name: discordUser.name },
+    });
+    if (!bot.ok) {
+      console.error(`[mock] discord: server ${guild.id}: the bot ${bot.log}`);
+      return outcome(
+        bot.reason === "bot_refused"
+          ? { linked: false, reason: "bot_refused", detail: isBotRefusalCode(bot.detail) ? bot.detail : null }
+          : { linked: false, reason: "bot_unreachable", detail: null },
+      );
+    }
+
+    // Listed as the real route would: the server's earlier link (if any) gives way to this one.
+    const at = nowIso();
+    const replaced = s.discordLinks.find((l) => l.guildId === guild.id);
+    if (replaced) {
+      s.discordLinks = s.discordLinks.filter((l) => l.id !== replaced.id);
+      s.apiKeys = s.apiKeys.filter((k) => k.id !== replaced.apiKeyId);
+    }
+    const keyId = `cosmos_${uuid(`key:${org.id}:discord:${guild.id}:${at}`)}`;
+    s.apiKeys.push({ id: keyId, org: org.id, createdAt: at, updatedAt: at, permissions: [...DISCORD_KEY_SCOPES], role: "user", environment: request.environment, name: discordKeyName(guild.name), description: DISCORD_KEY_DESCRIPTION });
+    s.discordLinks.unshift({
+      id: cuid(`discord:${org.id}:${guild.id}:${at}`),
+      orgId: org.id,
+      guildId: guild.id,
+      guildName: guild.name,
+      environment: request.environment,
+      chain: wallet.chain,
+      address: wallet.address,
+      asset: request.asset,
+      apiKeyId: keyId,
+      discordUserId: discordUser.id,
+      discordUsername: discordUser.name,
+      createdBy: { id: MOCK_USER.id, name: MOCK_USER.name, email: MOCK_USER.email },
+      createdAt: at,
+      updatedAt: at,
+    });
+    s.discordLiveGuilds = [...(s.discordLiveGuilds ?? []).filter((g) => g !== guild.id), guild.id];
+    notify("apikey.created", "API key created", `Linked the Discord server “${guild.name}”`, { id: keyId, environment: request.environment, role: "user" });
+    return outcome({ linked: true });
+  }),
 ];
+
+function outcome(result: LinkOutcome): Response {
+  return new Response(null, { status: 302, headers: { Location: outcomeLocation(result), "Cache-Control": "no-store" } });
+}
 
 const accountRoutes: MockRoute[] = [
   route("PATCH", "/api/account/plan", (req) => {
