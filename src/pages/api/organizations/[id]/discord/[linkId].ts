@@ -6,7 +6,7 @@ import { hasOrgPermission } from "@/lib/org-permissions";
 import { discordConfig, discordNotConfigured } from "@/lib/discord-env";
 import { deleteBotLink } from "@/lib/discord-http";
 import { deleteDiscordLink, findDiscordLink } from "@/lib/discord-links-store";
-import { deleteApiKey, getApiKey } from "@/utils/apisix";
+import { deleteApiKey, apiKeyPresence } from "@/utils/apisix";
 import { safeNotify } from "@/lib/notifications";
 import { geoLocate } from "@/lib/geo";
 import type { APIRoute } from "astro";
@@ -45,8 +45,10 @@ export const DELETE: APIRoute = async (ctx) => {
   if (!bot.ok) console.warn(`[discord] the bot did not confirm unlinking server ${link.guildId}: ${bot.log}`);
 
   // The key lives on the consumer of the member who linked the server.
+  // Fail closed: the row goes only once the gateway confirms the key is gone (deleted, or a 404),
+  // never when it could not be asked, or a live key would be left with nobody holding its record.
   const revoked = await deleteApiKey(link.apiKeyId, link.createdById).catch(() => null);
-  if (!revoked && (await getApiKey(link.apiKeyId, link.createdById).catch(() => null))) {
+  if (!revoked && (await apiKeyPresence(link.apiKeyId, link.createdById)) !== "absent") {
     console.error(`[discord] failed to revoke the key of server ${link.guildId} (${link.apiKeyId})`);
     return jsonError({ message: "Failed to revoke the server's API key. Try again.", code: 500, status: "internal_error" });
   }

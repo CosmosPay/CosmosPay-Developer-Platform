@@ -138,11 +138,26 @@ export const GET: APIRoute = async (ctx) => {
     await revokeMinted();
     return failed("internal");
   }
-  // Linked before (here or to another organization): its key is no longer the bot's.
+  // Linked before (here or to another organization): its key is no longer the bot's. Only an admin
+  // of the Discord server can add the bot (Discord requires Manage Server), so moving a server is
+  // that server's decision; the member who had linked it hears about it all the same.
   if (saved.replaced && saved.replaced.apiKeyId !== key.id) {
     const old = saved.replaced;
     if (!(await deleteApiKey(old.apiKeyId, old.createdById).catch(() => null))) {
       console.warn(`[discord] could not revoke the previous key of server ${guild.id} (${old.apiKeyId})`);
+    }
+    if (old.orgId !== request.orgId || old.createdById !== userId) {
+      safeNotify({
+        userId: old.createdById,
+        type: "apikey.deleted",
+        title: "Discord server linked again",
+        message: `An admin of the Discord server “${old.guildName}” linked it again${old.orgId !== request.orgId ? " to another organization" : ""}; the key it held was revoked.`,
+        origin: null,
+        country: null,
+        region: null,
+        ipAddress: null,
+        metadata: { id: old.apiKeyId, environment: old.environment, discordGuildId: guild.id },
+      });
     }
   }
 
