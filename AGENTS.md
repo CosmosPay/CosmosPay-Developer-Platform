@@ -1029,6 +1029,24 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   key that can move these funds; the only server key is the community server's matcher, and
   automatic settlement is never offered to a wallet with sale offers (the matcher/arbiter trust
   edge is in the docs' security page).
+- **The public app (`/p2p`) never holds a key in the browser.** It talks to its own server route on
+  the payments origin (`src/pages/payments/p2p/api/[...path].ts`, served at `/p2p/api/*`), which
+  holds Cosmos Pay's integrator key (`P2P_APP_API_KEY`, `p2p:read` and `p2p:write`; a `dv_` key is
+  the sandbox, any other mainnet) and binds each visitor to an EVM wallet: a single-use EIP-191
+  challenge (five minutes, bound to the address, the host and the environment, kept in this
+  process's memory), then an HMAC-signed HttpOnly, SameSite=Strict cookie on `/p2p`
+  (`P2P_APP_SESSION_SECRET`, 32 characters at least). Only a whitelist goes through, each call bound
+  to that wallet (a purchase delivers to it, a sale is sent from it, an order is read or acted on
+  only when it is the wallet's, the only transactions built are its own sale's release, cancel or
+  dispute), with per-IP (`cf-connecting-ip`) and per-wallet limits, a body cap and an origin
+  check; unset, it answers 503. The decisions are pure and tested (`src/lib/p2p/app-session.ts`,
+  `app-guard.ts`). `P2P_APP_API_URL` overrides the gateway it calls (default
+  `PUBLIC_PAYMENTS_API_URL`).
+- **The charge page (`/p2p/{chargeId}`) reads the gateway from the payer's browser**, as the hosted
+  checkout does: the keyless `<route>-p2p-checkout` (`/v1/p2p-checkout/*`, any origin, no
+  credentials, `X-Payer-Token` allowed; `src/lib/apisix-keyless.ts`), every answer through
+  `src/lib/p2p/checkout-api.ts`. Name, document and email come first; the account and the exact
+  amount after. Both pages are noindex.
 - **API keys** grant `p2p:read` and `p2p:write` (`COSMOS_RESOURCES`); the compact label still fits
   APISIX's 256 characters with the whole catalog (`apiKeyLabels.test.ts`).
 - **Mock mode** answers every `/api/p2p/*` route from `src/lib/mock/handlers/p2p-market.ts`: one

@@ -189,7 +189,8 @@ export function OrderCountdown({ order, compact = false }: { order: Pick<P2pOrde
   if (!d) return compact ? <span className="p2p-cd is-none">-</span> : null;
   const left = msLeft(d.at, now);
   const text = left > 0 ? fmt(t.p2p.deadlines[d.kind], { time: countdown(left) }) : t.p2p.deadlines.over;
-  return <span className={`p2p-cd${left <= 0 ? " is-over" : left < 5 * 60_000 ? " is-soon" : ""}`} role="timer" aria-live="off">{compact && left > 0 ? countdown(left) : text}</span>;
+  // In a list cell the clock alone (0:00 in red once over); the sentence is its accessible name.
+  return <span className={`p2p-cd${left <= 0 ? " is-over" : left < 5 * 60_000 ? " is-soon" : ""}`} role="timer" aria-live="off" aria-label={compact ? text : undefined}>{compact ? countdown(left) : text}</span>;
 }
 
 /* --- Sending what the Payments API built, from the person's own wallet --- */
