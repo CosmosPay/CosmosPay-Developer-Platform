@@ -25,9 +25,10 @@ and each wallet signs its own transactions.
 ## Networks and tokens
 
 The market runs on the EVM networks where its contract is deployed. `GET /v1/p2p/market` lists
-them with each contract address and token, the currencies and payment methods, the fees, the time
-windows and the matcher's address. Read it when your integration starts instead of hard-coding
-networks.
+them with each contract address, its tokens and its protocol fee, the currencies and the rails with
+their fields, the bond, the time windows and the matcher's address. Read it when your integration
+starts instead of hard-coding networks. When it answers `available: false`, the market is not
+offered on your key's tier yet.
 
 ```bash
 curl https://api.cosmospay.lat/cosmos-api/v1/p2p/market \
@@ -36,13 +37,20 @@ curl https://api.cosmospay.lat/cosmos-api/v1/p2p/market \
 
 Your API key picks the tier: `dv_` keys trade on test networks, `prod_` keys on mainnets.
 
+## Amounts
+
+Token amounts are integer strings in the token's base units, in requests and in responses: with
+6 decimals, `"25000000"` is 25 USDC. Every order, quote and charge also answers `token`, the
+contract address, with `tokenSymbol` and `tokenDecimals`. Local money is a decimal string, such as
+`"85000.50"`, up to the currency's decimals.
+
 ## How an order moves
 
 A **purchase** gives your user tokens for local money:
 
-1. You ask for a quote with the amount in local money: `POST /v1/p2p/quotes`. The quote names the price, the token amount, the fees and the merchant's public record. It lasts 60 seconds.
-2. You open the order from the quote: `POST /v1/p2p/orders`. The matcher locks the merchant's tokens in the contract, and the order answers the merchant's account and the exact amount to transfer.
-3. Your user transfers the money from an account in their own name before the payment deadline. You report it with `POST /v1/p2p/orders/{id}/paid`.
+1. You ask for a quote with the amount in local money: `POST /v1/p2p/quotes`. The quote names the price, the token amount, the fees, the bond, the windows and the merchant's public record. It lasts 60 seconds.
+2. You open the order from the quote: `POST /v1/p2p/orders`. The matcher locks the merchant's tokens in the contract, and the order answers the merchant's account in `paymentDetails` and its `paymentDeadline`.
+3. Your user transfers the exact amount from an account in their own name before the deadline. You report it with `POST /v1/p2p/orders/{id}/paid`.
 4. The merchant sees the money arrive and releases the order. The tokens reach your user's wallet.
 
 A **sale** gives your user local money for tokens:
@@ -51,7 +59,7 @@ A **sale** gives your user local money for tokens:
 2. You open the order. The response holds two unsigned transactions for your user's wallet, `approve` and `openWithDeposit`. The user signs and sends both, and their tokens are locked in the contract.
 3. The merchant accepts before the acceptance deadline and locks a bond of 10% of the order.
 4. The merchant transfers the local money to your user's account and marks the order paid.
-5. Your user releases the tokens. If nobody disputes the order, the settle window releases it on its own.
+5. Your user releases the tokens. If nobody disputes the order, it can be released by anyone once the settle window has passed.
 
 Charges and payouts are the same two flows, opened by your organization for someone else. See
 [Collections](/p2p/collections/) and [Payouts](/p2p/payouts/).
@@ -76,21 +84,23 @@ indexed, so what you read always matches the chain.
 
 ## Time windows
 
+The market answers its windows in seconds under `windows`:
+
 | Window | Default | What it limits |
 | --- | --- | --- |
-| Payment | 30 minutes | The buyer side transfers the money and marks the order paid. |
-| Acceptance | 5 minutes | The merchant accepts a sale or a payout, which carry a bond. |
-| Settle | 6 hours | A sale releases on its own once paid, unless someone disputes it. |
+| `buyPaymentWindow` | 30 minutes | On a purchase or a charge, the buyer side transfers the money and marks the order paid. |
+| `sellAcceptWindow` | 5 minutes | On a sale or a payout, the merchant accepts and locks its bond. |
+| `sellPaymentWindow` | 30 minutes | On a sale or a payout, the merchant then transfers the money and marks the order paid. |
+| `sellSettleWindow` | 6 hours | Once a sale is paid, it can be released after this window unless someone disputes it. A payout gets it only with automatic settlement on. |
 
-The market answers the windows in force. When a deadline passes, the order is cancelled and its
-tokens return to the seller.
+When a deadline passes, the order is cancelled and its tokens return to the seller.
 
 ## Fees
 
 Two fees can apply. Both are taken from what the buyer receives and fixed when the order opens.
 
-- The protocol fee, set by Cosmos Pay and listed by the market as `protocolFeeBps`. The contract caps it at 3%.
-- An integrator fee of up to 5%, which a client may add to its own users' orders. It is paid to one of the client's registered wallets.
+- The protocol fee, set by Cosmos Pay per network and listed by the market as `protocolFeeBps`. The contract caps it at 3%.
+- An integrator fee that a client may add to its own users' orders, up to the market's `maxIntegratorFeeBps`, 5% today. Pass `integratorFeeBps` on the quote; it is paid on-chain to `integratorAccountId`, one of the client's registered wallets.
 
 Every quote shows both fees and the net amount before anyone signs.
 
@@ -98,7 +108,8 @@ Every quote shows both fees and the net amount before anyone signs.
 
 API keys need the `p2p:read` scope to read the market and `p2p:write` to register wallets, publish
 offers and open orders, charges and payouts. Create them in the dashboard: [Get your API key](/api-keys/).
-The dashboard covers the whole market under **P2P** in the sidebar.
+The dashboard covers the whole market under **P2P** in the sidebar. Every endpoint, with its
+schemas, is in the [P2P market API reference](/api/p2p-market/).
 
 Cosmos Pay's own P2P app on the payments domain runs on this same API, with the same rules.
 

@@ -45,7 +45,7 @@ That is why:
 ## Data
 
 - Payment methods, payout accounts and payer identities are encrypted at rest.
-- An order shows each party only what its role needs: the payer sees the merchant's account for that order, the merchant sees the payer's name and document, and nobody sees another party's address book.
+- An order shows each party only what its role needs: the payer sees the merchant's account for that order, the merchant sees the payer's name and document or the beneficiary's account. Webhooks carry none of these: they are read from the API by the party entitled to them.
 - Wallets are registered with an EIP-191 signature over a single-use challenge that expires, and an address belongs to one organization.
 
 ## The public P2P app

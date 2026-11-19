@@ -12,29 +12,33 @@ avec l'API, et choisissez les événements ci-dessous.
 | Événement | Envoyé quand |
 | --- | --- |
 | `P2P_ORDER_CREATED` | Un ordre s'est ouvert sur la chaîne. |
-| `P2P_ORDER_ACCEPTED` | Le marchand a accepté une vente ou un versement et bloqué sa caution. |
-| `P2P_ORDER_PAID` | Le côté acheteur a signalé le virement et marqué l'ordre comme payé. |
+| `P2P_ORDER_ACCEPTED` | Un ordre attend le paiement : un marchand a accepté une vente ou un versement, ou un achat s'est ouvert. |
+| `P2P_ORDER_PAID` | Le côté acheteur a marqué l'ordre comme payé. |
 | `P2P_ORDER_COMPLETED` | Le vendeur a libéré. L'acheteur a reçu les jetons. |
 | `P2P_ORDER_CANCELLED` | L'ordre a été annulé. Les jetons sont revenus au vendeur. |
 | `P2P_ORDER_EXPIRED` | Une échéance est passée. Les jetons sont revenus au vendeur. |
 | `P2P_ORDER_DISPUTED` | Une partie a ouvert un litige. |
 | `P2P_ORDER_RESOLVED` | L'arbitre a tranché le litige. |
-| `P2P_CHARGE_SUCCEEDED` | L'ordre d'un encaissement a abouti. |
-| `P2P_PAYOUT_BATCH_COMPLETED` | Tous les éléments d'un lot de versements sont terminés. |
+| `P2P_ORDER_FAILED` | L'ordre ne s'est jamais ouvert. |
+| `P2P_CHARGE_SUCCEEDED` | Un ordre qui paie un encaissement a abouti. Un encaissement multi-usage en envoie un par ordre qui le paie. |
+| `P2P_PAYOUT_BATCH_COMPLETED` | Tous les ordres d'un lot de versements sont terminés. |
 
-Les ordres aboutis, annulés, expirés et tranchés, les encaissements réussis et les lots terminés sont
-définitifs : aucun autre événement ne les suit.
+Les ordres aboutis, annulés, expirés, tranchés et échoués, les encaissements réussis et les lots
+terminés sont définitifs : aucun autre événement ne les suit.
 
 ## Qui les reçoit
 
 Les événements d'un ordre parviennent à deux parties : le client qui l'a ouvert et le marchand auquel
 il a été apparié, lorsqu'il s'agit d'organisations différentes. `data.role` indique laquelle vous
-êtes, et le payload ne contient que ce que ce rôle peut voir.
+êtes, et chacune ne reçoit que sa propre vue de l'ordre.
 
-| `data.role` | Reçoit | Ne reçoit jamais |
+| `data.role` | Le payload contient | Il ne contient jamais |
 | --- | --- | --- |
-| `client` | L'ordre, le nom affiché et l'historique du marchand, le compte vers lequel virer pour un achat | L'adresse du marchand ou ses autres comptes |
-| `merchant` | L'ordre, le nom et le document du payeur pour un achat, le compte du bénéficiaire pour une vente ou un versement | Les autres utilisateurs ou ordres du client |
+| `client` | Les montants, les adresses, les échéances, les hashs de transaction et le statut de l'ordre, le nom affiché et l'historique du marchand, et vos propres `externalReference`, `chargeId` et `payoutBatchId` | Les coordonnées de paiement, l'identité du payeur ou le compte d'un bénéficiaire |
+| `merchant` | Les montants, les adresses, les échéances, les hashs de transaction et le statut de l'ordre, avec vos `merchantAccountId` et `merchantSide` | Les coordonnées de paiement, l'identité du payeur, le compte d'un bénéficiaire ou les références propres du client |
+
+Lisez l'ordre via l'API pour ce qu'un webhook laisse de côté : `GET /v1/p2p/orders/{id}` en tant que
+client, `GET /v1/p2p/merchant/orders/{id}` en tant que marchand.
 
 ## Payload
 
@@ -45,18 +49,22 @@ il a été apparié, lorsqu'il s'agit d'organisations différentes. `data.role` 
   "createdAt": "2026-11-19T14:02:11.000Z",
   "data": {
     "role": "merchant",
-    "id": "9f1c2e4a-…",
+    "id": "3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10",
     "kind": "BUY",
     "status": "paid",
     "network": "base",
-    "token": "USDC",
-    "tokenAmount": "104.712041",
-    "fiatAmount": "150000.00",
+    "chainId": 8453,
+    "merchantSide": "seller",
+    "token": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    "tokenSymbol": "USDC",
+    "tokenDecimals": 6,
     "currency": "ARS",
     "rail": "ar_bank_transfer",
-    "payer": { "name": "Ana Gómez", "document": "20329642330" },
-    "paidReference": "TRX-88421",
-    "externalReference": null
+    "fiatAmount": "150000.00",
+    "tokenAmount": "104712041",
+    "netAmount": "104397905",
+    "paymentDeadline": "2026-11-19T14:30:02.000Z",
+    "paidReference": "TRX-88421"
   }
 }
 ```

@@ -12,29 +12,33 @@ below.
 | Event | Sent when |
 | --- | --- |
 | `P2P_ORDER_CREATED` | An order opened on-chain. |
-| `P2P_ORDER_ACCEPTED` | The merchant accepted a sale or a payout and locked its bond. |
-| `P2P_ORDER_PAID` | The buyer side reported the transfer and marked the order paid. |
+| `P2P_ORDER_ACCEPTED` | An order is waiting for payment: a merchant accepted a sale or payout, or a purchase opened. |
+| `P2P_ORDER_PAID` | The buyer side marked the order paid. |
 | `P2P_ORDER_COMPLETED` | The seller released. The buyer received the tokens. |
 | `P2P_ORDER_CANCELLED` | The order was cancelled. The tokens went back to the seller. |
 | `P2P_ORDER_EXPIRED` | A deadline passed. The tokens went back to the seller. |
 | `P2P_ORDER_DISPUTED` | One side opened a dispute. |
 | `P2P_ORDER_RESOLVED` | The arbiter decided the dispute. |
-| `P2P_CHARGE_SUCCEEDED` | A charge's order completed. |
-| `P2P_PAYOUT_BATCH_COMPLETED` | Every item of a payout batch finished. |
+| `P2P_ORDER_FAILED` | The order never opened. |
+| `P2P_CHARGE_SUCCEEDED` | An order paying a charge completed. A multi-use charge sends one per paying order. |
+| `P2P_PAYOUT_BATCH_COMPLETED` | Every order of a payout batch ended. |
 
-Completed, cancelled, expired and resolved orders, succeeded charges and finished batches are
-final: no further event follows them.
+Completed, cancelled, expired, resolved and failed orders, succeeded charges and finished batches
+are final: no further event follows them.
 
 ## Who receives them
 
 An order's events reach two parties: the client that opened it and the merchant it was matched to,
-when they are different organizations. `data.role` says which one you are, and the payload holds
-only what that role is entitled to see.
+when they are different organizations. `data.role` says which one you are, and each receives only
+its own view of the order.
 
-| `data.role` | Receives | Never receives |
+| `data.role` | The payload holds | It never holds |
 | --- | --- | --- |
-| `client` | The order, the merchant's display name and record, the account to transfer to on a purchase | The merchant's address or its other accounts |
-| `merchant` | The order, the payer's name and document on a purchase, the beneficiary's account on a sale or payout | The client's other users or orders |
+| `client` | The order's amounts, addresses, deadlines, transaction hashes and status, the merchant's display name and record, and your own `externalReference`, `chargeId` and `payoutBatchId` | Payment details, the payer's identity or a beneficiary's account |
+| `merchant` | The order's amounts, addresses, deadlines, transaction hashes and status, with your `merchantAccountId` and `merchantSide` | Payment details, the payer's identity, a beneficiary's account or the client's own references |
+
+Read the order from the API for what a webhook leaves out: `GET /v1/p2p/orders/{id}` for a client,
+`GET /v1/p2p/merchant/orders/{id}` for a merchant.
 
 ## Payload
 
@@ -45,18 +49,22 @@ only what that role is entitled to see.
   "createdAt": "2026-11-19T14:02:11.000Z",
   "data": {
     "role": "merchant",
-    "id": "9f1c2e4a-…",
+    "id": "3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10",
     "kind": "BUY",
     "status": "paid",
     "network": "base",
-    "token": "USDC",
-    "tokenAmount": "104.712041",
-    "fiatAmount": "150000.00",
+    "chainId": 8453,
+    "merchantSide": "seller",
+    "token": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    "tokenSymbol": "USDC",
+    "tokenDecimals": 6,
     "currency": "ARS",
     "rail": "ar_bank_transfer",
-    "payer": { "name": "Ana Gómez", "document": "20329642330" },
-    "paidReference": "TRX-88421",
-    "externalReference": null
+    "fiatAmount": "150000.00",
+    "tokenAmount": "104712041",
+    "netAmount": "104397905",
+    "paymentDeadline": "2026-11-19T14:30:02.000Z",
+    "paidReference": "TRX-88421"
   }
 }
 ```

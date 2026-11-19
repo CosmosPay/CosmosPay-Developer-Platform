@@ -24,10 +24,13 @@ curl -X POST https://api.cosmospay.lat/cosmos-api/v1/p2p/charges \
     "expiresAt": "2026-12-01T00:00:00Z",
     "multiUse": false
   }'
-# → { "id": "…", "url": "https://payments.cosmospay.lat/p2p/…", "status": "open", … }
+# → { "id": "…", "url": "https://payments.cosmospay.lat/p2p/…", "status": "open", "recipientAddress": "0x…", "paidCount": 0, … }
 ```
 
-Share the `url`. On that page the payer:
+`recipient` is one of your account ids. A charge expires 24 hours after it is created unless
+`expiresAt` says otherwise, at most 30 days ahead.
+
+Share the `url`, as a link or as a QR code; the dashboard draws one for you. On that page the payer:
 
 1. Sees the amount in local money.
 2. Enters their name, ID document and email. The merchant checks the transfer comes from that person.
@@ -35,12 +38,17 @@ Share the `url`. On that page the payer:
 4. Transfers from their bank and presses **I transferred**.
 5. Follows the status live until the merchant releases, then sees the receipt.
 
-The tokens go to your `recipient` wallet. When the order completes, the charge sends
-`P2P_CHARGE_SUCCEEDED`. A charge has one live order at a time; set `multiUse` to collect from many
-payers on the same link. `GET /v1/p2p/charges/{id}` reads it and `DELETE` removes a charge nobody
-is paying.
+The tokens go to the recipient wallet. Each time a paying order completes, the charge sends
+`P2P_CHARGE_SUCCEEDED` and counts it in `paidCount`. A charge takes one payer at a time; set
+`multiUse` to collect from many payers on the same link. `status` is `open`, `paid`, `cancelled` or
+`expired`. `DELETE /v1/p2p/charges/{id}` cancels an open charge: no new payer can start, and an
+order already under way still pays the recipient when it completes. Every charge route is in the
+[charges and payouts reference](/api/p2p-collections/).
 
-The dashboard creates charges under **P2P → Charges**, with the link and its QR code to share.
+The hosted page calls the keyless routes of the [P2P checkout API](/api/p2p-checkout/): it reads the
+charge, starts paying it with `POST /v1/p2p-checkout/charges/{id}/orders` and the payer's rail, name,
+document and email, and follows the order with the `payerToken` that answer carries, sent as
+`X-Payer-Token`.
 
 ## Embedded ramp
 
@@ -62,12 +70,13 @@ curl -X POST $API/orders -H "$AUTH" -H "Content-Type: application/json" \
   -d '{
     "quoteId": "QUOTE_ID",
     "recipient": "0xUserWallet",
-    "payer": { "name": "Ana Gómez", "document": "20329642330", "email": "ana@example.com" }
+    "payer": { "name": "Ana Gómez", "document": "20329642330" },
+    "externalReference": "order-881"
   }'
 ```
 
-The order answers `paymentDetails`, the merchant's account for this order, and the deadline. Show
-them to your user. Once they transfer, report it:
+The order answers `paymentDetails`, the merchant's account for this order, and `paymentDeadline`.
+Show them to your user. Once they transfer, report it:
 
 ```bash
 curl -X POST $API/orders/ORDER_ID/paid -H "$AUTH" -H "Content-Type: application/json" \
@@ -78,29 +87,36 @@ The payer's name and document are required: the merchant releases only a transfe
 person. `POST /v1/p2p/orders/{id}/cancel` cancels before the transfer, and `/dispute` asks the
 arbiter to decide a paid order the merchant does not release.
 
+To charge your own fee, pass `integratorFeeBps` and `integratorAccountId` on the quote. The fee is
+taken from what the buyer receives and paid on-chain to that wallet.
+
 ### Sell
+
+The token amount of a sale is in base units: `"25000000"` is 25 USDC.
 
 ```bash
 curl -X POST $API/quotes -H "$AUTH" -H "Content-Type: application/json" \
-  -d '{ "side": "SELL", "network": "base", "token": "USDC", "currency": "ARS", "rail": "ar_bank_transfer", "tokenAmount": "25" }'
+  -d '{ "side": "SELL", "network": "base", "token": "USDC", "currency": "ARS", "rail": "ar_bank_transfer", "tokenAmount": "25000000" }'
 
 curl -X POST $API/orders -H "$AUTH" -H "Content-Type: application/json" \
   -d '{
     "quoteId": "QUOTE_ID",
     "seller": "0xUserWallet",
-    "payout": { "holderName": "Ana Gómez", "document": "20329642330", "details": { "alias": "ana.gomez.mp" } }
+    "beneficiary": { "holderName": "Ana Gómez", "document": "20329642330", "details": { "alias": "ana.gomez.mp", "cuit": "20329642330" } }
   }'
 ```
 
 The order answers `transactions`: an `approve` and an `openWithDeposit`, unsigned. Your user's
-wallet sends both, in that order. The merchant accepts, transfers the money to the account in
-`payout` and marks the order paid. Your user then releases with a `release` transaction from the
-builder, `from` being their address. If nobody disputes, the settle window releases it on its own.
+wallet sends both, in that order. The merchant accepts, transfers the money to the `beneficiary`
+account and marks the order paid. Your user then releases with a `release` transaction from the
+builder, with their address as `from`. If nobody disputes the order, it can be released by anyone
+once the settle window has passed.
 
-Every order you open carries `externalReference` if you pass one, and its webhooks reach your
-endpoints with `role: "client"`.
+`GET /v1/p2p/orders` lists the orders you opened, filtered by `status` and `kind`. Their webhooks
+reach your endpoints with `role: "client"`.
 
 <Cards>
   <Card title="Webhooks" href="/p2p/webhooks/" description="Follow every charge and order on your server." />
   <Card title="Payouts" href="/p2p/payouts/" description="The other direction: pay bank accounts from your balance." />
+  <Card title="API reference" href="/api/p2p-market/" description="Quotes and orders with their schemas." />
 </Cards>

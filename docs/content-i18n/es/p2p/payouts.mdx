@@ -12,7 +12,7 @@ saldo solo hacia un comerciante que ya pagó.
 
 1. **Registra la billetera** que paga. Consulta [Inicio rápido para comerciantes](/p2p/merchants/).
 2. **Deposita** en el contrato los tokens que necesita el lote.
-3. **Autoriza al matcher de Cosmos Pay** en esa red con `setMatcher`, con un tope por orden al menos igual a tu pago más grande. Deja `autoSettle` desactivado para liberar cada pago tú mismo, o actívalo para que los pagos ya pagados se liberen después de la ventana de liquidación.
+3. **Autoriza al matcher de Cosmos Pay** en esa red con `setMatcher`, con un tope por orden al menos igual a tu pago más grande. Deja `autoSettle` desactivado para liberar cada pago tú mismo, o actívalo para que un pago ya pagado pueda liberarse pasada la ventana de liquidación.
 
 ## Envía un lote
 
@@ -28,38 +28,47 @@ curl -X POST https://api.cosmospay.lat/cosmos-api/v1/p2p/payouts \
         "currency": "ARS",
         "fiatAmount": "150000",
         "rail": "ar_bank_transfer",
-        "beneficiary": { "holderName": "Ana Gómez", "document": "20329642330", "details": { "cbu": "0170099222000001234561" } },
-        "externalReference": "inv-1001"
+        "beneficiary": {
+          "holderName": "Ana Gómez",
+          "document": "20329642330",
+          "details": { "cbu": "0170099222000001234561", "cuit": "20329642330" }
+        },
+        "externalReference": "payroll-2026-11-ana"
       }
     ]
   }'
 ```
 
-Un lote tiene de 1 a 100 ítems. Los `details` del beneficiario siguen el medio de pago, igual que
-en los medios de cobro: consulta la tabla de medios en [Inicio rápido para comerciantes](/p2p/merchants/).
+Un lote tiene de 1 a 100 ítems. `accountId` es la billetera que paga, opcional cuando tienes
+exactamente una. Cada beneficiario tiene un nombre, un documento de identidad de 4 a 20 caracteres y
+los `details` del medio, revisados como los de un medio de cobro: consulta la tabla de medios en
+[Inicio rápido para comerciantes](/p2p/merchants/).
 
 ## Qué pasa con cada ítem
 
 1. Cosmos Pay empareja el ítem con un comerciante que compra tokens en ese medio y abre la orden sobre tu saldo. El comerciante bloquea una garantía del 10%.
-2. El comerciante acepta, transfiere el dinero al beneficiario y marca la orden como pagada con la referencia de la transferencia.
-3. Verificas el pago y liberas: una transacción `release` del generador, firmada por tu billetera o por tu bot con `PERM_RELEASE`.
+2. El comerciante acepta, transfiere el dinero al beneficiario y marca la orden como pagada.
+3. Verificas el pago y liberas: una transacción `release` del generador, firmada por tu billetera o por tu bot con el permiso `release`.
 
-Un ítem que ningún comerciante puede tomar queda `rejected` con el motivo; tus tokens nunca se
-movieron por él. Si un comerciante no acepta o no paga a tiempo, el plazo devuelve tus tokens.
+Un ítem que ningún comerciante puede tomar en este momento queda en `failedItems` con su `reason`;
+tus tokens nunca se movieron por él. Si un comerciante no acepta o no paga a tiempo, el plazo
+devuelve tus tokens.
 
 ## Estado del lote
 
-`GET /v1/p2p/payouts/{id}` responde el lote con el estado y la orden de cada ítem.
+`GET /v1/p2p/payouts/{id}` responde el lote con sus `orders`, sus `failedItems` y `itemCount`. La
+lista, `GET /v1/p2p/payouts`, responde cada lote sin sus órdenes: lee un lote por su identificador
+para verlas.
 
 | Estado | Significado |
 | --- | --- |
-| `processing` | Al menos un ítem sigue en curso. |
-| `completed` | Todos los ítems se completaron. |
-| `partial` | Todos los ítems terminaron y algunos no se completaron. |
-| `failed` | Ningún ítem se completó. |
+| `processing` | Al menos una orden sigue en curso. |
+| `completed` | Todas las órdenes se completaron. |
+| `partially_completed` | Todas las órdenes terminaron y algunas no se completaron. |
+| `failed` | Ninguna orden se completó. |
 
-`P2P_PAYOUT_BATCH_COMPLETED` se envía cuando un lote termina, y la orden de cada ítem envía sus
-propios eventos.
+`P2P_PAYOUT_BATCH_COMPLETED` se envía cuando terminaron todas las órdenes de un lote, y cada orden
+envía sus propios eventos.
 
 ## Sube un CSV desde el panel
 
@@ -75,11 +84,13 @@ encabezado y en cualquier orden:
 | `rail` | `ar_bank_transfer`, `br_pix`, `mx_spei`, `co_bank_transfer`, `pe_bank_transfer` o `cl_bank_transfer` |
 | `holderName` | El nombre del beneficiario |
 | `document` | El documento de identidad del beneficiario |
-| `cbu`, `alias` | Argentina |
-| `pixKeyType`, `pixKey` | Brasil |
+| `cbu`, `alias`, `cuit` | Argentina |
+| `keyType`, `key` | Brasil |
 | `clabe` | México |
 | `bank`, `accountType`, `accountNumber` | Colombia y Chile |
+| `documentType`, `documentNumber` | Colombia y Perú |
 | `cci` | Perú |
+| `rut` | Chile |
 | `reference` | Tu propia referencia, única en el archivo |
 
 Sirven tanto comas como punto y coma. La página ofrece una plantilla con una fila por medio.
@@ -87,4 +98,5 @@ Sirven tanto comas como punto y coma. La página ofrece una plantilla con una fi
 <Cards>
   <Card title="Webhooks" href="/p2p/webhooks/" description="Sigue cada pago a terceros desde tu servidor." />
   <Card title="Modelo de seguridad" href="/p2p/security/" description="Qué puede hacer el matcher con tu saldo, y qué no." />
+  <Card title="Referencia de la API" href="/api/p2p-collections/" description="Las rutas de pagos a terceros con sus esquemas." />
 </Cards>

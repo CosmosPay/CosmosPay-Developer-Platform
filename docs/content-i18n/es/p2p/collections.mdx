@@ -24,10 +24,13 @@ curl -X POST https://api.cosmospay.lat/cosmos-api/v1/p2p/charges \
     "expiresAt": "2026-12-01T00:00:00Z",
     "multiUse": false
   }'
-# → { "id": "…", "url": "https://payments.cosmospay.lat/p2p/…", "status": "open", … }
+# → { "id": "…", "url": "https://payments.cosmospay.lat/p2p/…", "status": "open", "recipientAddress": "0x…", "paidCount": 0, … }
 ```
 
-Comparte la `url`. En esa página, el pagador:
+`recipient` es uno de tus identificadores de cuenta. Un cobro vence 24 horas después de crearse,
+salvo que `expiresAt` diga otra cosa, con un máximo de 30 días.
+
+Comparte la `url`, como enlace o como código QR; el panel lo dibuja por ti. En esa página, el pagador:
 
 1. Ve el monto en moneda local.
 2. Ingresa su nombre, su documento de identidad y su email. El comerciante verifica que la transferencia venga de esa persona.
@@ -35,12 +38,17 @@ Comparte la `url`. En esa página, el pagador:
 4. Transfiere desde su banco y presiona **Ya transferí**.
 5. Sigue el estado en vivo hasta que el comerciante libera, y luego ve el comprobante.
 
-Los tokens llegan a tu billetera `recipient`. Cuando la orden se completa, el cobro envía
-`P2P_CHARGE_SUCCEEDED`. Un cobro tiene una sola orden en curso a la vez; activa `multiUse` para
-cobrar a muchos pagadores con el mismo enlace. `GET /v1/p2p/charges/{id}` lo lee y `DELETE` elimina
-un cobro que nadie está pagando.
+Los tokens llegan a la billetera receptora. Cada vez que se completa una orden que lo paga, el
+cobro envía `P2P_CHARGE_SUCCEEDED` y la cuenta en `paidCount`. Un cobro acepta un pagador a la vez;
+activa `multiUse` para cobrar a muchos pagadores con el mismo enlace. `status` es `open`, `paid`,
+`cancelled` o `expired`. `DELETE /v1/p2p/charges/{id}` cancela un cobro abierto: ningún pagador nuevo
+puede empezar, y una orden ya en curso igual le paga al receptor cuando se completa. Cada ruta de cobros está en la
+[referencia de cobros y pagos a terceros](/api/p2p-collections/).
 
-El panel crea cobros en **P2P → Cobros**, con el enlace y su código QR para compartir.
+La página alojada llama a las rutas sin clave de la [API de checkout P2P](/api/p2p-checkout/): lee el
+cobro, empieza a pagarlo con `POST /v1/p2p-checkout/charges/{id}/orders` y el medio, el nombre, el
+documento y el email del pagador, y sigue la orden con el `payerToken` que trae esa respuesta,
+enviado como `X-Payer-Token`.
 
 ## Rampa integrada
 
@@ -62,11 +70,12 @@ curl -X POST $API/orders -H "$AUTH" -H "Content-Type: application/json" \
   -d '{
     "quoteId": "QUOTE_ID",
     "recipient": "0xUserWallet",
-    "payer": { "name": "Ana Gómez", "document": "20329642330", "email": "ana@example.com" }
+    "payer": { "name": "Ana Gómez", "document": "20329642330" },
+    "externalReference": "order-881"
   }'
 ```
 
-La orden responde `paymentDetails`, la cuenta del comerciante para esta orden, y el plazo.
+La orden responde `paymentDetails`, la cuenta del comerciante para esta orden, y `paymentDeadline`.
 Muéstraselos a tu usuario. Cuando transfiera, infórmalo:
 
 ```bash
@@ -78,29 +87,36 @@ El nombre y el documento del pagador son obligatorios: el comerciante libera sol
 transferencia de esa persona. `POST /v1/p2p/orders/{id}/cancel` cancela antes de la transferencia, y
 `/dispute` le pide al árbitro que decida sobre una orden pagada que el comerciante no libera.
 
+Para cobrar tu propia comisión, envía `integratorFeeBps` e `integratorAccountId` en la cotización. La
+comisión se descuenta de lo que recibe el comprador y se paga en cadena a esa billetera.
+
 ### Vender
+
+El monto en tokens de una venta va en unidades base: `"25000000"` son 25 USDC.
 
 ```bash
 curl -X POST $API/quotes -H "$AUTH" -H "Content-Type: application/json" \
-  -d '{ "side": "SELL", "network": "base", "token": "USDC", "currency": "ARS", "rail": "ar_bank_transfer", "tokenAmount": "25" }'
+  -d '{ "side": "SELL", "network": "base", "token": "USDC", "currency": "ARS", "rail": "ar_bank_transfer", "tokenAmount": "25000000" }'
 
 curl -X POST $API/orders -H "$AUTH" -H "Content-Type: application/json" \
   -d '{
     "quoteId": "QUOTE_ID",
     "seller": "0xUserWallet",
-    "payout": { "holderName": "Ana Gómez", "document": "20329642330", "details": { "alias": "ana.gomez.mp" } }
+    "beneficiary": { "holderName": "Ana Gómez", "document": "20329642330", "details": { "alias": "ana.gomez.mp", "cuit": "20329642330" } }
   }'
 ```
 
 La orden responde `transactions`: un `approve` y un `openWithDeposit`, sin firmar. La billetera de
-tu usuario envía ambas, en ese orden. El comerciante acepta, transfiere el dinero a la cuenta de
-`payout` y marca la orden como pagada. Luego tu usuario libera con una transacción `release` del
-generador, con su dirección como `from`. Si nadie la disputa, la ventana de liquidación la libera sola.
+tu usuario envía ambas, en ese orden. El comerciante acepta, transfiere el dinero a la cuenta del
+`beneficiary` y marca la orden como pagada. Luego tu usuario libera con una transacción `release` del
+generador, con su dirección como `from`. Si nadie disputa la orden, cualquiera puede liberarla una
+vez pasada la ventana de liquidación.
 
-Cada orden que abres lleva `externalReference` si lo envías, y sus webhooks llegan a tus endpoints
-con `role: "client"`.
+`GET /v1/p2p/orders` lista las órdenes que abriste, con filtros por `status` y `kind`. Sus webhooks
+llegan a tus endpoints con `role: "client"`.
 
 <Cards>
   <Card title="Webhooks" href="/p2p/webhooks/" description="Sigue cada cobro y cada orden desde tu servidor." />
   <Card title="Pagos a terceros" href="/p2p/payouts/" description="La otra dirección: paga cuentas bancarias desde tu saldo." />
+  <Card title="Referencia de la API" href="/api/p2p-market/" description="Cotizaciones y órdenes con sus esquemas." />
 </Cards>

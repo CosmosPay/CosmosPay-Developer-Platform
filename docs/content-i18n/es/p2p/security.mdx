@@ -46,7 +46,7 @@ Por eso:
 ## Datos
 
 - Los medios de cobro, las cuentas de pago a terceros y las identidades de los pagadores se guardan cifrados.
-- Una orden muestra a cada parte solo lo que su rol necesita: el pagador ve la cuenta del comerciante para esa orden, el comerciante ve el nombre y el documento del pagador, y nadie ve la libreta de direcciones de otra parte.
+- Una orden muestra a cada parte solo lo que su rol necesita: el pagador ve la cuenta del comerciante para esa orden, el comerciante ve el nombre y el documento del pagador o la cuenta del beneficiario. Los webhooks no llevan ninguno de estos datos: los lee desde la API la parte que tiene derecho a verlos.
 - Las billeteras se registran con una firma EIP-191 sobre un desafío de un solo uso que vence, y una dirección pertenece a una sola organización.
 
 ## La app P2P pública

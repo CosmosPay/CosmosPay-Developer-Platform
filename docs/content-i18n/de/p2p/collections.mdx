@@ -26,10 +26,13 @@ curl -X POST https://api.cosmospay.lat/cosmos-api/v1/p2p/charges \
     "expiresAt": "2026-12-01T00:00:00Z",
     "multiUse": false
   }'
-# → { "id": "…", "url": "https://payments.cosmospay.lat/p2p/…", "status": "open", … }
+# → { "id": "…", "url": "https://payments.cosmospay.lat/p2p/…", "status": "open", "recipientAddress": "0x…", "paidCount": 0, … }
 ```
 
-Teilen Sie die `url`. Auf dieser Seite:
+`recipient` ist eine Ihrer Konto-IDs. Eine Zahlungsanforderung läuft 24 Stunden nach ihrer
+Erstellung ab, sofern `expiresAt` nichts anderes sagt, höchstens 30 Tage im Voraus.
+
+Teilen Sie die `url` als Link oder als QR-Code; das Dashboard zeichnet ihn für Sie. Auf dieser Seite:
 
 1. Sieht der Zahler den Betrag in Landeswährung.
 2. Gibt er Name, Ausweisdokument und E-Mail an. Der Händler prüft, dass die Überweisung von dieser Person kommt.
@@ -37,14 +40,18 @@ Teilen Sie die `url`. Auf dieser Seite:
 4. Überweist er von seiner Bank und tippt auf **Ich habe überwiesen**.
 5. Verfolgt er den Status live, bis der Händler freigibt, und sieht dann den Beleg.
 
-Die Token gehen an Ihre `recipient`-Wallet. Wenn der Auftrag abgeschlossen ist, sendet die
-Zahlungsanforderung `P2P_CHARGE_SUCCEEDED`. Eine Zahlungsanforderung hat jeweils nur einen laufenden
-Auftrag; setzen Sie `multiUse`, um mit demselben Link von vielen Zahlern zu kassieren.
-`GET /v1/p2p/charges/{id}` liest sie, und `DELETE` entfernt eine Zahlungsanforderung, die gerade
-niemand bezahlt.
+Die Token gehen an die empfangende Wallet. Jedes Mal, wenn ein Auftrag abgeschlossen wird, der sie
+bezahlt, sendet die Zahlungsanforderung `P2P_CHARGE_SUCCEEDED` und zählt ihn in `paidCount`. Eine
+Zahlungsanforderung nimmt jeweils einen Zahler an; setzen Sie `multiUse`, um mit demselben Link von
+vielen Zahlern zu kassieren. `status` ist `open`, `paid`, `cancelled` oder `expired`.
+`DELETE /v1/p2p/charges/{id}` storniert eine offene Zahlungsanforderung: Kein neuer Zahler kann
+beginnen, und ein bereits laufender Auftrag zahlt den Empfänger trotzdem, wenn er abgeschlossen wird. Alle Routen der Zahlungsanforderungen stehen in der
+[Referenz für Zahlungsanforderungen und Auszahlungen](/api/p2p-collections/).
 
-Das Dashboard erstellt Zahlungsanforderungen unter **P2P → Zahlungsanforderungen**, mit dem Link und
-seinem QR-Code zum Teilen.
+Die gehostete Seite ruft die schlüssellosen Routen der [P2P-Checkout-API](/api/p2p-checkout/) auf:
+Sie liest die Zahlungsanforderung, beginnt die Zahlung mit `POST /v1/p2p-checkout/charges/{id}/orders`
+und dem Zahlungsweg, dem Namen, dem Dokument und der E-Mail des Zahlers, und verfolgt den Auftrag mit
+dem `payerToken` aus dieser Antwort, gesendet als `X-Payer-Token`.
 
 ## Eingebettete Rampe
 
@@ -66,12 +73,13 @@ curl -X POST $API/orders -H "$AUTH" -H "Content-Type: application/json" \
   -d '{
     "quoteId": "QUOTE_ID",
     "recipient": "0xUserWallet",
-    "payer": { "name": "Ana Gómez", "document": "20329642330", "email": "ana@example.com" }
+    "payer": { "name": "Ana Gómez", "document": "20329642330" },
+    "externalReference": "order-881"
   }'
 ```
 
-Der Auftrag liefert `paymentDetails`, das Konto des Händlers für diesen Auftrag, und die Frist. Zeigen
-Sie beides Ihrem Nutzer. Sobald er überwiesen hat, melden Sie es:
+Der Auftrag liefert `paymentDetails`, das Konto des Händlers für diesen Auftrag, und `paymentDeadline`.
+Zeigen Sie beides Ihrem Nutzer. Sobald er überwiesen hat, melden Sie es:
 
 ```bash
 curl -X POST $API/orders/ORDER_ID/paid -H "$AUTH" -H "Content-Type: application/json" \
@@ -82,30 +90,36 @@ Name und Dokument des Zahlers sind Pflicht: Der Händler gibt nur eine Überweis
 `POST /v1/p2p/orders/{id}/cancel` storniert vor der Überweisung, und `/dispute` bittet die
 Schiedsstelle, über einen bezahlten Auftrag zu entscheiden, den der Händler nicht freigibt.
 
+Für eine eigene Gebühr übergeben Sie `integratorFeeBps` und `integratorAccountId` im Angebot. Die
+Gebühr wird von dem abgezogen, was der Käufer erhält, und On-Chain an diese Wallet gezahlt.
+
 ### Verkaufen
+
+Die Tokenmenge eines Verkaufs steht in Basiseinheiten: `"25000000"` sind 25 USDC.
 
 ```bash
 curl -X POST $API/quotes -H "$AUTH" -H "Content-Type: application/json" \
-  -d '{ "side": "SELL", "network": "base", "token": "USDC", "currency": "ARS", "rail": "ar_bank_transfer", "tokenAmount": "25" }'
+  -d '{ "side": "SELL", "network": "base", "token": "USDC", "currency": "ARS", "rail": "ar_bank_transfer", "tokenAmount": "25000000" }'
 
 curl -X POST $API/orders -H "$AUTH" -H "Content-Type: application/json" \
   -d '{
     "quoteId": "QUOTE_ID",
     "seller": "0xUserWallet",
-    "payout": { "holderName": "Ana Gómez", "document": "20329642330", "details": { "alias": "ana.gomez.mp" } }
+    "beneficiary": { "holderName": "Ana Gómez", "document": "20329642330", "details": { "alias": "ana.gomez.mp", "cuit": "20329642330" } }
   }'
 ```
 
 Der Auftrag liefert `transactions`: ein `approve` und ein `openWithDeposit`, unsigniert. Die Wallet
 Ihres Nutzers sendet beide, in dieser Reihenfolge. Der Händler nimmt an, überweist das Geld auf das
-Konto aus `payout` und markiert den Auftrag als bezahlt. Danach gibt Ihr Nutzer mit einer
-`release`-Transaktion des Builders frei, mit seiner Adresse als `from`. Ficht niemand an, gibt das
-Abwicklungsfenster den Auftrag von selbst frei.
+Konto des `beneficiary` und markiert den Auftrag als bezahlt. Danach gibt Ihr Nutzer mit einer
+`release`-Transaktion des Builders frei, mit seiner Adresse als `from`. Ficht niemand den Auftrag an,
+kann ihn nach Ablauf des Abwicklungsfensters jeder freigeben.
 
-Jeder Auftrag, den Sie eröffnen, trägt `externalReference`, wenn Sie eine angeben, und seine Webhooks
-erreichen Ihre Endpunkte mit `role: "client"`.
+`GET /v1/p2p/orders` listet die Aufträge, die Sie eröffnet haben, filterbar nach `status` und `kind`.
+Ihre Webhooks erreichen Ihre Endpunkte mit `role: "client"`.
 
 <Cards>
   <Card title="Webhooks" href="/p2p/webhooks/" description="Jede Zahlungsanforderung und jeden Auftrag auf Ihrem Server verfolgen." />
   <Card title="Auszahlungen" href="/p2p/payouts/" description="Die andere Richtung: Bankkonten aus Ihrem Guthaben bezahlen." />
+  <Card title="API-Referenz" href="/api/p2p-market/" description="Angebote und Aufträge mit ihren Schemata." />
 </Cards>

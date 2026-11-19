@@ -26,9 +26,10 @@ que opera, y cada billetera firma sus propias transacciones.
 ## Redes y tokens
 
 El mercado funciona en las redes EVM donde su contrato está desplegado. `GET /v1/p2p/market` las
-lista con la dirección del contrato y los tokens de cada una, las monedas y los medios de pago, las
-comisiones, las ventanas de tiempo y la dirección del matcher. Léelo cuando tu integración arranca,
-en lugar de fijar las redes en el código.
+lista con la dirección del contrato, los tokens y la comisión del protocolo de cada una, las monedas
+y los medios de pago con sus campos, la garantía, las ventanas de tiempo y la dirección del matcher.
+Léelo cuando tu integración arranca, en lugar de fijar las redes en el código. Si responde
+`available: false`, el mercado todavía no se ofrece en el entorno de tu clave.
 
 ```bash
 curl https://api.cosmospay.lat/cosmos-api/v1/p2p/market \
@@ -37,13 +38,20 @@ curl https://api.cosmospay.lat/cosmos-api/v1/p2p/market \
 
 Tu clave de API elige el entorno: las claves `dv_` operan en redes de prueba y las claves `prod_` en mainnet.
 
+## Montos
+
+Los montos en tokens son cadenas de enteros en las unidades base del token, tanto en las
+solicitudes como en las respuestas: con 6 decimales, `"25000000"` son 25 USDC. Cada orden,
+cotización y cobro responde además `token`, la dirección del contrato, con `tokenSymbol` y
+`tokenDecimals`. La moneda local es una cadena decimal, como `"85000.50"`, con los decimales de la moneda.
+
 ## Cómo avanza una orden
 
 Una **compra** le da tokens a tu usuario a cambio de moneda local:
 
-1. Pides una cotización con el monto en moneda local: `POST /v1/p2p/quotes`. La cotización indica el precio, el monto en tokens, las comisiones y el historial público del comerciante. Dura 60 segundos.
-2. Abres la orden a partir de la cotización: `POST /v1/p2p/orders`. El matcher bloquea los tokens del comerciante en el contrato, y la orden responde la cuenta del comerciante y el monto exacto a transferir.
-3. Tu usuario transfiere el dinero desde una cuenta a su nombre antes del plazo de pago. Lo informas con `POST /v1/p2p/orders/{id}/paid`.
+1. Pides una cotización con el monto en moneda local: `POST /v1/p2p/quotes`. La cotización indica el precio, el monto en tokens, las comisiones, la garantía, las ventanas y el historial público del comerciante. Dura 60 segundos.
+2. Abres la orden a partir de la cotización: `POST /v1/p2p/orders`. El matcher bloquea los tokens del comerciante en el contrato, y la orden responde la cuenta del comerciante en `paymentDetails` y su `paymentDeadline`.
+3. Tu usuario transfiere el monto exacto desde una cuenta a su nombre antes del plazo. Lo informas con `POST /v1/p2p/orders/{id}/paid`.
 4. El comerciante ve llegar el dinero y libera la orden. Los tokens llegan a la billetera de tu usuario.
 
 Una **venta** le da moneda local a tu usuario a cambio de tokens:
@@ -52,7 +60,7 @@ Una **venta** le da moneda local a tu usuario a cambio de tokens:
 2. Abres la orden. La respuesta trae dos transacciones sin firmar para la billetera de tu usuario, `approve` y `openWithDeposit`. El usuario firma y envía ambas, y sus tokens quedan bloqueados en el contrato.
 3. El comerciante acepta antes del plazo de aceptación y bloquea una garantía del 10% de la orden.
 4. El comerciante transfiere la moneda local a la cuenta de tu usuario y marca la orden como pagada.
-5. Tu usuario libera los tokens. Si nadie disputa la orden, la ventana de liquidación la libera sola.
+5. Tu usuario libera los tokens. Si nadie disputa la orden, cualquiera puede liberarla una vez pasada la ventana de liquidación.
 
 Los cobros y los pagos a terceros son los mismos dos flujos, abiertos por tu organización para
 otra persona. Consulta [Cobros](/p2p/collections/) y [Pagos a terceros](/p2p/payouts/).
@@ -77,22 +85,24 @@ así que lo que lees siempre coincide con la cadena.
 
 ## Ventanas de tiempo
 
+El mercado responde sus ventanas en segundos dentro de `windows`:
+
 | Ventana | Valor por defecto | Qué limita |
 | --- | --- | --- |
-| Pago | 30 minutos | El lado comprador transfiere el dinero y marca la orden como pagada. |
-| Aceptación | 5 minutos | El comerciante acepta una venta o un pago a terceros, que llevan garantía. |
-| Liquidación | 6 horas | Una venta pagada se libera sola, salvo que alguien la dispute. |
+| `buyPaymentWindow` | 30 minutos | En una compra o un cobro, el lado comprador transfiere el dinero y marca la orden como pagada. |
+| `sellAcceptWindow` | 5 minutos | En una venta o un pago a terceros, el comerciante acepta y bloquea su garantía. |
+| `sellPaymentWindow` | 30 minutos | En una venta o un pago a terceros, el comerciante luego transfiere el dinero y marca la orden como pagada. |
+| `sellSettleWindow` | 6 horas | Una venta pagada puede liberarse pasada esta ventana, salvo que alguien la dispute. Un pago a terceros la tiene solo con la liquidación automática activada. |
 
-El mercado responde las ventanas vigentes. Cuando vence un plazo, la orden se cancela y sus tokens
-vuelven al vendedor.
+Cuando vence un plazo, la orden se cancela y sus tokens vuelven al vendedor.
 
 ## Comisiones
 
 Pueden aplicarse dos comisiones. Ambas se descuentan de lo que recibe el comprador y quedan fijas
 al abrir la orden.
 
-- La comisión del protocolo, que fija Cosmos Pay y que el mercado informa como `protocolFeeBps`. El contrato la limita al 3%.
-- Una comisión de integrador de hasta el 5%, que un cliente puede sumar a las órdenes de sus propios usuarios. Se paga a una de las billeteras registradas del cliente.
+- La comisión del protocolo, que Cosmos Pay fija por red y que el mercado informa como `protocolFeeBps`. El contrato la limita al 3%.
+- Una comisión de integrador que un cliente puede sumar a las órdenes de sus propios usuarios, hasta el `maxIntegratorFeeBps` del mercado, hoy el 5%. Envía `integratorFeeBps` en la cotización; se paga en cadena a `integratorAccountId`, una de las billeteras registradas del cliente.
 
 Cada cotización muestra ambas comisiones y el monto neto antes de que alguien firme.
 
@@ -101,6 +111,7 @@ Cada cotización muestra ambas comisiones y el monto neto antes de que alguien f
 Las claves de API necesitan el alcance `p2p:read` para leer el mercado y `p2p:write` para registrar
 billeteras, publicar ofertas y abrir órdenes, cobros y pagos a terceros. Créalas en el panel:
 [Obtén tu clave de API](/api-keys/). El panel cubre todo el mercado en **P2P**, en la barra lateral.
+Cada endpoint, con sus esquemas, está en la [referencia de la API del mercado P2P](/api/p2p-market/).
 
 La app P2P propia de Cosmos Pay, en el dominio de pagos, funciona sobre esta misma API y con las mismas reglas.
 

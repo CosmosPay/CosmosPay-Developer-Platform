@@ -18,90 +18,101 @@ export AUTH="Authorization: Bearer $COSMOS_PAY_API_KEY"
 ## 1. Register a wallet
 
 A wallet is proven with an EIP-191 signature over a single-use challenge. Ask for the challenge,
-sign its `message` with `personal_sign` in the wallet, then register.
+sign its `message` with `personal_sign` in the wallet, then register the address with the
+signature. The challenge lasts 10 minutes and works once.
 
 ```bash
 curl -X POST $API/accounts/challenge -H "$AUTH" -H "Content-Type: application/json" \
   -d '{ "address": "0xYourWallet" }'
-# → { "id": "…", "message": "Cosmos Pay wants you to register this wallet…", "expiresAt": "…" }
+# → { "message": "…", "expiresAt": "…" }
 
 curl -X POST $API/accounts -H "$AUTH" -H "Content-Type: application/json" \
-  -d '{ "challengeId": "…", "address": "0xYourWallet", "signature": "0x…", "label": "Treasury" }'
+  -d '{ "address": "0xYourWallet", "signature": "0x…", "label": "Treasury", "displayName": "Lumio Exchange" }'
 ```
 
-The challenge expires in minutes and works once. An address belongs to one organization only.
+An address belongs to one organization only. The `displayName` makes the wallet a merchant: it is
+what buyers and sellers see on their quote. Your address is never shown there.
 
-## 2. Name it as a merchant
-
-The display name is what buyers and sellers see on their quote. Your address never is.
+## 2. Manage the merchant profile
 
 ```bash
 curl -X PATCH $API/accounts/ACCOUNT_ID -H "$AUTH" -H "Content-Type: application/json" \
-  -d '{ "merchant": { "displayName": "Lumio Exchange", "status": "ACTIVE" } }'
+  -d '{ "displayName": "Lumio Exchange", "merchantStatus": "PAUSED" }'
 ```
 
-Set `status` to `PAUSED` to stop receiving new orders. Orders already open keep running.
+`merchantStatus` is `ACTIVE` or `PAUSED`. A paused merchant receives no new orders; orders already
+open keep running. Each account answers its `stats`: `completedOrders`, `cancelledOrders`,
+`completionRate`, `disputesLost` and `medianReleaseSeconds`.
 
 ## 3. Deposit liquidity
 
 Deposits go into your free balance in the contract. Two transactions: an `approve` of the exact
-amount, then the `deposit`. The transaction builder answers each one unsigned:
+amount, then the `deposit`. Amounts are in the token's base units: with 6 decimals,
+`"5000000000"` is 5,000 USDC. The transaction builder answers each one unsigned:
 
 ```bash
 curl -X POST $API/transactions -H "$AUTH" -H "Content-Type: application/json" \
-  -d '{ "network": "base", "from": "ACCOUNT_ID", "action": "approve", "args": { "token": "USDC", "amount": "5000" } }'
-# → { "chainId": 8453, "to": "0x…", "data": "0x…", "value": "0", "description": "…" }
+  -d '{ "network": "base", "from": "ACCOUNT_ID", "action": "approve", "args": { "token": "USDC", "amount": "5000000000" } }'
+# → { "chainId": 8453, "to": "0x…", "data": "0x…", "value": "0", "description": "Allow the P2P market to take exactly 5000 USDC" }
 ```
 
 Send it from your wallet, wait until it is mined, then repeat with `"action": "deposit"`. The
-`network` is one of the ids `GET /v1/p2p/market` lists. `withdraw` takes the same arguments and
-returns free tokens to your wallet at any time.
+`network` is one of the ids `GET /v1/p2p/market` lists, and `token` is a symbol or a contract
+address it lists there. `withdraw` takes the same arguments and returns free tokens to your wallet
+at any time.
+
+`GET /v1/p2p/accounts/{id}` reads the contract live: for each network, the free `balances` in base
+units, the matcher terms you set and the bots you authorised.
 
 ## 4. Authorise Cosmos Pay with a per-order cap
 
-Cosmos Pay's matcher opens purchases on your balance. You decide the most one order may lock:
+Cosmos Pay's matcher opens purchases on your balance. You decide the most one order may lock, in
+base units:
 
 ```bash
 curl -X POST $API/transactions -H "$AUTH" -H "Content-Type: application/json" \
-  -d '{ "network": "base", "from": "ACCOUNT_ID", "action": "setMatcher", "args": { "maxPerOrder": "1000", "autoSettle": false } }'
+  -d '{ "network": "base", "from": "ACCOUNT_ID", "action": "setMatcher", "args": { "maxPerOrder": "1000000000", "autoSettle": false } }'
 ```
 
-A cap of `0` revokes the authorisation. The matcher can only lock your tokens into orders up to
-that cap. It cannot withdraw them or send them anywhere.
+A cap of `"0"` revokes the authorisation, and an account whose `matcher.maxPerOrder` reads `"0"` is
+not authorised on that network. The matcher can only lock your tokens into orders up to that cap.
+It cannot withdraw them or send them anywhere.
 
 <Callout type="warn" title="Keep automatic settlement off">
-Automatic settlement lets an order you sold release on its own after the settle window. A
-liquidity merchant never needs it, and the API refuses it for a wallet with active sell offers.
-Release each order yourself or through your bot.
+Automatic settlement lets an order you sold be released after the settle window if you do not
+dispute it in time. A liquidity merchant never needs it, and the API refuses it for a wallet with active
+sell offers. Release each order yourself or through your bot.
 </Callout>
 
 ## 5. Add payment methods
 
-A payment method is the account buyers transfer to. It is stored encrypted and shown only to the
-buyer of each order. Add one per rail you offer:
+A payment method is the account buyers transfer to. Its details are stored encrypted and shown
+only to the buyer of each order. Add one per rail you offer:
 
 ```bash
 curl -X POST $API/payment-methods -H "$AUTH" -H "Content-Type: application/json" \
   -d '{
     "accountId": "ACCOUNT_ID",
+    "currency": "ARS",
     "rail": "ar_bank_transfer",
-    "label": "Main account",
     "holderName": "Lumio Exchange SRL",
-    "document": "30714209879",
-    "details": { "cbu": "0170099222000001234561", "alias": "lumio.pagos.ars" }
+    "details": { "alias": "lumio.pagos.ars", "cuit": "30714209879" },
+    "label": "Main account"
   }'
 ```
 
-| Rail | Currency | `details` | Holder's `document` |
-| --- | --- | --- | --- |
-| `ar_bank_transfer` | ARS | `cbu` with its check digits, or `alias` | CUIT or CUIL |
-| `br_pix` | BRL | `pixKeyType` (`cpf`, `cnpj`, `email`, `phone`, `evp`) and `pixKey` | CPF or CNPJ |
-| `mx_spei` | MXN | `clabe` with its check digit | RFC, optional |
-| `co_bank_transfer` | COP | `bank`, `accountType` (`savings`, `checking`), `accountNumber` | NIT or ID card |
-| `pe_bank_transfer` | PEN | `cci` | DNI or RUC |
-| `cl_bank_transfer` | CLP | `bank`, `accountType` (`checking`, `vista`, `savings`), `accountNumber` | RUT |
+The holder's identity document is one of the `details`:
 
-The market lists the rails and their fields in force.
+| Rail | Currency | `details` |
+| --- | --- | --- |
+| `ar_bank_transfer` | ARS | Exactly one of `cbu` or `alias`, and the holder's `cuit` |
+| `br_pix` | BRL | `keyType` (`cpf`, `cnpj`, `email`, `phone`, `evp`) and `key` |
+| `mx_spei` | MXN | `clabe`, with its check digit |
+| `co_bank_transfer` | COP | `bank`, `accountType` (`savings`, `checking`), `accountNumber`, `documentType` (`CC`, `CE`, `NIT`, `PP`), `documentNumber` |
+| `pe_bank_transfer` | PEN | `cci`, `documentType` (`DNI`, `CE`, `RUC`, `PP`), `documentNumber` |
+| `cl_bank_transfer` | CLP | `bank`, `accountType` (`checking`, `vista`, `savings`), `accountNumber`, `rut` |
+
+The market lists the rails in force and their fields under each currency.
 
 ## 6. Publish offers
 
@@ -117,15 +128,16 @@ curl -X POST $API/offers -H "$AUTH" -H "Content-Type: application/json" \
     "currency": "ARS",
     "rails": ["ar_bank_transfer"],
     "price": "1432.50",
-    "priceTtlSeconds": 900,
+    "priceTtlSeconds": 600,
     "minFiat": "10000",
     "maxFiat": "2500000"
   }'
 ```
 
-- `SELL_TOKEN` sells tokens to people who buy. Each rail needs an active payment method.
+- `SELL_TOKEN` sells tokens to people who buy. Each of its `rails` needs an active payment method.
 - `BUY_TOKEN` buys tokens from people who sell, and from clients' payouts.
-- `price` is local money per token. A price older than `priceTtlSeconds` is not matched: refresh it with `PATCH /v1/p2p/offers/{id}` or let your bot do it.
+- `price` is local money per token, up to 6 decimals. The price stays matchable for `priceTtlSeconds` after each update, 10 minutes by default and between 30 seconds and one day; each offer answers `priceFresh`. Refresh it with `PATCH /v1/p2p/offers/{id}` or let your bot do it.
+- `minFiat` and `maxFiat` are the smallest and largest order in local money.
 
 An offer is matched when your merchant status is `ACTIVE`, its price is fresh and the amount fits
 its limits. A purchase also needs a free balance and a per-order cap of at least the token
@@ -134,13 +146,14 @@ best price for the person wins, then the record: completion rate, release time a
 
 ## 7. Handle orders
 
-`GET /v1/p2p/merchant/orders` lists the orders matched to your wallets. Each shows what you need
-for your side and nothing more.
+`GET /v1/p2p/merchant/orders` lists the orders matched to your wallets, filtered by `status` and
+`kind`. Each answers `merchantSide`, your side of it, and what you need for that side: the
+`payer`'s name and document on a purchase, the `beneficiary`'s account on a sale or payout.
 
 | Order | Your role | What you do |
 | --- | --- | --- |
-| Purchase or charge | You sell tokens | Check the transfer arrived from the payer the order names, for the exact amount, then `release`. |
-| Sale or payout | You buy tokens | `accept` before the acceptance deadline, transfer the money to the account the order shows, then `markPaid`. |
+| Purchase or charge | You sell tokens | Check the transfer arrived from the named payer, for the exact amount, then `release`. |
+| Sale or payout | You buy tokens | `accept` before `acceptDeadline`, transfer the money to the beneficiary, then `markPaid` before `paymentDeadline`. |
 
 Each action is a transaction from the same builder, signed in your wallet:
 
@@ -149,12 +162,12 @@ curl -X POST $API/transactions -H "$AUTH" -H "Content-Type: application/json" \
   -d '{ "network": "base", "from": "ACCOUNT_ID", "action": "release", "args": { "orderId": "ORDER_ID" } }'
 ```
 
-`cancel` declines a sale before you pay, and `dispute` asks the arbiter to decide a paid order.
-Never release a purchase before the money is in your account, and never accept a transfer from
-someone other than the named payer.
+`cancel` declines a sale or payout before you pay, and `dispute` asks the arbiter to decide a paid
+order. Never release a purchase before the money is in your account, and never accept a transfer
+from someone other than the named payer.
 
 <Cards>
   <Card title="Bot quick start" href="/p2p/bots/" description="Let a bot refresh prices and release paid orders." />
   <Card title="Security model" href="/p2p/security/" description="What the matcher and the arbiter can and cannot do." />
-  <Card title="API reference" href="/api/" description="Every P2P market endpoint with its schemas." />
+  <Card title="API reference" href="/api/p2p-accounts/" description="Wallets, payment methods and offers with their schemas." />
 </Cards>

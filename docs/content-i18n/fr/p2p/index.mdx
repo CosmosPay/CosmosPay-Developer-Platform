@@ -26,9 +26,10 @@ lesquels elle opère, et chaque portefeuille signe ses propres transactions.
 ## Réseaux et jetons
 
 Le marché fonctionne sur les réseaux EVM où son contrat est déployé. `GET /v1/p2p/market` les liste
-avec l'adresse du contrat et les jetons de chacun, les devises et les moyens de paiement, les frais,
-les délais et l'adresse du matcher. Lisez-le au démarrage de votre intégration plutôt que de figer
-les réseaux dans le code.
+avec l'adresse du contrat, les jetons et les frais de protocole de chacun, les devises et les moyens
+de paiement avec leurs champs, la caution, les délais et l'adresse du matcher. Lisez-le au démarrage
+de votre intégration plutôt que de figer les réseaux dans le code. S'il répond `available: false`,
+le marché n'est pas encore proposé dans l'environnement de votre clé.
 
 ```bash
 curl https://api.cosmospay.lat/cosmos-api/v1/p2p/market \
@@ -37,13 +38,20 @@ curl https://api.cosmospay.lat/cosmos-api/v1/p2p/market \
 
 Votre clé API choisit l'environnement : les clés `dv_` opèrent sur les réseaux de test, les clés `prod_` sur le mainnet.
 
+## Montants
+
+Les montants en jetons sont des chaînes d'entiers dans les unités de base du jeton, dans les
+requêtes comme dans les réponses : avec 6 décimales, `"25000000"` vaut 25 USDC. Chaque ordre,
+cotation et encaissement renvoie aussi `token`, l'adresse du contrat, avec `tokenSymbol` et
+`tokenDecimals`. La monnaie locale est une chaîne décimale, comme `"85000.50"`, avec les décimales de la devise.
+
 ## Comment un ordre avance
 
 Un **achat** donne des jetons à votre utilisateur contre de la monnaie locale :
 
-1. Vous demandez une cotation avec le montant en monnaie locale : `POST /v1/p2p/quotes`. La cotation indique le prix, le montant en jetons, les frais et l'historique public du marchand. Elle est valable 60 secondes.
-2. Vous ouvrez l'ordre à partir de la cotation : `POST /v1/p2p/orders`. Le matcher bloque les jetons du marchand dans le contrat, et l'ordre renvoie le compte du marchand et le montant exact à virer.
-3. Votre utilisateur vire l'argent depuis un compte à son nom avant l'échéance de paiement. Vous le signalez avec `POST /v1/p2p/orders/{id}/paid`.
+1. Vous demandez une cotation avec le montant en monnaie locale : `POST /v1/p2p/quotes`. La cotation indique le prix, le montant en jetons, les frais, la caution, les délais et l'historique public du marchand. Elle est valable 60 secondes.
+2. Vous ouvrez l'ordre à partir de la cotation : `POST /v1/p2p/orders`. Le matcher bloque les jetons du marchand dans le contrat, et l'ordre renvoie le compte du marchand dans `paymentDetails` et son `paymentDeadline`.
+3. Votre utilisateur vire le montant exact depuis un compte à son nom avant l'échéance. Vous le signalez avec `POST /v1/p2p/orders/{id}/paid`.
 4. Le marchand voit l'argent arriver et libère l'ordre. Les jetons arrivent dans le portefeuille de votre utilisateur.
 
 Une **vente** donne de la monnaie locale à votre utilisateur contre des jetons :
@@ -52,7 +60,7 @@ Une **vente** donne de la monnaie locale à votre utilisateur contre des jetons 
 2. Vous ouvrez l'ordre. La réponse contient deux transactions non signées pour le portefeuille de votre utilisateur, `approve` et `openWithDeposit`. L'utilisateur signe et envoie les deux, et ses jetons sont bloqués dans le contrat.
 3. Le marchand accepte avant l'échéance d'acceptation et bloque une caution de 10 % de l'ordre.
 4. Le marchand vire la monnaie locale sur le compte de votre utilisateur et marque l'ordre comme payé.
-5. Votre utilisateur libère les jetons. Si personne ne conteste l'ordre, la fenêtre de règlement le libère d'elle-même.
+5. Votre utilisateur libère les jetons. Si personne ne conteste l'ordre, n'importe qui peut le libérer une fois la fenêtre de règlement écoulée.
 
 Les encaissements et les versements sont ces deux mêmes parcours, ouverts par votre organisation
 pour quelqu'un d'autre. Voir [Encaissements](/p2p/collections/) et [Versements](/p2p/payouts/).
@@ -77,22 +85,24 @@ indexés, si bien que ce que vous lisez correspond toujours à la chaîne.
 
 ## Délais
 
+Le marché renvoie ses délais en secondes dans `windows` :
+
 | Délai | Par défaut | Ce qu'il limite |
 | --- | --- | --- |
-| Paiement | 30 minutes | Le côté acheteur vire l'argent et marque l'ordre comme payé. |
-| Acceptation | 5 minutes | Le marchand accepte une vente ou un versement, qui comportent une caution. |
-| Règlement | 6 heures | Une vente payée se libère d'elle-même, sauf si quelqu'un la conteste. |
+| `buyPaymentWindow` | 30 minutes | Pour un achat ou un encaissement, le côté acheteur vire l'argent et marque l'ordre comme payé. |
+| `sellAcceptWindow` | 5 minutes | Pour une vente ou un versement, le marchand accepte et bloque sa caution. |
+| `sellPaymentWindow` | 30 minutes | Pour une vente ou un versement, le marchand vire ensuite l'argent et marque l'ordre comme payé. |
+| `sellSettleWindow` | 6 heures | Une vente payée peut être libérée passé ce délai, sauf si quelqu'un la conteste. Un versement n'en bénéficie qu'avec le règlement automatique activé. |
 
-Le marché renvoie les délais en vigueur. Lorsqu'une échéance passe, l'ordre est annulé et ses jetons
-reviennent au vendeur.
+Lorsqu'une échéance passe, l'ordre est annulé et ses jetons reviennent au vendeur.
 
 ## Frais
 
 Deux frais peuvent s'appliquer. Tous deux sont prélevés sur ce que reçoit l'acheteur et fixés à
 l'ouverture de l'ordre.
 
-- Les frais de protocole, fixés par Cosmos Pay et indiqués par le marché dans `protocolFeeBps`. Le contrat les plafonne à 3 %.
-- Des frais d'intégrateur jusqu'à 5 %, qu'un client peut ajouter aux ordres de ses propres utilisateurs. Ils sont versés à l'un des portefeuilles enregistrés du client.
+- Les frais de protocole, fixés par Cosmos Pay par réseau et indiqués par le marché dans `protocolFeeBps`. Le contrat les plafonne à 3 %.
+- Des frais d'intégrateur qu'un client peut ajouter aux ordres de ses propres utilisateurs, jusqu'au `maxIntegratorFeeBps` du marché, 5 % aujourd'hui. Passez `integratorFeeBps` dans la cotation ; ils sont versés sur la chaîne à `integratorAccountId`, l'un des portefeuilles enregistrés du client.
 
 Chaque cotation affiche les deux frais et le montant net avant que quiconque ne signe.
 
@@ -101,7 +111,8 @@ Chaque cotation affiche les deux frais et le montant net avant que quiconque ne 
 Les clés API ont besoin de la portée `p2p:read` pour lire le marché et de `p2p:write` pour
 enregistrer des portefeuilles, publier des offres et ouvrir des ordres, des encaissements et des
 versements. Créez-les dans le tableau de bord : [Obtenez votre clé API](/api-keys/). Le tableau de bord
-couvre tout le marché sous **P2P**, dans la barre latérale.
+couvre tout le marché sous **P2P**, dans la barre latérale. Chaque endpoint, avec ses schémas, figure
+dans la [référence de l'API du marché P2P](/api/p2p-market/).
 
 L'application P2P de Cosmos Pay, sur le domaine des paiements, fonctionne avec cette même API et les mêmes règles.
 

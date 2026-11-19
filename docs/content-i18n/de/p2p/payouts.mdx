@@ -12,7 +12,7 @@ verlassen Ihr Guthaben nur zugunsten eines Händlers, der bereits gezahlt hat.
 
 1. **Registrieren Sie die Wallet**, die zahlt. Siehe [Schnellstart für Händler](/p2p/merchants/).
 2. **Zahlen Sie die Token ein**, die der Stapel braucht.
-3. **Autorisieren Sie den Matcher von Cosmos Pay** in diesem Netzwerk mit `setMatcher`, mit einem Limit pro Auftrag, das mindestens Ihrer größten Auszahlung entspricht. Lassen Sie `autoSettle` aus, um jede Auszahlung selbst freizugeben, oder schalten Sie es ein, damit bezahlte Auszahlungen nach dem Abwicklungsfenster freigegeben werden.
+3. **Autorisieren Sie den Matcher von Cosmos Pay** in diesem Netzwerk mit `setMatcher`, mit einem Limit pro Auftrag, das mindestens Ihrer größten Auszahlung entspricht. Lassen Sie `autoSettle` aus, um jede Auszahlung selbst freizugeben, oder schalten Sie es ein, damit eine bezahlte Auszahlung nach dem Abwicklungsfenster freigegeben werden kann.
 
 ## Einen Stapel senden
 
@@ -28,39 +28,47 @@ curl -X POST https://api.cosmospay.lat/cosmos-api/v1/p2p/payouts \
         "currency": "ARS",
         "fiatAmount": "150000",
         "rail": "ar_bank_transfer",
-        "beneficiary": { "holderName": "Ana Gómez", "document": "20329642330", "details": { "cbu": "0170099222000001234561" } },
-        "externalReference": "inv-1001"
+        "beneficiary": {
+          "holderName": "Ana Gómez",
+          "document": "20329642330",
+          "details": { "cbu": "0170099222000001234561", "cuit": "20329642330" }
+        },
+        "externalReference": "payroll-2026-11-ana"
       }
     ]
   }'
 ```
 
-Ein Stapel enthält 1 bis 100 Einträge. Die `details` des Begünstigten folgen dem Zahlungsweg, wie bei
-den Zahlungswegen eines Händlers: siehe die Tabelle in [Schnellstart für Händler](/p2p/merchants/).
+Ein Stapel enthält 1 bis 100 Einträge. `accountId` ist die Wallet, die zahlt, optional, wenn Sie genau
+eine haben. Jeder Begünstigte hat einen Namen, ein Ausweisdokument mit 4 bis 20 Zeichen und die
+`details` des Zahlungswegs, geprüft wie bei einem Zahlungsweg eines Händlers: siehe die Tabelle in
+[Schnellstart für Händler](/p2p/merchants/).
 
 ## Was mit jedem Eintrag geschieht
 
 1. Cosmos Pay ordnet den Eintrag einem Händler zu, der auf diesem Weg Token kauft, und eröffnet den Auftrag auf Ihrem Guthaben. Der Händler sperrt eine Sicherheitsleistung von 10 %.
-2. Der Händler nimmt an, überweist das Geld an den Begünstigten und markiert den Auftrag mit der Überweisungsreferenz als bezahlt.
-3. Sie prüfen die Zahlung und geben frei: eine `release`-Transaktion des Builders, signiert von Ihrer Wallet oder von Ihrem Bot mit `PERM_RELEASE`.
+2. Der Händler nimmt an, überweist das Geld an den Begünstigten und markiert den Auftrag als bezahlt.
+3. Sie prüfen die Zahlung und geben frei: eine `release`-Transaktion des Builders, signiert von Ihrer Wallet oder von Ihrem Bot mit dem Recht `release`.
 
-Ein Eintrag, den kein Händler übernehmen kann, wird mit Begründung `rejected`; Ihre Token haben sich
-dafür nie bewegt. Nimmt ein Händler nicht rechtzeitig an oder zahlt nicht rechtzeitig, gibt die Frist
-Ihre Token zurück.
+Ein Eintrag, den gerade kein Händler übernehmen kann, landet mit seinem `reason` in `failedItems`;
+Ihre Token haben sich dafür nie bewegt. Nimmt ein Händler nicht rechtzeitig an oder zahlt nicht
+rechtzeitig, gibt die Frist Ihre Token zurück.
 
 ## Status des Stapels
 
-`GET /v1/p2p/payouts/{id}` liefert den Stapel mit Status und Auftrag jedes Eintrags.
+`GET /v1/p2p/payouts/{id}` liefert den Stapel mit seinen `orders`, seinen `failedItems` und
+`itemCount`. Die Liste, `GET /v1/p2p/payouts`, liefert jeden Stapel ohne seine Aufträge: Lesen Sie
+einen Stapel über seine ID, um sie zu sehen.
 
 | Status | Bedeutung |
 | --- | --- |
-| `processing` | Mindestens ein Eintrag läuft noch. |
-| `completed` | Alle Einträge wurden abgeschlossen. |
-| `partial` | Alle Einträge sind beendet, einige wurden nicht abgeschlossen. |
-| `failed` | Kein Eintrag wurde abgeschlossen. |
+| `processing` | Mindestens ein Auftrag läuft noch. |
+| `completed` | Alle Aufträge wurden abgeschlossen. |
+| `partially_completed` | Alle Aufträge sind beendet, einige wurden nicht abgeschlossen. |
+| `failed` | Kein Auftrag wurde abgeschlossen. |
 
-`P2P_PAYOUT_BATCH_COMPLETED` wird gesendet, wenn ein Stapel endet, und der Auftrag jedes Eintrags
-sendet seine eigenen Ereignisse.
+`P2P_PAYOUT_BATCH_COMPLETED` wird gesendet, wenn alle Aufträge eines Stapels beendet sind, und jeder
+Auftrag sendet seine eigenen Ereignisse.
 
 ## Eine CSV-Datei im Dashboard hochladen
 
@@ -76,11 +84,13 @@ beliebiger Reihenfolge:
 | `rail` | `ar_bank_transfer`, `br_pix`, `mx_spei`, `co_bank_transfer`, `pe_bank_transfer` oder `cl_bank_transfer` |
 | `holderName` | Der Name des Begünstigten |
 | `document` | Das Ausweisdokument des Begünstigten |
-| `cbu`, `alias` | Argentinien |
-| `pixKeyType`, `pixKey` | Brasilien |
+| `cbu`, `alias`, `cuit` | Argentinien |
+| `keyType`, `key` | Brasilien |
 | `clabe` | Mexiko |
 | `bank`, `accountType`, `accountNumber` | Kolumbien und Chile |
+| `documentType`, `documentNumber` | Kolumbien und Peru |
 | `cci` | Peru |
+| `rut` | Chile |
 | `reference` | Ihre eigene Referenz, eindeutig in der Datei |
 
 Kommas und Semikolons funktionieren beide. Die Seite bietet eine Vorlage mit einer Zeile pro Zahlungsweg.
@@ -88,4 +98,5 @@ Kommas und Semikolons funktionieren beide. Die Seite bietet eine Vorlage mit ein
 <Cards>
   <Card title="Webhooks" href="/p2p/webhooks/" description="Jede Auszahlung auf Ihrem Server verfolgen." />
   <Card title="Sicherheitsmodell" href="/p2p/security/" description="Was der Matcher mit Ihrem Guthaben tun kann und was nicht." />
+  <Card title="API-Referenz" href="/api/p2p-collections/" description="Die Routen der Auszahlungen mit ihren Schemata." />
 </Cards>

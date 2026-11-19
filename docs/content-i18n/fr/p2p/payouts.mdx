@@ -12,7 +12,7 @@ ne quittent votre solde que vers un marchand qui a déjà payé.
 
 1. **Enregistrez le portefeuille** qui paie. Voir [Démarrage rapide pour les marchands](/p2p/merchants/).
 2. **Déposez** dans le contrat les jetons dont le lot a besoin.
-3. **Autorisez le matcher de Cosmos Pay** sur ce réseau avec `setMatcher`, avec un plafond par ordre au moins égal à votre plus gros versement. Laissez `autoSettle` désactivé pour libérer chaque versement vous-même, ou activez-le pour que les versements payés se libèrent après la fenêtre de règlement.
+3. **Autorisez le matcher de Cosmos Pay** sur ce réseau avec `setMatcher`, avec un plafond par ordre au moins égal à votre plus gros versement. Laissez `autoSettle` désactivé pour libérer chaque versement vous-même, ou activez-le pour qu'un versement payé puisse être libéré après la fenêtre de règlement.
 
 ## Envoyez un lot
 
@@ -28,39 +28,47 @@ curl -X POST https://api.cosmospay.lat/cosmos-api/v1/p2p/payouts \
         "currency": "ARS",
         "fiatAmount": "150000",
         "rail": "ar_bank_transfer",
-        "beneficiary": { "holderName": "Ana Gómez", "document": "20329642330", "details": { "cbu": "0170099222000001234561" } },
-        "externalReference": "inv-1001"
+        "beneficiary": {
+          "holderName": "Ana Gómez",
+          "document": "20329642330",
+          "details": { "cbu": "0170099222000001234561", "cuit": "20329642330" }
+        },
+        "externalReference": "payroll-2026-11-ana"
       }
     ]
   }'
 ```
 
-Un lot contient de 1 à 100 éléments. Les `details` du bénéficiaire suivent le moyen de paiement,
-comme pour les moyens d'encaissement : voir le tableau des moyens dans
+Un lot contient de 1 à 100 éléments. `accountId` est le portefeuille qui paie, facultatif quand vous
+n'en avez qu'un. Chaque bénéficiaire a un nom, une pièce d'identité de 4 à 20 caractères et les
+`details` du moyen, vérifiés comme ceux d'un moyen d'encaissement : voir le tableau des moyens dans
 [Démarrage rapide pour les marchands](/p2p/merchants/).
 
 ## Ce qui arrive à chaque élément
 
 1. Cosmos Pay apparie l'élément à un marchand qui achète des jetons sur ce moyen et ouvre l'ordre sur votre solde. Le marchand bloque une caution de 10 %.
-2. Le marchand accepte, vire l'argent au bénéficiaire et marque l'ordre comme payé avec la référence du virement.
-3. Vous vérifiez le paiement et libérez : une transaction `release` du générateur, signée par votre portefeuille ou par votre bot avec `PERM_RELEASE`.
+2. Le marchand accepte, vire l'argent au bénéficiaire et marque l'ordre comme payé.
+3. Vous vérifiez le paiement et libérez : une transaction `release` du générateur, signée par votre portefeuille ou par votre bot avec la permission `release`.
 
-Un élément qu'aucun marchand ne peut prendre passe à `rejected` avec le motif ; vos jetons n'ont
-jamais bougé pour lui. Si un marchand n'accepte pas ou ne paie pas à temps, l'échéance vous rend vos jetons.
+Un élément qu'aucun marchand ne peut prendre pour l'instant figure dans `failedItems` avec sa
+`reason` ; vos jetons n'ont jamais bougé pour lui. Si un marchand n'accepte pas ou ne paie pas à
+temps, l'échéance vous rend vos jetons.
 
 ## Statut du lot
 
-`GET /v1/p2p/payouts/{id}` renvoie le lot avec le statut et l'ordre de chaque élément.
+`GET /v1/p2p/payouts/{id}` renvoie le lot avec ses `orders`, ses `failedItems` et `itemCount`. La
+liste, `GET /v1/p2p/payouts`, renvoie chaque lot sans ses ordres : lisez un lot par son identifiant
+pour les voir.
 
 | Statut | Signification |
 | --- | --- |
-| `processing` | Au moins un élément est encore en cours. |
-| `completed` | Tous les éléments ont abouti. |
-| `partial` | Tous les éléments sont terminés et certains n'ont pas abouti. |
-| `failed` | Aucun élément n'a abouti. |
+| `processing` | Au moins un ordre est encore en cours. |
+| `completed` | Tous les ordres ont abouti. |
+| `partially_completed` | Tous les ordres sont terminés et certains n'ont pas abouti. |
+| `failed` | Aucun ordre n'a abouti. |
 
-`P2P_PAYOUT_BATCH_COMPLETED` est envoyé quand un lot se termine, et l'ordre de chaque élément envoie
-ses propres événements.
+`P2P_PAYOUT_BATCH_COMPLETED` est envoyé quand tous les ordres d'un lot sont terminés, et chaque
+ordre envoie ses propres événements.
 
 ## Importez un CSV depuis le tableau de bord
 
@@ -76,11 +84,13 @@ et dans n'importe quel ordre :
 | `rail` | `ar_bank_transfer`, `br_pix`, `mx_spei`, `co_bank_transfer`, `pe_bank_transfer` ou `cl_bank_transfer` |
 | `holderName` | Le nom du bénéficiaire |
 | `document` | La pièce d'identité du bénéficiaire |
-| `cbu`, `alias` | Argentine |
-| `pixKeyType`, `pixKey` | Brésil |
+| `cbu`, `alias`, `cuit` | Argentine |
+| `keyType`, `key` | Brésil |
 | `clabe` | Mexique |
 | `bank`, `accountType`, `accountNumber` | Colombie et Chili |
+| `documentType`, `documentNumber` | Colombie et Pérou |
 | `cci` | Pérou |
+| `rut` | Chili |
 | `reference` | Votre propre référence, unique dans le fichier |
 
 Les virgules comme les points-virgules fonctionnent. La page propose un modèle avec une ligne par moyen.
@@ -88,4 +98,5 @@ Les virgules comme les points-virgules fonctionnent. La page propose un modèle 
 <Cards>
   <Card title="Webhooks" href="/p2p/webhooks/" description="Suivez chaque versement depuis votre serveur." />
   <Card title="Modèle de sécurité" href="/p2p/security/" description="Ce que le matcher peut faire de votre solde, et ce qu'il ne peut pas faire." />
+  <Card title="Référence de l'API" href="/api/p2p-collections/" description="Les routes des versements avec leurs schémas." />
 </Cards>

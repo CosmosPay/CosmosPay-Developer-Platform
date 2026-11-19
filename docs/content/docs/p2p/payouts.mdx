@@ -12,7 +12,7 @@ that has paid.
 
 1. **Register the wallet** that pays. See [Merchant quick start](/p2p/merchants/).
 2. **Deposit** the tokens the batch needs into the contract.
-3. **Authorise Cosmos Pay's matcher** on that network with `setMatcher`, with a per-order cap at least as large as your biggest payout. Keep `autoSettle` off to release each payout yourself, or turn it on to let paid payouts release after the settle window.
+3. **Authorise Cosmos Pay's matcher** on that network with `setMatcher`, with a per-order cap at least as large as your biggest payout. Keep `autoSettle` off to release each payout yourself, or turn it on to let a paid payout be released after the settle window.
 
 ## Send a batch
 
@@ -28,38 +28,45 @@ curl -X POST https://api.cosmospay.lat/cosmos-api/v1/p2p/payouts \
         "currency": "ARS",
         "fiatAmount": "150000",
         "rail": "ar_bank_transfer",
-        "beneficiary": { "holderName": "Ana Gómez", "document": "20329642330", "details": { "cbu": "0170099222000001234561" } },
-        "externalReference": "inv-1001"
+        "beneficiary": {
+          "holderName": "Ana Gómez",
+          "document": "20329642330",
+          "details": { "cbu": "0170099222000001234561", "cuit": "20329642330" }
+        },
+        "externalReference": "payroll-2026-11-ana"
       }
     ]
   }'
 ```
 
-A batch holds 1 to 100 items. The beneficiary's `details` follow the rail, as for payment methods:
-see the rails table in [Merchant quick start](/p2p/merchants/).
+A batch holds 1 to 100 items. `accountId` is the wallet that pays, optional when you have exactly
+one. Each beneficiary has a name, an identity document of 4 to 20 characters and the rail's
+`details`, checked as a payment method's: see the rails table in
+[Merchant quick start](/p2p/merchants/).
 
 ## What happens to each item
 
 1. Cosmos Pay matches the item to a merchant that buys tokens on that rail and opens the order on your balance. The merchant locks a bond of 10%.
-2. The merchant accepts, transfers the money to the beneficiary and marks the order paid with the transfer reference.
-3. You check the payment and release: a `release` transaction from the builder, signed by your wallet or by your bot with `PERM_RELEASE`.
+2. The merchant accepts, transfers the money to the beneficiary and marks the order paid.
+3. You check the payment and release: a `release` transaction from the builder, signed by your wallet or by your bot with the `release` permission.
 
-An item no merchant can take is `rejected` with the reason; your tokens never moved for it. A
-merchant that does not accept or pay in time lets the deadline return your tokens.
+An item no merchant can take right now lands in `failedItems` with its `reason`; your tokens never
+moved for it. A merchant that does not accept or pay in time lets the deadline return your tokens.
 
 ## Batch status
 
-`GET /v1/p2p/payouts/{id}` answers the batch with each item's status and order.
+`GET /v1/p2p/payouts/{id}` answers the batch with its `orders`, its `failedItems` and `itemCount`.
+The list, `GET /v1/p2p/payouts`, answers each batch without its orders: read a batch by id for them.
 
 | Status | Meaning |
 | --- | --- |
-| `processing` | At least one item is still moving. |
-| `completed` | Every item completed. |
-| `partial` | Every item finished and some did not complete. |
-| `failed` | No item completed. |
+| `processing` | At least one order is still live. |
+| `completed` | Every order completed. |
+| `partially_completed` | Every order ended and some did not complete. |
+| `failed` | No order completed. |
 
-`P2P_PAYOUT_BATCH_COMPLETED` fires when a batch finishes, and each item's order sends its own
-events.
+`P2P_PAYOUT_BATCH_COMPLETED` fires when every order of a batch has ended, and each order sends its
+own events.
 
 ## Upload a CSV from the dashboard
 
@@ -75,11 +82,13 @@ order:
 | `rail` | `ar_bank_transfer`, `br_pix`, `mx_spei`, `co_bank_transfer`, `pe_bank_transfer` or `cl_bank_transfer` |
 | `holderName` | The beneficiary's name |
 | `document` | The beneficiary's ID document |
-| `cbu`, `alias` | Argentina |
-| `pixKeyType`, `pixKey` | Brazil |
+| `cbu`, `alias`, `cuit` | Argentina |
+| `keyType`, `key` | Brazil |
 | `clabe` | Mexico |
 | `bank`, `accountType`, `accountNumber` | Colombia and Chile |
+| `documentType`, `documentNumber` | Colombia and Peru |
 | `cci` | Peru |
+| `rut` | Chile |
 | `reference` | Your own reference, unique in the file |
 
 Commas or semicolons both work. The page offers a template with one row per rail.
@@ -87,4 +96,5 @@ Commas or semicolons both work. The page offers a template with one row per rail
 <Cards>
   <Card title="Webhooks" href="/p2p/webhooks/" description="Follow each payout on your server." />
   <Card title="Security model" href="/p2p/security/" description="What the matcher can do with your balance, and what it cannot." />
+  <Card title="API reference" href="/api/p2p-collections/" description="The payout routes with their schemas." />
 </Cards>

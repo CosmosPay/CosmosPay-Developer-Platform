@@ -12,29 +12,33 @@ abaixo.
 | Evento | Enviado quando |
 | --- | --- |
 | `P2P_ORDER_CREATED` | Uma ordem foi aberta on-chain. |
-| `P2P_ORDER_ACCEPTED` | O comerciante aceitou uma venda ou um pagamento a terceiros e bloqueou a garantia. |
-| `P2P_ORDER_PAID` | O lado comprador informou a transferência e marcou a ordem como paga. |
+| `P2P_ORDER_ACCEPTED` | Uma ordem aguarda o pagamento: um comerciante aceitou uma venda ou um pagamento a terceiros, ou uma compra foi aberta. |
+| `P2P_ORDER_PAID` | O lado comprador marcou a ordem como paga. |
 | `P2P_ORDER_COMPLETED` | O vendedor liberou. O comprador recebeu os tokens. |
 | `P2P_ORDER_CANCELLED` | A ordem foi cancelada. Os tokens voltaram ao vendedor. |
 | `P2P_ORDER_EXPIRED` | Um prazo venceu. Os tokens voltaram ao vendedor. |
 | `P2P_ORDER_DISPUTED` | Uma das partes abriu uma disputa. |
 | `P2P_ORDER_RESOLVED` | O árbitro resolveu a disputa. |
-| `P2P_CHARGE_SUCCEEDED` | A ordem de uma cobrança foi concluída. |
-| `P2P_PAYOUT_BATCH_COMPLETED` | Todos os itens de um lote de pagamentos a terceiros terminaram. |
+| `P2P_ORDER_FAILED` | A ordem nunca foi aberta. |
+| `P2P_CHARGE_SUCCEEDED` | Uma ordem que paga uma cobrança foi concluída. Uma cobrança de uso múltiplo envia um por ordem que a paga. |
+| `P2P_PAYOUT_BATCH_COMPLETED` | Todas as ordens de um lote de pagamentos a terceiros terminaram. |
 
-Ordens concluídas, canceladas, vencidas e resolvidas, cobranças bem-sucedidas e lotes terminados são
-finais: nenhum outro evento vem depois deles.
+Ordens concluídas, canceladas, vencidas, resolvidas e que falharam, cobranças bem-sucedidas e lotes
+terminados são finais: nenhum outro evento vem depois deles.
 
 ## Quem recebe
 
 Os eventos de uma ordem chegam a duas partes: o cliente que a abriu e o comerciante com quem ela foi
-combinada, quando são organizações diferentes. `data.role` diz qual delas você é, e o payload contém
-só o que esse papel pode ver.
+combinada, quando são organizações diferentes. `data.role` diz qual delas você é, e cada parte
+recebe apenas a própria visão da ordem.
 
-| `data.role` | Recebe | Nunca recebe |
+| `data.role` | O payload contém | Nunca contém |
 | --- | --- | --- |
-| `client` | A ordem, o nome de exibição e o histórico do comerciante, a conta para a qual transferir em uma compra | O endereço do comerciante ou as outras contas dele |
-| `merchant` | A ordem, o nome e o documento do pagador em uma compra, a conta do beneficiário em uma venda ou um pagamento a terceiros | Os outros usuários ou ordens do cliente |
+| `client` | Os valores, os endereços, os prazos, os hashes das transações e o status da ordem, o nome de exibição e o histórico do comerciante, e seus próprios `externalReference`, `chargeId` e `payoutBatchId` | Dados de pagamento, a identidade do pagador ou a conta de um beneficiário |
+| `merchant` | Os valores, os endereços, os prazos, os hashes das transações e o status da ordem, com seus `merchantAccountId` e `merchantSide` | Dados de pagamento, a identidade do pagador, a conta de um beneficiário ou as referências próprias do cliente |
+
+Leia a ordem pela API para o que um webhook deixa de fora: `GET /v1/p2p/orders/{id}` como cliente,
+`GET /v1/p2p/merchant/orders/{id}` como comerciante.
 
 ## Payload
 
@@ -45,18 +49,22 @@ só o que esse papel pode ver.
   "createdAt": "2026-11-19T14:02:11.000Z",
   "data": {
     "role": "merchant",
-    "id": "9f1c2e4a-…",
+    "id": "3f1c2b7e-8d4a-4c1e-9b2f-6a5d4c3b2a10",
     "kind": "BUY",
     "status": "paid",
     "network": "base",
-    "token": "USDC",
-    "tokenAmount": "104.712041",
-    "fiatAmount": "150000.00",
+    "chainId": 8453,
+    "merchantSide": "seller",
+    "token": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    "tokenSymbol": "USDC",
+    "tokenDecimals": 6,
     "currency": "ARS",
     "rail": "ar_bank_transfer",
-    "payer": { "name": "Ana Gómez", "document": "20329642330" },
-    "paidReference": "TRX-88421",
-    "externalReference": null
+    "fiatAmount": "150000.00",
+    "tokenAmount": "104712041",
+    "netAmount": "104397905",
+    "paymentDeadline": "2026-11-19T14:30:02.000Z",
+    "paidReference": "TRX-88421"
   }
 }
 ```

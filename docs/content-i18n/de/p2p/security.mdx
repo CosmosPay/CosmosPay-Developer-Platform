@@ -48,7 +48,7 @@ Deshalb gilt:
 ## Daten
 
 - Zahlungswege, Auszahlungskonten und die Identität der Zahler werden verschlüsselt gespeichert.
-- Ein Auftrag zeigt jeder Partei nur, was ihre Rolle braucht: Der Zahler sieht das Konto des Händlers für diesen Auftrag, der Händler sieht Name und Dokument des Zahlers, und niemand sieht das Adressbuch einer anderen Partei.
+- Ein Auftrag zeigt jeder Partei nur, was ihre Rolle braucht: Der Zahler sieht das Konto des Händlers für diesen Auftrag, der Händler sieht Name und Dokument des Zahlers oder das Konto des Begünstigten. Webhooks enthalten keine dieser Daten: Die berechtigte Partei liest sie über die API.
 - Wallets werden mit einer EIP-191-Signatur über eine einmalig gültige, ablaufende Challenge registriert, und eine Adresse gehört genau einer Organisation.
 
 ## Die öffentliche P2P-App

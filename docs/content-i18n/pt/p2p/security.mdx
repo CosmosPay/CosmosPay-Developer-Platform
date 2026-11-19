@@ -45,7 +45,7 @@ Por isso:
 ## Dados
 
 - Meios de recebimento, contas de pagamento a terceiros e identidades dos pagadores são armazenados criptografados.
-- Uma ordem mostra a cada parte apenas o que o seu papel precisa: o pagador vê a conta do comerciante para aquela ordem, o comerciante vê o nome e o documento do pagador, e ninguém vê a agenda de contas de outra parte.
+- Uma ordem mostra a cada parte apenas o que o seu papel precisa: o pagador vê a conta do comerciante para aquela ordem, o comerciante vê o nome e o documento do pagador ou a conta do beneficiário. Os webhooks não levam nenhum desses dados: a parte que tem direito a eles os lê pela API.
 - As carteiras são registradas com uma assinatura EIP-191 sobre um desafio de uso único que expira, e um endereço pertence a uma só organização.
 
 ## O app P2P público

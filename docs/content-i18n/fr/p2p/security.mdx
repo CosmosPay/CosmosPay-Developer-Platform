@@ -46,7 +46,7 @@ C'est pourquoi :
 ## Données
 
 - Les moyens d'encaissement, les comptes de versement et l'identité des payeurs sont chiffrés au repos.
-- Un ordre ne montre à chaque partie que ce dont son rôle a besoin : le payeur voit le compte du marchand pour cet ordre, le marchand voit le nom et le document du payeur, et personne ne voit le carnet d'adresses d'une autre partie.
+- Un ordre ne montre à chaque partie que ce dont son rôle a besoin : le payeur voit le compte du marchand pour cet ordre, le marchand voit le nom et le document du payeur ou le compte du bénéficiaire. Les webhooks ne portent aucune de ces données : la partie qui y a droit les lit via l'API.
 - Les portefeuilles s'enregistrent avec une signature EIP-191 sur un défi à usage unique qui expire, et une adresse appartient à une seule organisation.
 
 ## L'application P2P publique

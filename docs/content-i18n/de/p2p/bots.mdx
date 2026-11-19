@@ -10,37 +10,42 @@ eingegangen ist, und nimmt Verkäufe an.
 
 ## 1. Dem Bot seine Rechte erteilen
 
-Rechte sind eine Bitmaske, die der Vertrag bei jedem Aufruf prüft, den der Bot für Sie macht:
+Rechte sind Bits, die der Vertrag bei jedem Aufruf prüft, den der Bot für Sie macht:
 
 | Recht | Bit | Erlaubt dem Bot |
 | --- | --- | --- |
-| `PERM_OPEN` | `1` | Aufträge auf Ihrem Guthaben eröffnen. |
-| `PERM_RELEASE` | `2` | Ihre Aufträge freigeben, was deren Käufer bezahlt. |
-| `PERM_TRADE` | `4` | Für Sie annehmen, als bezahlt markieren, stornieren und anfechten. |
-| `PERM_WITHDRAW` | `8` | Ihr freies Guthaben auf Ihre eigene Wallet abheben, nie anderswohin. |
+| `open` | `1` | Aufträge auf Ihrem Guthaben eröffnen. |
+| `release` | `2` | Ihre Aufträge freigeben, was deren Käufer bezahlt. |
+| `trade` | `4` | Für Sie annehmen, als bezahlt markieren, stornieren und anfechten. |
+| `withdraw` | `8` | Ihr freies Guthaben auf Ihre eigene Wallet abheben, nie anderswohin. |
 
-Addieren Sie die gewünschten Bits: Ein Bot, der Käufe freigibt und Verkäufe bearbeitet, braucht
-`2 + 4 = 6`. Die Wallet des Händlers signiert die Erteilung, einmal pro Netzwerk:
+Übergeben Sie `permissions` als ihre Summe, von `0` bis `15`, oder als Liste von Namen: Ein Bot, der
+Käufe freigibt und Verkäufe bearbeitet, braucht `6` oder `["release", "trade"]`. Die Wallet des
+Händlers signiert die Erteilung, einmal pro Netzwerk:
 
 ```bash
 curl -X POST https://api.cosmospay.lat/cosmos-api/v1/p2p/transactions \
   -H "Authorization: Bearer $COSMOS_PAY_API_KEY" -H "Content-Type: application/json" \
-  -d '{ "network": "base", "from": "ACCOUNT_ID", "action": "setOperator", "args": { "operator": "0xBotWallet", "perms": 6 } }'
+  -d '{ "network": "base", "from": "ACCOUNT_ID", "action": "setOperator", "args": { "operator": "0xBotWallet", "permissions": ["release", "trade"] } }'
 ```
 
-Eine Erteilung von `0` widerruft den Bot. Das Dashboard macht dasselbe unter **P2P → Liquidität**,
+Eine Erteilung von `0` widerruft den Bot. Die Kontodetails listen die Bots pro Netzwerk unter
+`operators`, jede Adresse mit ihren Bits. Das Dashboard macht dasselbe unter **P2P → Liquidität**,
 mit einem Kontrollkästchen pro Recht.
 
 ## 2. Dem Bot einen API-Schlüssel geben
 
-Erstellen Sie einen Schlüssel mit `p2p:read` und `p2p:write` und bewahren Sie ihn auf dem Server des
-Bots auf, neben dem Schlüssel seiner Wallet. Keiner von beiden gelangt jemals in einen Browser.
+Erstellen Sie einen Schlüssel für den Bot und bewahren Sie ihn auf seinem Server auf, neben dem
+Schlüssel seiner Wallet. Keiner von beiden gelangt jemals in einen Browser. `p2p:read` genügt, um
+Aufträge und die Überweisungstreffer mit ihren `release`-Transaktionen zu lesen; fügen Sie
+`p2p:write` hinzu, um Preise zu aktualisieren und weitere Transaktionen zu erstellen.
 
 ## 3. Aufträge freigeben, wenn das Geld eingeht
 
-Leiten Sie jede eingehende Banküberweisung an den Überweisungsabgleich weiter. Er liefert die offenen
-Käufe Ihrer Händler-Wallets, die diese Überweisung am wahrscheinlichsten bezahlt, die besten zuerst,
-jeweils mit der signierbereiten `release`-Transaktion.
+Leiten Sie jede eingehende Banküberweisung an den Überweisungsabgleich weiter. Er liefert, die
+besten zuerst, bis zu 10 Ihrer laufenden Käufe und Zahlungsanforderungen über genau diesen Betrag
+und diese Währung, jeweils mit der signierbereiten `release`-Transaktion. Nichts bewegt sich, bevor
+eine Wallet signiert.
 
 ```ts
 const API = 'https://api.cosmospay.lat/cosmos-api/v1/p2p';
@@ -50,12 +55,12 @@ const headers = {
 };
 
 interface BankTransfer {
-  currency: string;      // ISO 4217, e.g. "ARS"
-  amount: string;        // as received, e.g. "150000.00"
-  payerName?: string;    // the sender's name, as the bank reports it
+  currency: string;       // ISO 4217, e.g. "ARS"
+  amount: string;         // local money as received, e.g. "150000.00"
+  payerName?: string;     // the sender's name, as the bank reports it
   payerDocument?: string; // the sender's tax id, when the bank reports it
-  reference?: string;    // the bank's transfer id
-  receivedAt?: string;   // ISO 8601
+  reference?: string;     // the bank's transfer id
+  receivedAt?: string;    // ISO 8601
 }
 
 // Called by your bank integration for every incoming transfer.
@@ -66,21 +71,22 @@ export async function onBankTransfer(transfer: BankTransfer, wallet: { sendTrans
     body: JSON.stringify(transfer),
   });
   if (!res.ok) throw new Error(`transfer-matches failed with ${res.status}`);
-  const { matches } = await res.json();
+  const { data } = await res.json();
 
-  const best = matches[0];
-  // Release on its own only a transfer that matches the payer exactly; leave the rest to a person.
-  if (!best || best.score < 1) return;
+  const best = data[0];
+  // Release on its own only when amount, name and document all match; leave the rest to a person.
+  if (!best || best.score < 3) return;
 
-  // The bot's wallet signs and sends; PERM_RELEASE lets it release the merchant's order.
+  // The bot's wallet signs and sends; the release permission lets it release the merchant's order.
   const hash = await wallet.sendTransaction(best.transaction);
-  console.log(`released order ${best.order.id} in ${hash}`);
+  console.log(`released order ${best.order.id} (${best.matchedOn.join(', ')}) in ${hash}`);
 }
 ```
 
-Ein Treffer verlangt den genauen Betrag und die genaue Währung. Name und Dokument des Zahlers erhöhen
-seine Bewertung. Geben Sie automatisch nur frei, wenn sie mit dem im Auftrag genannten Zahler
-übereinstimmen: Genau diese Prüfung verhindert, dass die Überweisung eines Dritten Ihre Token freigibt.
+Jeder Treffer hat den genauen Betrag und die genaue Währung, also beginnt `score` bei 1. Ein
+passender Zahlername zählt 1 dazu und ein passendes Dokument noch einmal 1: `matchedOn` nennt
+welche. Geben Sie automatisch nur bei 3 frei, wenn die Überweisung vom im Auftrag genannten Zahler
+stammt: Genau diese Prüfung verhindert, dass die Überweisung eines Dritten Ihre Token freigibt.
 
 ## 4. Preise aktuell halten
 
@@ -100,10 +106,12 @@ await fetch(`${API}/offers/${offerId}`, {
 Abonnieren Sie mit dem Endpunkt des Bots die Ereignisse, auf die er reagiert: `P2P_ORDER_CREATED`
 für neue Aufträge, `P2P_ORDER_PAID`, wenn ein Zahler eine Überweisung meldet, `P2P_ORDER_ACCEPTED`
 für Verkäufe, die er bezahlen muss, und `P2P_ORDER_DISPUTED`, damit eine Person den Fall prüft.
-Zustellungen an den Händler tragen `role: "merchant"`. Siehe [Webhooks](/p2p/webhooks/).
+Zustellungen an den Händler tragen `role: "merchant"`; lesen Sie den Auftrag über
+`GET /v1/p2p/merchant/orders/{id}` für die Daten des Zahlers oder des Begünstigten. Siehe
+[Webhooks](/p2p/webhooks/).
 
 <Callout type="warn" title="Geben Sie einem Bot nur, was er braucht">
 Der Schlüssel eines Bots ist ein Schlüssel zu Ihrer Liquidität im Rahmen seiner Rechte. Lassen Sie
-`PERM_WITHDRAW` weg, außer der Bot gleicht Bestände aus, und halten Sie das Limit pro Auftrag der
+`withdraw` weg, außer der Bot gleicht Bestände aus, und halten Sie das Limit pro Auftrag der
 Matcher-Autorisierung in der Größe, mit der Sie handeln.
 </Callout>

@@ -26,9 +26,10 @@ handelt, und jede Wallet signiert ihre eigenen Transaktionen.
 ## Netzwerke und Token
 
 Der Markt läuft auf den EVM-Netzwerken, auf denen sein Vertrag bereitgestellt ist. `GET /v1/p2p/market`
-listet sie mit Vertragsadresse und Token, die Währungen und Zahlungswege, die Gebühren, die Fristen
-und die Adresse des Matchers. Lesen Sie die Liste beim Start Ihrer Integration, statt Netzwerke fest
-im Code zu hinterlegen.
+listet sie mit Vertragsadresse, Token und Protokollgebühr, die Währungen und Zahlungswege mit ihren
+Feldern, die Sicherheitsleistung, die Fristen und die Adresse des Matchers. Lesen Sie die Liste beim
+Start Ihrer Integration, statt Netzwerke fest im Code zu hinterlegen. Antwortet er mit
+`available: false`, wird der Markt in der Umgebung Ihres Schlüssels noch nicht angeboten.
 
 ```bash
 curl https://api.cosmospay.lat/cosmos-api/v1/p2p/market \
@@ -37,13 +38,20 @@ curl https://api.cosmospay.lat/cosmos-api/v1/p2p/market \
 
 Ihr API-Schlüssel wählt die Umgebung: `dv_`-Schlüssel handeln auf Testnetzwerken, `prod_`-Schlüssel im Mainnet.
 
+## Beträge
+
+Tokenbeträge sind Ganzzahl-Strings in den Basiseinheiten des Tokens, in Anfragen wie in Antworten:
+Bei 6 Dezimalstellen sind `"25000000"` 25 USDC. Jeder Auftrag, jedes Angebot und jede
+Zahlungsanforderung liefert außerdem `token`, die Vertragsadresse, mit `tokenSymbol` und
+`tokenDecimals`. Landeswährung ist ein Dezimal-String wie `"85000.50"`, mit den Dezimalstellen der Währung.
+
 ## Wie ein Auftrag abläuft
 
 Ein **Kauf** gibt Ihrem Nutzer Token gegen Landeswährung:
 
-1. Sie fordern ein Angebot mit dem Betrag in Landeswährung an: `POST /v1/p2p/quotes`. Das Angebot nennt den Preis, die Tokenmenge, die Gebühren und die öffentliche Bilanz des Händlers. Es gilt 60 Sekunden.
-2. Sie eröffnen den Auftrag aus dem Angebot: `POST /v1/p2p/orders`. Der Matcher sperrt die Token des Händlers im Vertrag, und der Auftrag liefert das Konto des Händlers und den genauen Überweisungsbetrag.
-3. Ihr Nutzer überweist das Geld vor Ablauf der Zahlungsfrist von einem Konto auf seinen eigenen Namen. Sie melden das mit `POST /v1/p2p/orders/{id}/paid`.
+1. Sie fordern ein Angebot mit dem Betrag in Landeswährung an: `POST /v1/p2p/quotes`. Das Angebot nennt den Preis, die Tokenmenge, die Gebühren, die Sicherheitsleistung, die Fristen und die öffentliche Bilanz des Händlers. Es gilt 60 Sekunden.
+2. Sie eröffnen den Auftrag aus dem Angebot: `POST /v1/p2p/orders`. Der Matcher sperrt die Token des Händlers im Vertrag, und der Auftrag liefert das Konto des Händlers in `paymentDetails` und seine `paymentDeadline`.
+3. Ihr Nutzer überweist den genauen Betrag vor Ablauf der Frist von einem Konto auf seinen eigenen Namen. Sie melden das mit `POST /v1/p2p/orders/{id}/paid`.
 4. Der Händler sieht das Geld eingehen und gibt den Auftrag frei. Die Token erreichen die Wallet Ihres Nutzers.
 
 Ein **Verkauf** gibt Ihrem Nutzer Landeswährung gegen Token:
@@ -52,7 +60,7 @@ Ein **Verkauf** gibt Ihrem Nutzer Landeswährung gegen Token:
 2. Sie eröffnen den Auftrag. Die Antwort enthält zwei unsignierte Transaktionen für die Wallet Ihres Nutzers, `approve` und `openWithDeposit`. Der Nutzer signiert und sendet beide, und seine Token sind im Vertrag gesperrt.
 3. Der Händler nimmt vor Ablauf der Annahmefrist an und sperrt eine Sicherheitsleistung von 10 % des Auftrags.
 4. Der Händler überweist die Landeswährung auf das Konto Ihres Nutzers und markiert den Auftrag als bezahlt.
-5. Ihr Nutzer gibt die Token frei. Wenn niemand den Auftrag anficht, gibt das Abwicklungsfenster ihn von selbst frei.
+5. Ihr Nutzer gibt die Token frei. Ficht niemand den Auftrag an, kann ihn nach Ablauf des Abwicklungsfensters jeder freigeben.
 
 Zahlungsanforderungen und Auszahlungen sind dieselben zwei Abläufe, eröffnet von Ihrer Organisation
 für jemand anderen. Siehe [Zahlungsanforderungen](/p2p/collections/) und [Auszahlungen](/p2p/payouts/).
@@ -77,22 +85,24 @@ indexiert werden, sodass das Gelesene immer der Chain entspricht.
 
 ## Fristen
 
+Der Markt liefert seine Fristen in Sekunden unter `windows`:
+
 | Frist | Standard | Was sie begrenzt |
 | --- | --- | --- |
-| Zahlung | 30 Minuten | Die Käuferseite überweist das Geld und markiert den Auftrag als bezahlt. |
-| Annahme | 5 Minuten | Der Händler nimmt einen Verkauf oder eine Auszahlung an, die eine Sicherheitsleistung tragen. |
-| Abwicklung | 6 Stunden | Ein bezahlter Verkauf wird von selbst freigegeben, sofern ihn niemand anficht. |
+| `buyPaymentWindow` | 30 Minuten | Bei einem Kauf oder einer Zahlungsanforderung überweist die Käuferseite das Geld und markiert den Auftrag als bezahlt. |
+| `sellAcceptWindow` | 5 Minuten | Bei einem Verkauf oder einer Auszahlung nimmt der Händler an und sperrt seine Sicherheitsleistung. |
+| `sellPaymentWindow` | 30 Minuten | Bei einem Verkauf oder einer Auszahlung überweist der Händler danach das Geld und markiert den Auftrag als bezahlt. |
+| `sellSettleWindow` | 6 Stunden | Ein bezahlter Verkauf kann nach diesem Fenster freigegeben werden, sofern ihn niemand anficht. Eine Auszahlung erhält es nur mit eingeschalteter automatischer Abwicklung. |
 
-Der Markt liefert die geltenden Fristen. Läuft eine Frist ab, wird der Auftrag storniert und seine
-Token gehen an den Verkäufer zurück.
+Läuft eine Frist ab, wird der Auftrag storniert und seine Token gehen an den Verkäufer zurück.
 
 ## Gebühren
 
 Zwei Gebühren können anfallen. Beide werden von dem abgezogen, was der Käufer erhält, und bei der
 Eröffnung des Auftrags festgeschrieben.
 
-- Die Protokollgebühr, von Cosmos Pay festgelegt und vom Markt als `protocolFeeBps` ausgewiesen. Der Vertrag begrenzt sie auf 3 %.
-- Eine Integratorgebühr von bis zu 5 %, die ein Kunde auf die Aufträge seiner eigenen Nutzer aufschlagen kann. Sie geht an eine der registrierten Wallets des Kunden.
+- Die Protokollgebühr, von Cosmos Pay pro Netzwerk festgelegt und vom Markt als `protocolFeeBps` ausgewiesen. Der Vertrag begrenzt sie auf 3 %.
+- Eine Integratorgebühr, die ein Kunde auf die Aufträge seiner eigenen Nutzer aufschlagen kann, bis zum `maxIntegratorFeeBps` des Marktes, derzeit 5 %. Übergeben Sie `integratorFeeBps` im Angebot; sie wird On-Chain an `integratorAccountId` gezahlt, eine der registrierten Wallets des Kunden.
 
 Jedes Angebot zeigt beide Gebühren und den Nettobetrag, bevor jemand signiert.
 
@@ -101,7 +111,8 @@ Jedes Angebot zeigt beide Gebühren und den Nettobetrag, bevor jemand signiert.
 API-Schlüssel brauchen die Berechtigung `p2p:read`, um den Markt zu lesen, und `p2p:write`, um
 Wallets zu registrieren, Angebote zu veröffentlichen und Aufträge, Zahlungsanforderungen und
 Auszahlungen zu eröffnen. Erstellen Sie sie im Dashboard: [API-Schlüssel holen](/api-keys/). Das
-Dashboard deckt den gesamten Markt unter **P2P** in der Seitenleiste ab.
+Dashboard deckt den gesamten Markt unter **P2P** in der Seitenleiste ab. Jeder Endpunkt steht mit
+seinen Schemata in der [API-Referenz des P2P-Marktes](/api/p2p-market/).
 
 Die eigene P2P-App von Cosmos Pay auf der Zahlungsdomain läuft auf genau dieser API, mit denselben Regeln.
 

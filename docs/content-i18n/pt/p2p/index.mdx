@@ -26,9 +26,10 @@ que opera, e cada carteira assina as próprias transações.
 ## Redes e tokens
 
 O mercado funciona nas redes EVM onde seu contrato está implantado. `GET /v1/p2p/market` lista essas
-redes com o endereço do contrato e os tokens de cada uma, as moedas e os meios de pagamento, as
-tarifas, as janelas de tempo e o endereço do matcher. Leia esse recurso quando sua integração
-iniciar, em vez de fixar as redes no código.
+redes com o endereço do contrato, os tokens e a tarifa do protocolo de cada uma, as moedas e os
+meios de pagamento com seus campos, a garantia, as janelas de tempo e o endereço do matcher. Leia
+esse recurso quando sua integração iniciar, em vez de fixar as redes no código. Se ele responder
+`available: false`, o mercado ainda não é oferecido no ambiente da sua chave.
 
 ```bash
 curl https://api.cosmospay.lat/cosmos-api/v1/p2p/market \
@@ -37,13 +38,20 @@ curl https://api.cosmospay.lat/cosmos-api/v1/p2p/market \
 
 Sua chave de API escolhe o ambiente: chaves `dv_` operam em redes de teste e chaves `prod_` em mainnet.
 
+## Valores
+
+Os valores em tokens são strings de inteiros nas unidades base do token, nas requisições e nas
+respostas: com 6 casas decimais, `"25000000"` são 25 USDC. Cada ordem, cotação e cobrança responde
+também `token`, o endereço do contrato, com `tokenSymbol` e `tokenDecimals`. A moeda local é uma
+string decimal, como `"85000.50"`, com as casas decimais da moeda.
+
 ## Como uma ordem avança
 
 Uma **compra** dá tokens ao seu usuário em troca de moeda local:
 
-1. Você pede uma cotação com o valor em moeda local: `POST /v1/p2p/quotes`. A cotação informa o preço, o valor em tokens, as tarifas e o histórico público do comerciante. Ela vale por 60 segundos.
-2. Você abre a ordem a partir da cotação: `POST /v1/p2p/orders`. O matcher bloqueia os tokens do comerciante no contrato, e a ordem responde a conta do comerciante e o valor exato a transferir.
-3. Seu usuário transfere o dinheiro de uma conta em nome próprio antes do prazo de pagamento. Você informa com `POST /v1/p2p/orders/{id}/paid`.
+1. Você pede uma cotação com o valor em moeda local: `POST /v1/p2p/quotes`. A cotação informa o preço, o valor em tokens, as tarifas, a garantia, as janelas e o histórico público do comerciante. Ela vale por 60 segundos.
+2. Você abre a ordem a partir da cotação: `POST /v1/p2p/orders`. O matcher bloqueia os tokens do comerciante no contrato, e a ordem responde a conta do comerciante em `paymentDetails` e o seu `paymentDeadline`.
+3. Seu usuário transfere o valor exato de uma conta em nome próprio antes do prazo. Você informa com `POST /v1/p2p/orders/{id}/paid`.
 4. O comerciante vê o dinheiro chegar e libera a ordem. Os tokens chegam à carteira do seu usuário.
 
 Uma **venda** dá moeda local ao seu usuário em troca de tokens:
@@ -52,7 +60,7 @@ Uma **venda** dá moeda local ao seu usuário em troca de tokens:
 2. Você abre a ordem. A resposta traz duas transações não assinadas para a carteira do seu usuário, `approve` e `openWithDeposit`. O usuário assina e envia as duas, e os tokens dele ficam bloqueados no contrato.
 3. O comerciante aceita antes do prazo de aceitação e bloqueia uma garantia de 10% da ordem.
 4. O comerciante transfere a moeda local para a conta do seu usuário e marca a ordem como paga.
-5. Seu usuário libera os tokens. Se ninguém disputar a ordem, a janela de liquidação a libera sozinha.
+5. Seu usuário libera os tokens. Se ninguém disputar a ordem, qualquer pessoa pode liberá-la depois que a janela de liquidação passar.
 
 Cobranças e pagamentos a terceiros são os mesmos dois fluxos, abertos pela sua organização para
 outra pessoa. Veja [Cobranças](/p2p/collections/) e [Pagamentos a terceiros](/p2p/payouts/).
@@ -77,22 +85,24 @@ então o que você lê sempre corresponde à blockchain.
 
 ## Janelas de tempo
 
+O mercado responde suas janelas em segundos dentro de `windows`:
+
 | Janela | Padrão | O que limita |
 | --- | --- | --- |
-| Pagamento | 30 minutos | O lado comprador transfere o dinheiro e marca a ordem como paga. |
-| Aceitação | 5 minutos | O comerciante aceita uma venda ou um pagamento a terceiros, que levam garantia. |
-| Liquidação | 6 horas | Uma venda paga é liberada sozinha, a menos que alguém a dispute. |
+| `buyPaymentWindow` | 30 minutos | Em uma compra ou cobrança, o lado comprador transfere o dinheiro e marca a ordem como paga. |
+| `sellAcceptWindow` | 5 minutos | Em uma venda ou pagamento a terceiros, o comerciante aceita e bloqueia a garantia. |
+| `sellPaymentWindow` | 30 minutos | Em uma venda ou pagamento a terceiros, o comerciante então transfere o dinheiro e marca a ordem como paga. |
+| `sellSettleWindow` | 6 horas | Uma venda paga pode ser liberada depois desta janela, a menos que alguém a dispute. Um pagamento a terceiros só a tem com a liquidação automática ativada. |
 
-O mercado responde as janelas em vigor. Quando um prazo vence, a ordem é cancelada e os tokens
-voltam ao vendedor.
+Quando um prazo vence, a ordem é cancelada e os tokens voltam ao vendedor.
 
 ## Tarifas
 
 Duas tarifas podem ser aplicadas. As duas saem do que o comprador recebe e ficam fixas quando a
 ordem é aberta.
 
-- A tarifa do protocolo, definida pela Cosmos Pay e informada pelo mercado como `protocolFeeBps`. O contrato a limita a 3%.
-- Uma tarifa de integrador de até 5%, que um cliente pode somar às ordens dos próprios usuários. Ela é paga a uma das carteiras registradas do cliente.
+- A tarifa do protocolo, definida pela Cosmos Pay por rede e informada pelo mercado como `protocolFeeBps`. O contrato a limita a 3%.
+- Uma tarifa de integrador que um cliente pode somar às ordens dos próprios usuários, até o `maxIntegratorFeeBps` do mercado, hoje 5%. Envie `integratorFeeBps` na cotação; ela é paga on-chain para `integratorAccountId`, uma das carteiras registradas do cliente.
 
 Cada cotação mostra as duas tarifas e o valor líquido antes que alguém assine.
 
@@ -100,7 +110,8 @@ Cada cotação mostra as duas tarifas e o valor líquido antes que alguém assin
 
 As chaves de API precisam do escopo `p2p:read` para ler o mercado e de `p2p:write` para registrar
 carteiras, publicar ofertas e abrir ordens, cobranças e pagamentos a terceiros. Crie as chaves no
-painel: [Obtenha sua chave de API](/api-keys/). O painel cobre todo o mercado em **P2P**, na barra lateral.
+painel: [Obtenha sua chave de API](/api-keys/). O painel cobre todo o mercado em **P2P**, na barra
+lateral. Cada endpoint, com seus esquemas, está na [referência da API do mercado P2P](/api/p2p-market/).
 
 O app P2P próprio da Cosmos Pay, no domínio de pagamentos, funciona sobre esta mesma API e com as mesmas regras.
 

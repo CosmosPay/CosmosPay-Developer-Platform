@@ -18,90 +18,101 @@ export AUTH="Authorization: Bearer $COSMOS_PAY_API_KEY"
 ## 1. Registra una billetera
 
 Una billetera se demuestra con una firma EIP-191 sobre un desafío de un solo uso. Pide el desafío,
-firma su `message` con `personal_sign` en la billetera y luego regístrala.
+firma su `message` con `personal_sign` en la billetera y luego registra la dirección con la firma.
+El desafío dura 10 minutos y sirve una sola vez.
 
 ```bash
 curl -X POST $API/accounts/challenge -H "$AUTH" -H "Content-Type: application/json" \
   -d '{ "address": "0xYourWallet" }'
-# → { "id": "…", "message": "Cosmos Pay wants you to register this wallet…", "expiresAt": "…" }
+# → { "message": "…", "expiresAt": "…" }
 
 curl -X POST $API/accounts -H "$AUTH" -H "Content-Type: application/json" \
-  -d '{ "challengeId": "…", "address": "0xYourWallet", "signature": "0x…", "label": "Treasury" }'
+  -d '{ "address": "0xYourWallet", "signature": "0x…", "label": "Treasury", "displayName": "Lumio Exchange" }'
 ```
 
-El desafío vence en minutos y sirve una sola vez. Una dirección pertenece a una sola organización.
+Una dirección pertenece a una sola organización. El `displayName` convierte la billetera en
+comerciante: es lo que compradores y vendedores ven en su cotización. Tu dirección nunca se muestra ahí.
 
-## 2. Nómbrala como comerciante
-
-El nombre visible es lo que compradores y vendedores ven en su cotización. Tu dirección nunca se muestra.
+## 2. Gestiona el perfil de comerciante
 
 ```bash
 curl -X PATCH $API/accounts/ACCOUNT_ID -H "$AUTH" -H "Content-Type: application/json" \
-  -d '{ "merchant": { "displayName": "Lumio Exchange", "status": "ACTIVE" } }'
+  -d '{ "displayName": "Lumio Exchange", "merchantStatus": "PAUSED" }'
 ```
 
-Usa `status` en `PAUSED` para dejar de recibir órdenes nuevas. Las órdenes ya abiertas siguen su curso.
+`merchantStatus` es `ACTIVE` o `PAUSED`. Un comerciante en pausa no recibe órdenes nuevas; las
+órdenes ya abiertas siguen su curso. Cada cuenta responde sus `stats`: `completedOrders`,
+`cancelledOrders`, `completionRate`, `disputesLost` y `medianReleaseSeconds`.
 
 ## 3. Deposita liquidez
 
 Los depósitos van a tu saldo libre en el contrato. Son dos transacciones: un `approve` por el monto
-exacto y luego el `deposit`. El generador de transacciones responde cada una sin firmar:
+exacto y luego el `deposit`. Los montos van en las unidades base del token: con 6 decimales,
+`"5000000000"` son 5.000 USDC. El generador de transacciones responde cada una sin firmar:
 
 ```bash
 curl -X POST $API/transactions -H "$AUTH" -H "Content-Type: application/json" \
-  -d '{ "network": "base", "from": "ACCOUNT_ID", "action": "approve", "args": { "token": "USDC", "amount": "5000" } }'
-# → { "chainId": 8453, "to": "0x…", "data": "0x…", "value": "0", "description": "…" }
+  -d '{ "network": "base", "from": "ACCOUNT_ID", "action": "approve", "args": { "token": "USDC", "amount": "5000000000" } }'
+# → { "chainId": 8453, "to": "0x…", "data": "0x…", "value": "0", "description": "Allow the P2P market to take exactly 5000 USDC" }
 ```
 
 Envíala desde tu billetera, espera a que se confirme y repite con `"action": "deposit"`. La
-`network` es uno de los identificadores que lista `GET /v1/p2p/market`. `withdraw` recibe los mismos
-argumentos y devuelve tokens libres a tu billetera en cualquier momento.
+`network` es uno de los identificadores que lista `GET /v1/p2p/market`, y `token` es un símbolo o
+una dirección de contrato que figura ahí. `withdraw` recibe los mismos argumentos y devuelve tokens
+libres a tu billetera en cualquier momento.
+
+`GET /v1/p2p/accounts/{id}` lee el contrato en vivo: para cada red, los `balances` libres en
+unidades base, las condiciones del matcher que fijaste y los bots que autorizaste.
 
 ## 4. Autoriza a Cosmos Pay con un tope por orden
 
-El matcher de Cosmos Pay abre compras sobre tu saldo. Tú decides cuánto puede bloquear una orden como máximo:
+El matcher de Cosmos Pay abre compras sobre tu saldo. Tú decides cuánto puede bloquear una orden
+como máximo, en unidades base:
 
 ```bash
 curl -X POST $API/transactions -H "$AUTH" -H "Content-Type: application/json" \
-  -d '{ "network": "base", "from": "ACCOUNT_ID", "action": "setMatcher", "args": { "maxPerOrder": "1000", "autoSettle": false } }'
+  -d '{ "network": "base", "from": "ACCOUNT_ID", "action": "setMatcher", "args": { "maxPerOrder": "1000000000", "autoSettle": false } }'
 ```
 
-Un tope de `0` revoca la autorización. El matcher solo puede bloquear tus tokens en órdenes hasta
-ese tope. No puede retirarlos ni enviarlos a ningún lado.
+Un tope de `"0"` revoca la autorización, y una cuenta cuyo `matcher.maxPerOrder` dice `"0"` no está
+autorizada en esa red. El matcher solo puede bloquear tus tokens en órdenes hasta ese tope. No puede
+retirarlos ni enviarlos a ningún lado.
 
 <Callout type="warn" title="Mantén la liquidación automática desactivada">
-La liquidación automática permite que una orden que vendiste se libere sola después de la ventana
-de liquidación. Un comerciante de liquidez nunca la necesita, y la API la rechaza para una billetera
-con ofertas de venta activas. Libera cada orden tú mismo o con tu bot.
+La liquidación automática permite que una orden que vendiste se libere pasada la ventana de
+liquidación si no la disputas a tiempo. Un comerciante de liquidez nunca la necesita, y la API la
+rechaza para una billetera con ofertas de venta activas. Libera cada orden tú mismo o con tu bot.
 </Callout>
 
 ## 5. Agrega medios de cobro
 
-Un medio de cobro es la cuenta a la que transfieren los compradores. Se guarda cifrado y solo se
-muestra al comprador de cada orden. Agrega uno por cada medio que ofreces:
+Un medio de cobro es la cuenta a la que transfieren los compradores. Sus datos se guardan cifrados
+y solo se muestran al comprador de cada orden. Agrega uno por cada medio que ofreces:
 
 ```bash
 curl -X POST $API/payment-methods -H "$AUTH" -H "Content-Type: application/json" \
   -d '{
     "accountId": "ACCOUNT_ID",
+    "currency": "ARS",
     "rail": "ar_bank_transfer",
-    "label": "Main account",
     "holderName": "Lumio Exchange SRL",
-    "document": "30714209879",
-    "details": { "cbu": "0170099222000001234561", "alias": "lumio.pagos.ars" }
+    "details": { "alias": "lumio.pagos.ars", "cuit": "30714209879" },
+    "label": "Main account"
   }'
 ```
 
-| Medio | Moneda | `details` | `document` del titular |
-| --- | --- | --- | --- |
-| `ar_bank_transfer` | ARS | `cbu` con sus dígitos verificadores, o `alias` | CUIT o CUIL |
-| `br_pix` | BRL | `pixKeyType` (`cpf`, `cnpj`, `email`, `phone`, `evp`) y `pixKey` | CPF o CNPJ |
-| `mx_spei` | MXN | `clabe` con su dígito verificador | RFC, opcional |
-| `co_bank_transfer` | COP | `bank`, `accountType` (`savings`, `checking`), `accountNumber` | NIT o cédula |
-| `pe_bank_transfer` | PEN | `cci` | DNI o RUC |
-| `cl_bank_transfer` | CLP | `bank`, `accountType` (`checking`, `vista`, `savings`), `accountNumber` | RUT |
+El documento de identidad del titular es uno de los `details`:
 
-El mercado lista los medios vigentes y sus campos.
+| Medio | Moneda | `details` |
+| --- | --- | --- |
+| `ar_bank_transfer` | ARS | Exactamente uno entre `cbu` y `alias`, y el `cuit` del titular |
+| `br_pix` | BRL | `keyType` (`cpf`, `cnpj`, `email`, `phone`, `evp`) y `key` |
+| `mx_spei` | MXN | `clabe`, con su dígito verificador |
+| `co_bank_transfer` | COP | `bank`, `accountType` (`savings`, `checking`), `accountNumber`, `documentType` (`CC`, `CE`, `NIT`, `PP`), `documentNumber` |
+| `pe_bank_transfer` | PEN | `cci`, `documentType` (`DNI`, `CE`, `RUC`, `PP`), `documentNumber` |
+| `cl_bank_transfer` | CLP | `bank`, `accountType` (`checking`, `vista`, `savings`), `accountNumber`, `rut` |
+
+El mercado lista los medios vigentes y sus campos dentro de cada moneda.
 
 ## 6. Publica ofertas
 
@@ -117,7 +128,7 @@ curl -X POST $API/offers -H "$AUTH" -H "Content-Type: application/json" \
     "currency": "ARS",
     "rails": ["ar_bank_transfer"],
     "price": "1432.50",
-    "priceTtlSeconds": 900,
+    "priceTtlSeconds": 600,
     "minFiat": "10000",
     "maxFiat": "2500000"
   }'
@@ -125,7 +136,8 @@ curl -X POST $API/offers -H "$AUTH" -H "Content-Type: application/json" \
 
 - `SELL_TOKEN` vende tokens a quienes compran. Cada uno de sus `rails` necesita un medio de cobro activo.
 - `BUY_TOKEN` compra tokens a quienes venden y a los pagos a terceros de los clientes.
-- `price` es moneda local por token. Un precio más antiguo que `priceTtlSeconds` no se empareja: actualízalo con `PATCH /v1/p2p/offers/{id}` o deja que lo haga tu bot.
+- `price` es moneda local por token, con hasta 6 decimales. El precio se puede emparejar durante `priceTtlSeconds` después de cada actualización, 10 minutos por defecto y entre 30 segundos y un día; cada oferta responde `priceFresh`. Actualízalo con `PATCH /v1/p2p/offers/{id}` o deja que lo haga tu bot.
+- `minFiat` y `maxFiat` son la orden más chica y la más grande en moneda local.
 
 Una oferta se empareja cuando tu estado de comerciante es `ACTIVE`, su precio está vigente y el
 monto entra en sus límites. Una compra además necesita un saldo libre y un tope por orden de al
@@ -135,13 +147,15 @@ comerciantes que califican gana el mejor precio para la persona, y luego el hist
 
 ## 7. Gestiona órdenes
 
-`GET /v1/p2p/merchant/orders` lista las órdenes emparejadas con tus billeteras. Cada una muestra lo
-que necesitas para tu lado y nada más.
+`GET /v1/p2p/merchant/orders` lista las órdenes emparejadas con tus billeteras, con filtros por
+`status` y `kind`. Cada una responde `merchantSide`, tu lado en ella, y lo que necesitas para ese
+lado: el nombre y el documento del `payer` en una compra, la cuenta del `beneficiary` en una venta o
+un pago a terceros.
 
 | Orden | Tu rol | Qué haces |
 | --- | --- | --- |
-| Compra o cobro | Vendes tokens | Verifica que la transferencia llegó del pagador que indica la orden, por el monto exacto, y luego `release`. |
-| Venta o pago a terceros | Compras tokens | `accept` antes del plazo de aceptación, transfiere el dinero a la cuenta que muestra la orden y luego `markPaid`. |
+| Compra o cobro | Vendes tokens | Verifica que la transferencia llegó del pagador indicado, por el monto exacto, y luego `release`. |
+| Venta o pago a terceros | Compras tokens | `accept` antes de `acceptDeadline`, transfiere el dinero al beneficiario y luego `markPaid` antes de `paymentDeadline`. |
 
 Cada acción es una transacción del mismo generador, firmada en tu billetera:
 
@@ -150,12 +164,12 @@ curl -X POST $API/transactions -H "$AUTH" -H "Content-Type: application/json" \
   -d '{ "network": "base", "from": "ACCOUNT_ID", "action": "release", "args": { "orderId": "ORDER_ID" } }'
 ```
 
-`cancel` rechaza una venta antes de que pagues, y `dispute` le pide al árbitro que decida sobre una
-orden pagada. Nunca liberes una compra antes de tener el dinero en tu cuenta, y nunca aceptes una
-transferencia de alguien distinto del pagador indicado.
+`cancel` rechaza una venta o un pago a terceros antes de que pagues, y `dispute` le pide al árbitro
+que decida sobre una orden pagada. Nunca liberes una compra antes de tener el dinero en tu cuenta,
+y nunca aceptes una transferencia de alguien distinto del pagador indicado.
 
 <Cards>
   <Card title="Inicio rápido para bots" href="/p2p/bots/" description="Deja que un bot actualice precios y libere órdenes pagadas." />
   <Card title="Modelo de seguridad" href="/p2p/security/" description="Qué pueden hacer el matcher y el árbitro, y qué no." />
-  <Card title="Referencia de la API" href="/api/" description="Cada endpoint del mercado P2P con sus esquemas." />
+  <Card title="Referencia de la API" href="/api/p2p-accounts/" description="Billeteras, medios de cobro y ofertas con sus esquemas." />
 </Cards>
