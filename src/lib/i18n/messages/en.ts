@@ -1,7 +1,12 @@
 /* en.js: English message catalog (source of truth for all locales).
    Only natural-language UI copy lives here. Icons, brand names, code snippets,
    numeric stats, asset codes and mock API records stay in the components. */
+import p2pEn from "@/lib/i18n/messages/p2p/en";
+import p2pPublicEn from "@/lib/i18n/messages/p2p-public/en";
+
 export default {
+  p2p: p2pEn,
+  p2pPublic: p2pPublicEn,
   ui: { close: "Close", dialog: "Dialog", copyToClipboard: "Copy to clipboard", search: "Search", searchEllipsis: "Search…", select: "Select…", account: "Account", onboardingSteps: "Onboarding steps", skipToContent: "Skip to content" },
   zk: {
     title: "Private payments",
@@ -889,14 +894,14 @@ export default {
     },
     examples: { order: "Order #24", firstName: "Jane", lastName: "Doe", fullName: "Jane Doe", jobTitle: "Director", customerName: "Acme billing", payoutsName: "Acme payouts (USD)", productName: "Pro plan (monthly)" },
     search: { label: "Search the dashboard", placeholder: "Search", pages: "Pages", searchGroup: "Search", searchIn: "{place} matching “{q}”", empty: "Nothing matches “{q}”." },
-    viewLabels: { overview: "Overview", payment: "Payment", payments: "Payments", zkPayments: "Private payments", zkAccounts: "Private accounts", balances: "Balances", customers: "Customers", products: "Products & links", swaps: "Swaps", crossChainSwaps: "Cross-chain swaps", liquidity: "Liquidity pools", blindpay: "Fiat", onramp: "On-ramp", offramp: "Off-ramp", developers: "API keys", webhook: "Webhooks", logs: "API logs", weblogs: "Webhook logs", activityLog: "Client activity", activity: "Notifications", support: "Support", inbox: "Support inbox", users: "Users", settings: "Organization", account: "Account", adminOverview: "Platform overview", adminPayments: "Payments (all orgs)", adminSwaps: "Swaps (all orgs)", adminFiat: "Fiat (all orgs)", adminCustomers: "Customers (all orgs)", adminProducts: "Products (all orgs)", adminConsumers: "Organizations" },
+    viewLabels: { overview: "Overview", payment: "Payment", payments: "Payments", zkPayments: "Private payments", zkAccounts: "Private accounts", balances: "Balances", customers: "Customers", products: "Products & links", swaps: "Swaps", crossChainSwaps: "Cross-chain swaps", liquidity: "Liquidity pools", blindpay: "Fiat", onramp: "On-ramp", offramp: "Off-ramp", p2pOverview: "P2P overview", p2pLiquidity: "P2P liquidity", p2pOffers: "P2P offers", p2pMethods: "Payment methods", p2pOrders: "P2P orders", p2pCharges: "Charges", p2pPayouts: "Payouts", p2pBots: "Bots & API", developers: "API keys", webhook: "Webhooks", logs: "API logs", weblogs: "Webhook logs", activityLog: "Client activity", activity: "Notifications", support: "Support", inbox: "Support inbox", users: "Users", settings: "Organization", account: "Account", adminOverview: "Platform overview", adminPayments: "Payments (all orgs)", adminSwaps: "Swaps (all orgs)", adminFiat: "Fiat (all orgs)", adminCustomers: "Customers (all orgs)", adminProducts: "Products (all orgs)", adminConsumers: "Organizations" },
     sidebar: {
       label: "Dashboard",
       menu: { main: "Main menu", preferences: "Preferences" },
-      groups: { payments: "Payments", swaps: "Swaps", fiat: "Fiat", developers: "Developers", settings: "Settings", help: "Help", admin: "Admin" },
+      groups: { payments: "Payments", swaps: "Swaps", fiat: "Fiat", p2p: "P2P", developers: "Developers", settings: "Settings", help: "Help", admin: "Admin" },
       notifications: "Notifications",
       sections: { Platform: "Platform", Build: "Build", Account: "Account", Support: "Support", Admin: "Admin" },
-      items: { overview: "Overview", payments: "Payments", zkPayments: "Private payments", zkAccounts: "Private accounts", balances: "Balances", customers: "Customers", products: "Products", swaps: "Swaps", crossChainSwaps: "Cross-chain", liquidity: "Liquidity", blindpay: "Fiat", onramp: "On-ramp", offramp: "Off-ramp", developers: "API keys", webhook: "Webhooks", logs: "Logs", weblogs: "Webhook logs", activityLog: "Activity log", activity: "Activity", support: "Support", inbox: "Inbox", users: "Users", settings: "Organization", account: "Account", adminOverview: "Overview", adminPayments: "Payments", adminSwaps: "Swaps", adminFiat: "Fiat", adminCustomers: "Customers", adminProducts: "Products", adminConsumers: "Organizations" },
+      items: { overview: "Overview", payments: "Payments", zkPayments: "Private payments", zkAccounts: "Private accounts", balances: "Balances", customers: "Customers", products: "Products", swaps: "Swaps", crossChainSwaps: "Cross-chain", liquidity: "Liquidity", blindpay: "Fiat", onramp: "On-ramp", offramp: "Off-ramp", p2pOverview: "Overview", p2pLiquidity: "Liquidity", p2pOffers: "Offers", p2pMethods: "Payment methods", p2pOrders: "Orders", p2pCharges: "Charges", p2pPayouts: "Payouts", p2pBots: "Bots & API", developers: "API keys", webhook: "Webhooks", logs: "Logs", weblogs: "Webhook logs", activityLog: "Activity log", activity: "Activity", support: "Support", inbox: "Inbox", users: "Users", settings: "Organization", account: "Account", adminOverview: "Overview", adminPayments: "Payments", adminSwaps: "Swaps", adminFiat: "Fiat", adminCustomers: "Customers", adminProducts: "Products", adminConsumers: "Organizations" },
       collapse: "Collapse sidebar",
     },
     admin: { viewList: "View list",
@@ -1014,7 +1019,7 @@ export default {
         roles: { user: "User", admin: "Admin" },
         permsLabel: "Permissions",
         permResource: "Resource",
-        scopeResources: { payments: "Payments", swaps: "Swaps", liquidity: "Liquidity", webhooks: "Webhooks", products: "Products", customers: "Customers", kyc: "KYC", onramp: "On-ramp", offramp: "Off-ramp", activity: "Activity", plugins: "Plugins" },
+        scopeResources: { payments: "Payments", swaps: "Swaps", liquidity: "Liquidity", webhooks: "Webhooks", products: "Products", customers: "Customers", kyc: "KYC", onramp: "On-ramp", offramp: "Off-ramp", activity: "Activity", plugins: "Plugins", p2p: "P2P market" },
         adminHint: "Admin keys have full access to every resource.",
         perms: { read: "Read", write: "Write" },
         create: "Create key", save: "Save changes",

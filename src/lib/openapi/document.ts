@@ -69,6 +69,10 @@ export const openApiConfig: OpenAPIObjectConfig = {
       description: 'BlindPay KYC/KYB, on-ramp and off-ramp proxies',
     },
     {
+      name: 'P2P market',
+      description: 'Local money for stablecoins between people: registered wallets, offers, payment methods, orders, charges, payouts and the unsigned transactions their wallets sign',
+    },
+    {
       name: 'API Keys',
       description: 'Manage APISIX API keys for authenticated users',
     },

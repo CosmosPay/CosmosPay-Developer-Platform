@@ -11,8 +11,9 @@ import { routes as paymentsRoutes } from "@/lib/mock/handlers/payments";
 import { routes as swapsRoutes } from "@/lib/mock/handlers/swaps";
 import { routes as fiatAdminRoutes } from "@/lib/mock/handlers/fiat-admin";
 import { routes as p2pRampRoutes } from "@/lib/mock/handlers/p2p-ramp";
+import { routes as p2pMarketRoutes } from "@/lib/mock/handlers/p2p-market";
 
-const ROUTES: MockRoute[] = [...platformRoutes, ...paymentsRoutes, ...swapsRoutes, ...p2pRampRoutes, ...fiatAdminRoutes];
+const ROUTES: MockRoute[] = [...platformRoutes, ...paymentsRoutes, ...swapsRoutes, ...p2pRampRoutes, ...p2pMarketRoutes, ...fiatAdminRoutes];
 
 /** Paths served by the real route even in mock mode (no database or upstream behind them;
  *  /api/nav-session reads the sample account the middleware set). */

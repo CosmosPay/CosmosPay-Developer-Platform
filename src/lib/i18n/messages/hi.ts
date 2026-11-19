@@ -1,5 +1,10 @@
 /* hi.ts: Hindi message catalog. Mirrors en.ts exactly in shape. */
+import p2pHi from "@/lib/i18n/messages/p2p/hi";
+import p2pPublicHi from "@/lib/i18n/messages/p2p-public/hi";
+
 export default {
+  p2p: p2pHi,
+  p2pPublic: p2pPublicHi,
   ui: { close: "बंद करें", dialog: "संवाद", copyToClipboard: "क्लिपबोर्ड पर कॉपी करें", search: "खोजें", searchEllipsis: "खोजें…", select: "चुनें…", account: "खाता", onboardingSteps: "शुरुआत के चरण", skipToContent: "सामग्री पर जाएँ" },
   zk: {
     title: "निजी भुगतान",
@@ -882,14 +887,14 @@ export default {
     },
     examples: { order: "ऑर्डर #24", firstName: "प्रिया", lastName: "शर्मा", fullName: "प्रिया शर्मा", jobTitle: "निदेशक", customerName: "Acme बिलिंग", payoutsName: "Acme भुगतान (USD)", productName: "Pro प्लान (मासिक)" },
     search: { label: "डैशबोर्ड में खोजें", placeholder: "खोजें", pages: "पेज", searchGroup: "खोजें", searchIn: "{place} में “{q}” से मेल खाने वाले", empty: "“{q}” से कुछ भी मेल नहीं खाता।" },
-    viewLabels: { overview: "अवलोकन", payment: "भुगतान", payments: "भुगतान", zkPayments: "निजी भुगतान", zkAccounts: "निजी खाते", balances: "बैलेंस", customers: "ग्राहक", products: "प्रोडक्ट और लिंक", swaps: "स्वैप", crossChainSwaps: "क्रॉस-चेन स्वैप", liquidity: "लिक्विडिटी पूल", blindpay: "फ़िएट", onramp: "ऑन-रैंप", offramp: "ऑफ़-रैंप", developers: "API कुंजियाँ", webhook: "वेबहुक", logs: "API लॉग", weblogs: "वेबहुक लॉग", activityLog: "क्लाइंट गतिविधि", activity: "सूचनाएँ", support: "सहायता", inbox: "सहायता इनबॉक्स", users: "यूज़र", settings: "संगठन", account: "खाता", adminOverview: "प्लेटफ़ॉर्म अवलोकन", adminPayments: "भुगतान (सभी संगठन)", adminSwaps: "स्वैप (सभी संगठन)", adminFiat: "फ़िएट (सभी संगठन)", adminCustomers: "ग्राहक (सभी संगठन)", adminProducts: "प्रोडक्ट (सभी संगठन)", adminConsumers: "संगठन" },
+    viewLabels: { overview: "अवलोकन", payment: "भुगतान", payments: "भुगतान", zkPayments: "निजी भुगतान", zkAccounts: "निजी खाते", balances: "बैलेंस", customers: "ग्राहक", products: "प्रोडक्ट और लिंक", swaps: "स्वैप", crossChainSwaps: "क्रॉस-चेन स्वैप", liquidity: "लिक्विडिटी पूल", blindpay: "फ़िएट", onramp: "ऑन-रैंप", offramp: "ऑफ़-रैंप", p2pOverview: "P2P अवलोकन", p2pLiquidity: "P2P लिक्विडिटी", p2pOffers: "P2P ऑफ़र", p2pMethods: "भुगतान के तरीके", p2pOrders: "P2P ऑर्डर", p2pCharges: "भुगतान अनुरोध", p2pPayouts: "पेआउट", p2pBots: "बॉट और API", developers: "API कुंजियाँ", webhook: "वेबहुक", logs: "API लॉग", weblogs: "वेबहुक लॉग", activityLog: "क्लाइंट गतिविधि", activity: "सूचनाएँ", support: "सहायता", inbox: "सहायता इनबॉक्स", users: "यूज़र", settings: "संगठन", account: "खाता", adminOverview: "प्लेटफ़ॉर्म अवलोकन", adminPayments: "भुगतान (सभी संगठन)", adminSwaps: "स्वैप (सभी संगठन)", adminFiat: "फ़िएट (सभी संगठन)", adminCustomers: "ग्राहक (सभी संगठन)", adminProducts: "प्रोडक्ट (सभी संगठन)", adminConsumers: "संगठन" },
     sidebar: {
       label: "डैशबोर्ड",
       menu: { main: "मुख्य मेन्यू", preferences: "प्राथमिकताएँ" },
-      groups: { payments: "भुगतान", swaps: "स्वैप", fiat: "फ़िएट", developers: "डेवलपर", settings: "सेटिंग्स", help: "मदद", admin: "एडमिन" },
+      groups: { payments: "भुगतान", swaps: "स्वैप", fiat: "फ़िएट", p2p: "P2P", developers: "डेवलपर", settings: "सेटिंग्स", help: "मदद", admin: "एडमिन" },
       notifications: "सूचनाएँ",
       sections: { Platform: "प्लेटफ़ॉर्म", Build: "बनाएँ", Account: "खाता", Support: "सहायता", Admin: "एडमिन" },
-      items: { overview: "अवलोकन", payments: "भुगतान", zkPayments: "निजी भुगतान", zkAccounts: "निजी खाते", balances: "बैलेंस", customers: "ग्राहक", products: "प्रोडक्ट", swaps: "स्वैप", crossChainSwaps: "क्रॉस-चेन", liquidity: "लिक्विडिटी", blindpay: "फ़िएट", onramp: "ऑन-रैंप", offramp: "ऑफ़-रैंप", developers: "API कुंजियाँ", webhook: "वेबहुक", logs: "लॉग", weblogs: "वेबहुक लॉग", activityLog: "गतिविधि लॉग", activity: "गतिविधि", support: "सहायता", inbox: "इनबॉक्स", users: "यूज़र", settings: "संगठन", account: "खाता", adminOverview: "अवलोकन", adminPayments: "भुगतान", adminSwaps: "स्वैप", adminFiat: "फ़िएट", adminCustomers: "ग्राहक", adminProducts: "प्रोडक्ट", adminConsumers: "संगठन" },
+      items: { overview: "अवलोकन", payments: "भुगतान", zkPayments: "निजी भुगतान", zkAccounts: "निजी खाते", balances: "बैलेंस", customers: "ग्राहक", products: "प्रोडक्ट", swaps: "स्वैप", crossChainSwaps: "क्रॉस-चेन", liquidity: "लिक्विडिटी", blindpay: "फ़िएट", onramp: "ऑन-रैंप", offramp: "ऑफ़-रैंप", p2pOverview: "अवलोकन", p2pLiquidity: "लिक्विडिटी", p2pOffers: "ऑफ़र", p2pMethods: "भुगतान के तरीके", p2pOrders: "ऑर्डर", p2pCharges: "भुगतान अनुरोध", p2pPayouts: "पेआउट", p2pBots: "बॉट और API", developers: "API कुंजियाँ", webhook: "वेबहुक", logs: "लॉग", weblogs: "वेबहुक लॉग", activityLog: "गतिविधि लॉग", activity: "गतिविधि", support: "सहायता", inbox: "इनबॉक्स", users: "यूज़र", settings: "संगठन", account: "खाता", adminOverview: "अवलोकन", adminPayments: "भुगतान", adminSwaps: "स्वैप", adminFiat: "फ़िएट", adminCustomers: "ग्राहक", adminProducts: "प्रोडक्ट", adminConsumers: "संगठन" },
       collapse: "साइडबार छोटा करें",
     },
     admin: { viewList: "सूची देखें",
@@ -1007,7 +1012,7 @@ export default {
         roles: { user: "यूज़र", admin: "एडमिन" },
         permsLabel: "अनुमतियाँ",
         permResource: "रिसोर्स",
-        scopeResources: { payments: "भुगतान", swaps: "स्वैप", liquidity: "लिक्विडिटी", webhooks: "वेबहुक", products: "प्रोडक्ट", customers: "ग्राहक", kyc: "KYC", onramp: "ऑन-रैंप", offramp: "ऑफ़-रैंप", activity: "गतिविधि", plugins: "प्लगइन" },
+        scopeResources: { payments: "भुगतान", swaps: "स्वैप", liquidity: "लिक्विडिटी", webhooks: "वेबहुक", products: "प्रोडक्ट", customers: "ग्राहक", kyc: "KYC", onramp: "ऑन-रैंप", offramp: "ऑफ़-रैंप", activity: "गतिविधि", plugins: "प्लगइन", p2p: "P2P बाज़ार" },
         adminHint: "एडमिन कुंजियों के पास हर रिसोर्स का पूरा एक्सेस होता है।",
         perms: { read: "पढ़ना", write: "लिखना" },
         create: "कुंजी बनाएँ", save: "बदलाव सहेजें",

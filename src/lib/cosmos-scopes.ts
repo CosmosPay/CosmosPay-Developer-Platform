@@ -11,7 +11,9 @@
    leaves out. Keep this in step with the server's @RequirePermissions
    decorators; `pollar` left with the server's Pollar bridge. `plugins` is
    /v1/plugins: `plugins:read` lists plugins and runs their queries,
-   `plugins:write` installs them and runs their commands. */
+   `plugins:write` installs them and runs their commands. `p2p` is /v1/p2p: `p2p:read` reads
+   the market, accounts, offers, orders, charges and payouts; `p2p:write` registers wallets,
+   publishes offers, opens orders, charges and payouts and builds the market's transactions. */
 export const COSMOS_RESOURCES = [
   "payments",
   "swaps",
@@ -24,6 +26,7 @@ export const COSMOS_RESOURCES = [
   "offramp",
   "activity",
   "plugins",
+  "p2p",
 ] as const;
 export const COSMOS_ACTIONS = ["read", "write"] as const;
 

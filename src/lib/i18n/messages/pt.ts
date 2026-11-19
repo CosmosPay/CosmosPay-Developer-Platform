@@ -1,5 +1,10 @@
 /* pt.js: Portuguese message catalog. Mirrors en.js exactly in shape. */
+import p2pPt from "@/lib/i18n/messages/p2p/pt";
+import p2pPublicPt from "@/lib/i18n/messages/p2p-public/pt";
+
 export default {
+  p2p: p2pPt,
+  p2pPublic: p2pPublicPt,
   ui: { close: "Fechar", dialog: "Diálogo", copyToClipboard: "Copiar para a área de transferência", search: "Pesquisar", searchEllipsis: "Pesquisar…", select: "Selecionar…", account: "Conta", onboardingSteps: "Etapas do cadastro", skipToContent: "Pular para o conteúdo" },
   zk: {
     title: "Pagamentos privados",
@@ -1159,6 +1164,7 @@ export default {
       liquidity: "Pools de liquidez",
       blindpay: "Fiat",
       onramp: "On-ramp", offramp: "Off-ramp",
+      p2pOverview: "Visão geral P2P", p2pLiquidity: "Liquidez P2P", p2pOffers: "Ofertas P2P", p2pMethods: "Meios de recebimento", p2pOrders: "Ordens P2P", p2pCharges: "Cobranças", p2pPayouts: "Pagamentos a terceiros", p2pBots: "Bots e API",
       developers: "Chaves de API",
       webhook: "Webhooks",
       logs: "Logs da API",
@@ -1181,7 +1187,7 @@ export default {
     sidebar: {
       label: "Painel",
       menu: { main: "Menu principal", preferences: "Preferências" },
-      groups: { payments: "Pagamentos", swaps: "Swaps", fiat: "Fiat", developers: "Desenvolvedores", settings: "Configurações", help: "Ajuda", admin: "Admin" },
+      groups: { payments: "Pagamentos", swaps: "Swaps", fiat: "Fiat", p2p: "P2P", developers: "Desenvolvedores", settings: "Configurações", help: "Ajuda", admin: "Admin" },
       notifications: "Notificações",
       sections: {
         Platform: "Plataforma",
@@ -1200,6 +1206,7 @@ export default {
         liquidity: "Liquidez",
         blindpay: "Fiat",
         onramp: "On-ramp", offramp: "Off-ramp",
+        p2pOverview: "Visão geral", p2pLiquidity: "Liquidez", p2pOffers: "Ofertas", p2pMethods: "Meios de recebimento", p2pOrders: "Ordens", p2pCharges: "Cobranças", p2pPayouts: "Pagamentos a terceiros", p2pBots: "Bots e API",
         developers: "Chaves de API",
         webhook: "Webhooks",
         logs: "Logs",
@@ -1304,7 +1311,7 @@ export default {
         },
         permsLabel: "Permissões",
         permResource: "Recurso",
-        scopeResources: { payments: "Pagamentos", swaps: "Swaps", liquidity: "Liquidez", webhooks: "Webhooks", products: "Produtos", customers: "Clientes", kyc: "KYC", onramp: "On-ramp", offramp: "Off-ramp", activity: "Atividade", plugins: "Plugins" },
+        scopeResources: { payments: "Pagamentos", swaps: "Swaps", liquidity: "Liquidez", webhooks: "Webhooks", products: "Produtos", customers: "Clientes", kyc: "KYC", onramp: "On-ramp", offramp: "Off-ramp", activity: "Atividade", plugins: "Plugins", p2p: "Mercado P2P" },
         adminHint: "As chaves de admin têm acesso total a todos os recursos.",
         perms: {
           read: "Leitura",

@@ -106,6 +106,10 @@ export const SIDE: { sec: "main" | "preferences" | "Admin"; entries: SideEntry[]
       // "a section called Fiat with on-ramp and off-ramp as its options"). BlindPay's view stays
       // in it, off with DISABLED_VIEWS; give it its own label before turning it back on.
       { group: "fiat", views: ["onramp", "offramp", "blindpay"] },
+      // The P2P market (2026-11-19): local money for stablecoins between people, on the EVM
+      // networks the market contract is deployed on. Liquidity, offers and payment methods are the
+      // merchant's side; orders, charges and payouts the client's; Bots & API both.
+      { group: "p2p", views: ["p2pOverview", "p2pLiquidity", "p2pOffers", "p2pMethods", "p2pOrders", "p2pCharges", "p2pPayouts", "p2pBots"] },
       { group: "developers", views: ["developers", "webhook", "logs", "weblogs", "activityLog"] },
     ],
   },

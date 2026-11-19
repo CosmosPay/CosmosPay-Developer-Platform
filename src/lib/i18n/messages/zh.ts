@@ -1,5 +1,10 @@
 /* zh.ts: Simplified Chinese message catalog. Mirrors en.ts exactly in shape. */
+import p2pZh from "@/lib/i18n/messages/p2p/zh";
+import p2pPublicZh from "@/lib/i18n/messages/p2p-public/zh";
+
 export default {
+  p2p: p2pZh,
+  p2pPublic: p2pPublicZh,
   ui: { close: "关闭", dialog: "对话框", copyToClipboard: "复制到剪贴板", search: "搜索", searchEllipsis: "搜索…", select: "请选择…", account: "账户", onboardingSteps: "开通步骤", skipToContent: "跳到主要内容" },
   zk: {
     title: "隐私支付",
@@ -802,14 +807,14 @@ export default {
     },
     examples: { order: "订单 #24", firstName: "伟", lastName: "王", fullName: "王伟", jobTitle: "总监", customerName: "Acme 财务", payoutsName: "Acme 出金 (USD)", productName: "Pro 套餐（月付）" },
     search: { label: "搜索控制台", placeholder: "搜索", pages: "页面", searchGroup: "搜索", searchIn: "在{place}中搜索“{q}”", empty: "没有与“{q}”匹配的结果。" },
-    viewLabels: { overview: "概览", payment: "付款", payments: "支付", zkPayments: "隐私支付", zkAccounts: "隐私账户", balances: "余额", customers: "客户", products: "产品与链接", swaps: "兑换", crossChainSwaps: "跨链兑换", liquidity: "流动性池", blindpay: "法币", onramp: "入金", offramp: "出金", developers: "API 密钥", webhook: "Webhook", logs: "API 日志", weblogs: "Webhook 日志", activityLog: "客户端活动", activity: "通知", support: "支持", inbox: "客服收件箱", users: "用户", settings: "组织", account: "账户", adminOverview: "平台概览", adminPayments: "支付（所有组织）", adminSwaps: "兑换（所有组织）", adminFiat: "法币（所有组织）", adminCustomers: "客户（所有组织）", adminProducts: "产品（所有组织）", adminConsumers: "组织" },
+    viewLabels: { overview: "概览", payment: "付款", payments: "支付", zkPayments: "隐私支付", zkAccounts: "隐私账户", balances: "余额", customers: "客户", products: "产品与链接", swaps: "兑换", crossChainSwaps: "跨链兑换", liquidity: "流动性池", blindpay: "法币", onramp: "入金", offramp: "出金", p2pOverview: "P2P 概览", p2pLiquidity: "P2P 流动性", p2pOffers: "P2P 报价", p2pMethods: "收款方式", p2pOrders: "P2P 订单", p2pCharges: "收款单", p2pPayouts: "批量付款", p2pBots: "机器人与 API", developers: "API 密钥", webhook: "Webhook", logs: "API 日志", weblogs: "Webhook 日志", activityLog: "客户端活动", activity: "通知", support: "支持", inbox: "客服收件箱", users: "用户", settings: "组织", account: "账户", adminOverview: "平台概览", adminPayments: "支付（所有组织）", adminSwaps: "兑换（所有组织）", adminFiat: "法币（所有组织）", adminCustomers: "客户（所有组织）", adminProducts: "产品（所有组织）", adminConsumers: "组织" },
     sidebar: {
       label: "控制台",
       menu: { main: "主菜单", preferences: "偏好设置" },
-      groups: { payments: "支付", swaps: "兑换", fiat: "法币", developers: "开发者", settings: "设置", help: "帮助", admin: "管理" },
+      groups: { payments: "支付", swaps: "兑换", fiat: "法币", p2p: "P2P", developers: "开发者", settings: "设置", help: "帮助", admin: "管理" },
       notifications: "通知",
       sections: { Platform: "平台", Build: "构建", Account: "账户", Support: "支持", Admin: "管理" },
-      items: { overview: "概览", payments: "支付", zkPayments: "隐私支付", zkAccounts: "隐私账户", balances: "余额", customers: "客户", products: "产品", swaps: "兑换", crossChainSwaps: "跨链", liquidity: "流动性", blindpay: "法币", onramp: "入金", offramp: "出金", developers: "API 密钥", webhook: "Webhook", logs: "日志", weblogs: "Webhook 日志", activityLog: "活动日志", activity: "活动", support: "支持", inbox: "收件箱", users: "用户", settings: "组织", account: "账户", adminOverview: "概览", adminPayments: "支付", adminSwaps: "兑换", adminFiat: "法币", adminCustomers: "客户", adminProducts: "产品", adminConsumers: "组织" },
+      items: { overview: "概览", payments: "支付", zkPayments: "隐私支付", zkAccounts: "隐私账户", balances: "余额", customers: "客户", products: "产品", swaps: "兑换", crossChainSwaps: "跨链", liquidity: "流动性", blindpay: "法币", onramp: "入金", offramp: "出金", p2pOverview: "概览", p2pLiquidity: "流动性", p2pOffers: "报价", p2pMethods: "收款方式", p2pOrders: "订单", p2pCharges: "收款单", p2pPayouts: "批量付款", p2pBots: "机器人与 API", developers: "API 密钥", webhook: "Webhook", logs: "日志", weblogs: "Webhook 日志", activityLog: "活动日志", activity: "活动", support: "支持", inbox: "收件箱", users: "用户", settings: "组织", account: "账户", adminOverview: "概览", adminPayments: "支付", adminSwaps: "兑换", adminFiat: "法币", adminCustomers: "客户", adminProducts: "产品", adminConsumers: "组织" },
       collapse: "收起侧边栏",
     },
     admin: { viewList: "查看列表",
@@ -927,7 +932,7 @@ export default {
         roles: { user: "用户", admin: "管理员" },
         permsLabel: "权限",
         permResource: "资源",
-        scopeResources: { payments: "支付", swaps: "兑换", liquidity: "流动性", webhooks: "Webhook", products: "产品", customers: "客户", kyc: "KYC", onramp: "入金", offramp: "出金", activity: "活动", plugins: "插件" },
+        scopeResources: { payments: "支付", swaps: "兑换", liquidity: "流动性", webhooks: "Webhook", products: "产品", customers: "客户", kyc: "KYC", onramp: "入金", offramp: "出金", activity: "活动", plugins: "插件", p2p: "P2P 市场" },
         adminHint: "管理员密钥拥有所有资源的完全访问权限。",
         perms: { read: "读取", write: "写入" },
         create: "创建密钥", save: "保存更改",

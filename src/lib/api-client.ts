@@ -347,6 +347,8 @@ function blindpayClient(prefix) {
 export const kyc = blindpayClient("kyc");
 export const onramp = blindpayClient("onramp");
 export const offramp = blindpayClient("offramp");
+/* The P2P market (/api/p2p/*, the Payments API's /v1/p2p/*): the same generic proxy. */
+export const p2p = blindpayClient("p2p");
 
 /* Organizations CRUD + members. */
 export const organizations = {

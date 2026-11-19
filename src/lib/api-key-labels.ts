@@ -1,11 +1,12 @@
 /* An API key's scopes live in its APISIX credential's `permissions` label, and APISIX caps
    every label value at 256 characters with no whitespace (schema_def.lua, label_value_def).
    The JSON array this label used to hold is 344 characters for the full catalog
-   (src/lib/cosmos-scopes.ts, 22 scopes), so APISIX refused every key with 17 scopes or more,
+   (src/lib/cosmos-scopes.ts, 22 scopes then), so APISIX refused every key with 17 scopes or more,
    an "Admin" key included, and the dashboard answered a bare 500 (found 2026-11-18).
 
    The label is now compact: one entry per resource with the actions it grants,
-   `payments:rw,swaps:r,webhooks:w` (121 characters for the whole catalog). A key written
+   `payments:rw,swaps:r,webhooks:w` (121 characters for the 22-scope catalog, 128 with the P2P
+   market's two; tests/unit/apiKeyLabels.test.ts keeps the whole catalog under the limit). A key written
    before keeps its JSON label; the parser reads both. Only this app reads the label: the
    consumer forwarder bakes the parsed scopes into its own plugin config, which has no such
    limit, so the Payments service never sees this format. */
