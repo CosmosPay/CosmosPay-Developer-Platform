@@ -1421,3 +1421,5 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 }
 .p2p-sec { margin-top: 32px; }
 .inst .tx.p2p-t td { white-space: nowrap; }
+.inst .tx.p2p-t td, .inst .tx.p2p-t th { padding-left: 14px; padding-right: 14px; }
+.inst .tx.p2p-t .p2p-sub { display: block; margin-top: 2px; font-size: 12.5px; font-weight: 400; color: var(--ink-3); }

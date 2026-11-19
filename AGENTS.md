@@ -992,6 +992,50 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   503 misconfigured. A local server can set `SWAP_COMMISSION_DEV_WAIVER=true` instead: it waives
   (and logs) the commission; the boot refuses it in production.
 
+### The P2P market (dashboard, payments domain, docs)
+
+- **Cosmos Pay's own peer-to-peer market** (2026-11-19; not the Fiat group's ramps above, which
+  open a marketplace's hosted window): people buy and sell USD stablecoins for local money through
+  merchants Cosmos Pay picks for each order (no order book), on the EVM networks where the market
+  contract is deployed. The Payments API's `/v1/p2p/*` is the authority; this app has three
+  surfaces: the dashboard's **P2P** sidebar group, the payments domain's public app (`/p2p`) and
+  charge page (`/p2p/{chargeId}`), and the docs' "P2P market" guide (`docs/content/docs/p2p/`, five
+  languages).
+- **Never "escrow"** anywhere a person reads it (funds are locked, an order is protected; Spanish
+  "pago protegido", "bloqueado"), never a provider's name, and **the copy names no network**: the
+  screens name them only in pickers, from the market's own answer (`GET /v1/p2p/market`), and count
+  them from it. `tests/unit/p2pCopy.test.ts` fails on a P2P string that names a network or a
+  language left in English.
+- **The pure vocabulary is `src/lib/p2p/`** (tested): `types.ts` (the API's shapes as the screens
+  read them), `rails.ts` (the rails and every check an account or document goes through before it
+  leaves the browser: CBU/CVU and CLABE check digits, the alias, CUIT/CUIL, CPF/CNPJ and every PIX
+  key type, RUT, RUC, CCI), `amounts.ts` (base units without floating point), `perms.ts` (the bots'
+  bitmask: open 1, release 2, trade 4, withdraw 8), `orders.ts` (each status's tone, the deadline
+  that runs now, who may act) and `csv.ts` (the payouts file, row by row).
+- **The dashboard** (`views/P2p*View.tsx`, shared pieces in `dashboard/p2p/shared.tsx`) reaches
+  `/v1/p2p/*` through `/api/p2p/*` (`blindpayProxy`, reads for members, writes need
+  `payments:create`). Overview, Liquidity (wallets registered with an EIP-191 signature over a
+  single-use challenge, merchant profile, balances per network and token with the matcher's
+  per-order limit, bots with permission checkboxes), Offers, Payment methods, Orders (to fill and
+  yours, with the running deadline), Charges (link and QR), Payouts (CSV, a template, every row
+  checked) and Bots & API (the `p2p:read` / `p2p:write` scopes, the webhook events, the
+  transfer-matches helper by hand, a bot to start from). Every list is the Payments table; every
+  create is a dialog in steps; every delete asks first.
+- **Every on-chain action is signed in the person's own wallet**: the Payments API builds the
+  unsigned transaction (`POST /v1/p2p/transactions`, or the order's own for a sale), and
+  `WalletTxDialog` sends it from the registered wallet through `WalletSign`'s EIP-6963 list,
+  refusing another account, another chain or a transaction that moves native coin; deposits are
+  two steps (approve, deposit). Any other wallet gets the transaction to copy. Cosmos Pay holds no
+  key that can move these funds; the only server key is the community server's matcher, and
+  automatic settlement is never offered to a wallet with sale offers (the matcher/arbiter trust
+  edge is in the docs' security page).
+- **API keys** grant `p2p:read` and `p2p:write` (`COSMOS_RESOURCES`); the compact label still fits
+  APISIX's 256 characters with the whole catalog (`apiKeyLabels.test.ts`).
+- **Mock mode** answers every `/api/p2p/*` route from `src/lib/mock/handlers/p2p-market.ts`: one
+  seeded market per environment whose on-chain moves follow a built transaction a few seconds
+  later, as the indexer would show them; the payments domain's mocks read the same store
+  (`p2p-public.ts`). `tests/unit/p2pMock.test.ts` lists the routes the views call.
+
 ### The payments landing
 
 - **The gateway is several pages** (multi-page layout, product owner, 2026-10-25: "so not

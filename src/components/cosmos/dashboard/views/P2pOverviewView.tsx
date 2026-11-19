@@ -132,7 +132,7 @@ export function P2pOverviewView({ orgId, env = "dev", onGo = () => {} }: { orgId
               <th>{t.p2p.orders.head.order}</th><th>{t.p2p.orders.head.fiat}</th><th>{t.p2p.orders.head.status}</th><th>{t.p2p.orders.head.left}</th><th>{p.orders.side}</th><th>{t.p2p.orders.head.created}</th>
             </tr></thead>
               <tbody>{pg.slice.map(({ o, side }) => (
-                <tr key={o.id} className="row-click" onClick={() => goFiltered(onGo, "p2pOrders", { open: o.id })}>
+                <tr key={`${side}:${o.id}`} className="row-click" onClick={() => goFiltered(onGo, "p2pOrders", { open: o.id })}>
                   <td className="tid" onClick={(e) => e.stopPropagation()}>
                     <span className="cell-mark"><span className="am-sq">{DI.p2p}</span>
                       <RecordLink href={`/dashboard?view=p2pOrders&open=${encodeURIComponent(o.id)}`} onOpen={() => goFiltered(onGo, "p2pOrders", { open: o.id })} copy={o.id} title={o.id}>

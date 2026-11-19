@@ -150,10 +150,10 @@ export function P2pOrdersView({ canManage = false, orgId, env = "dev" }: { canMa
         shown={view.length} total={loading ? undefined : rows.length} loading={loading}
       />
       <div className="panel">
-        {loading && <TableSkeleton label={p.loading} cols={8} />}
+        {loading && <TableSkeleton label={p.loading} cols={7} />}
         {!loading && (
           <div className="t-scroll" tabIndex={0} ref={tref}><table className="tx p2p-t"><thead><tr>
-            <th>{p.head.order}</th><th>{p.head.fiat}</th><th>{p.head.tokens}</th><th>{p.head.status}</th><th>{p.head.left}</th><th>{side === "merchant" ? p.head.counterpartyMerchant : p.head.counterpartyClient}</th><th>{p.head.created}</th>
+            <th>{p.head.order}</th><th>{p.head.amount}</th><th>{p.head.status}</th><th>{p.head.left}</th><th>{side === "merchant" ? p.head.counterpartyMerchant : p.head.counterpartyClient}</th><th>{p.head.created}</th>
             <th><span className="sr-only">{cm.actions}</span></th>
           </tr></thead>
             <tbody>{!list.error && pg.slice.map((o) => {
@@ -168,8 +168,7 @@ export function P2pOrdersView({ canManage = false, orgId, env = "dev" }: { canMa
                       ><span>{kindLabel(o)} <code>{shortAddress(o.id)}</code></span></RecordLink>
                     </span>
                   </td>
-                  <td className="amt"><span className="cell-mark"><CurrencyMark id={o.currency} size={20} /><span>{fiatText(o.fiatAmount, o.currency, lang)}</span></span></td>
-                  <td className="amt"><span className="cell-mark"><P2pTokenMark market={market} network={o.network} symbol={o.token} size={20} /><span>{tokenText(o.tokenAmount, o.token, lang)}</span></span></td>
+                  <td className="amt"><span className="cell-mark"><CurrencyMark id={o.currency} size={20} /><span>{fiatText(o.fiatAmount, o.currency, lang)}<small className="p2p-sub">{tokenText(o.tokenAmount, o.token, lang)}</small></span></span></td>
                   <td><OrderStatus status={o.status} /></td>
                   <td className="cust"><OrderCountdown order={o} compact /></td>
                   <td className="cust">{counterparty(o)}</td>
@@ -187,7 +186,7 @@ export function P2pOrdersView({ canManage = false, orgId, env = "dev" }: { canMa
                 </tr>
               );
             })}
-              <FillRows n={pg.size - (list.error ? 0 : pg.count)} cols={8} empty={list.error ? p.listError : null} />
+              <FillRows n={pg.size - (list.error ? 0 : pg.count)} cols={7} empty={list.error ? p.listError : null} />
             </tbody>
           </table></div>
         )}
@@ -315,7 +314,7 @@ function OrderDetail({ order: o, side, market, accounts, env, orgId, canManage, 
         <div className="modal-eyebrow">{t.p2p.kinds[o.kind]} · {side === "merchant" ? p.tabs.merchant : p.tabs.client}</div>
         <h3 title={o.id}>{fiatText(o.fiatAmount, o.currency, lang)}</h3>
         <div className="paylink-fields" style={{ marginBottom: 16 }}>
-          {fields.map(([k, v]) => <div className="paylink-field" key={k}><span className="pf-k">{k}</span><span className="pf-v">{v}</span></div>)}
+          {fields.map(([k, v], i) => <div className="paylink-field" key={`${i}-${k}`}><span className="pf-k">{k}</span><span className="pf-v">{v}</span></div>)}
         </div>
         {o.paymentDetails && (
           <div className="paylink-block">
