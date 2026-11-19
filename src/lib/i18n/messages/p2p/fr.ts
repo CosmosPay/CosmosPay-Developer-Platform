@@ -47,6 +47,8 @@ export default {
     nitCc: "Carte d’identité ou NIT",
     text: "Valeur",
     documentType: "Type de pièce d’identité",
+    documentTypeCo: "Type de pièce d’identité",
+    documentTypePe: "Type de pièce d’identité",
     documentNumber: "Numéro de pièce",
   },
   hints: {

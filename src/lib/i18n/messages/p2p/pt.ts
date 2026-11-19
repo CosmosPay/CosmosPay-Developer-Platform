@@ -47,6 +47,8 @@ export default {
     nitCc: "Documento de identidade ou NIT",
     text: "Valor",
     documentType: "Tipo de documento",
+    documentTypeCo: "Tipo de documento",
+    documentTypePe: "Tipo de documento",
     documentNumber: "Número do documento",
   },
   hints: {

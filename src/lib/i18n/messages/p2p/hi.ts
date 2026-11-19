@@ -47,6 +47,8 @@ export default {
     nitCc: "पहचान पत्र या NIT",
     text: "मान",
     documentType: "दस्तावेज़ का प्रकार",
+    documentTypeCo: "दस्तावेज़ का प्रकार",
+    documentTypePe: "दस्तावेज़ का प्रकार",
     documentNumber: "दस्तावेज़ संख्या",
   },
   hints: {

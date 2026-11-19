@@ -232,7 +232,7 @@ export function BankAccountLines({ account }: { account: { rail: string; holderN
   return (
     <div className="paylink-fields p2p-account">
       <CopyLine label={fx.holderName} value={account.holderName} />
-      {account.document && <CopyLine label={rail ? fx[rail.document] : fx.document} value={account.document} />}
+      {account.document && <CopyLine label={fx.document} value={account.document} />}
       {Object.entries(account.details).map(([k, v]) => <CopyLine key={k} label={label(k)} value={optionLabel(k, v)} />)}
     </div>
   );

@@ -47,6 +47,8 @@ export default {
     nitCc: "ID card or NIT",
     text: "Value",
     documentType: "Document type",
+    documentTypeCo: "Document type",
+    documentTypePe: "Document type",
     documentNumber: "Document number",
   },
   hints: {

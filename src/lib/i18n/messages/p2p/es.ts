@@ -48,6 +48,8 @@ export default {
     nitCc: "Cédula o NIT",
     text: "Valor",
     documentType: "Tipo de documento",
+    documentTypeCo: "Tipo de documento",
+    documentTypePe: "Tipo de documento",
     documentNumber: "Número de documento",
   },
   hints: {

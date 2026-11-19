@@ -47,6 +47,8 @@ export default {
     nitCc: "身份证或 NIT",
     text: "值",
     documentType: "证件类型",
+    documentTypeCo: "证件类型",
+    documentTypePe: "证件类型",
     documentNumber: "证件号码",
   },
   hints: {

@@ -47,6 +47,8 @@ export default {
     nitCc: "Personalausweis oder NIT",
     text: "Wert",
     documentType: "Dokumenttyp",
+    documentTypeCo: "Dokumenttyp",
+    documentTypePe: "Dokumenttyp",
     documentNumber: "Dokumentnummer",
   },
   hints: {
