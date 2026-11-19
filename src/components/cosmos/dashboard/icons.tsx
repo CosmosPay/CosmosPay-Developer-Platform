@@ -2,6 +2,9 @@
    (not the global icons/ folder) because these are specific to the dashboard shell/views. */
 
 /* ---------------- icons ---------------- */
+// The P2P market: two people trading across, money one way and tokens the other. Its views share it
+// (the overview's quick links draw a view's icon).
+const P2P_ICON = <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><circle cx="6" cy="7" r="2.6" /><circle cx="18" cy="17" r="2.6" /><path d="M10.5 6.5h7l-2.5-2.5M13.5 17.5h-7l2.5 2.5" /></svg>;
 export const DI = {
   overview: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9"><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /></svg>,
   payments: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><rect x="3" y="6" width="18" height="12" rx="2" /><path d="M3 10h18" /></svg>,
@@ -14,8 +17,9 @@ export const DI = {
   blindpay: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="6" width="18" height="12" rx="2" /><path d="M3 10h18" /><circle cx="8" cy="14" r="1.2" fill="currentColor" /></svg>,
   // Fiat: local money in (on-ramp: down into the stablecoin) and out (off-ramp: up out of it).
   fiat: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="6" width="18" height="12" rx="2" /><circle cx="12" cy="12" r="2.5" /><path d="M6.5 9.5v.01M17.5 14.5v.01" /></svg>,
-  // The P2P market: two people trading across, money one way and tokens the other.
-  p2p: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><circle cx="6" cy="7" r="2.6" /><circle cx="18" cy="17" r="2.6" /><path d="M10.5 6.5h7l-2.5-2.5M13.5 17.5h-7l2.5 2.5" /></svg>,
+  p2p: P2P_ICON,
+  p2pOverview: P2P_ICON, p2pLiquidity: P2P_ICON, p2pOffers: P2P_ICON, p2pMethods: P2P_ICON,
+  p2pOrders: P2P_ICON, p2pCharges: P2P_ICON, p2pPayouts: P2P_ICON, p2pBots: P2P_ICON,
   onramp: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="15" r="6" /><path d="M12 2v7M9 6l3 3 3-3" /></svg>,
   offramp: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="9" r="6" /><path d="M12 22v-7M9 18l3-3 3 3" /></svg>,
   developers: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 8l-4 4 4 4M16 8l4 4-4 4M13 5l-2 14" /></svg>,

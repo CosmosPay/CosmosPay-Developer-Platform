@@ -17,6 +17,7 @@ import { STAFF_ROLES, MANAGER_ROLES, STAFF_ONLY, MANAGER_ONLY, OWNER_ONLY, DISAB
 import { OPEN_RECORD_EVENT, FILTERS_EVENT } from "@/components/cosmos/dashboard/hooks";
 import {
   OverviewView, PaymentsView, PaymentRecordView, ZkPaymentsView, ZkAccountsView, BalancesView, CustomersView, ProductsView, SwapsView, LiquidityView, BlindPayView, P2pRampView,
+  P2pOverviewView, P2pLiquidityView, P2pOffersView, P2pMethodsView, P2pOrdersView, P2pChargesView, P2pPayoutsView, P2pBotsView,
   ApiKeysView, WebhooksView, LogsView, ActivityLogView, NotificationsView, SupportView, SupportInboxView, UsersView, SettingsView, AccountView,
   AdminOverviewView, AdminPaymentsView, AdminSwapsView, AdminFiatView, AdminCustomersView, AdminProductsView, AdminConsumersView,
 } from "@/components/cosmos/dashboard/views/index";
@@ -428,6 +429,16 @@ export default function Dashboard({ user: initialUser, lang, features, env = "de
       case "blindpay": return <BlindPayView canManage={can("payments:create")} orgId={org.id} orgRole={org.role} env={live ? "prod" : "dev"} />;
       case "onramp": return <P2pRampView key="buy" side="buy" canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "offramp": return <P2pRampView key="sell" side="sell" canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
+      // The P2P market: its merchant side (liquidity, offers, payment methods), its client side
+      // (orders, charges, payouts) and the API. Writes need payments:create, as the fiat rails.
+      case "p2pOverview": return <P2pOverviewView orgId={org.id} env={live ? "prod" : "dev"} onGo={go} />;
+      case "p2pLiquidity": return <P2pLiquidityView canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
+      case "p2pOffers": return <P2pOffersView canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
+      case "p2pMethods": return <P2pMethodsView canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
+      case "p2pOrders": return <P2pOrdersView canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
+      case "p2pCharges": return <P2pChargesView canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
+      case "p2pPayouts": return <P2pPayoutsView canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
+      case "p2pBots": return <P2pBotsView canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} keys={keys} onGo={go} onCreateKey={canCreateKeys ? () => setModal("key") : null} />;
       case "developers": return <ApiKeysView keys={keys} env={live ? "prod" : "dev"} loading={keysLoading} error={keysError} limit={orgLimits.maxApiKeys} lockedIds={lockedKeyIds} canCreate={canCreateKeys} canEdit={canEditKeys} canDelete={canDeleteKeys} liveLocked={liveKeysLocked} onUpgrade={keyUpgrade} onCreate={() => setModal("key")} onRevoke={requestRevoke} onEdit={setEditing} />;
       case "webhook": return <WebhooksView canManage={can("webhooks:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "logs": return <LogsView kind="api" env={live ? "prod" : "dev"} />;

@@ -1364,3 +1364,60 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .inst .pay-emails li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-width: 0; }
 .inst .pay-emails-addr { overflow-wrap: anywhere; font-weight: 500; }
 .inst .pay-emails-meta { color: var(--ink-2); font-size: 13px; }
+
+/* ---- The P2P market's views (src/components/cosmos/dashboard/views/P2p*.tsx, p2p/shared.tsx): the
+   deadline running on an order, the steps a wallet signs, checkboxes with a line under their label,
+   an account to transfer to as copyable lines, the payouts file and its rows. Tokens and shapes
+   are the skin's; no new colour. */
+.p2p-cd { font-variant-numeric: tabular-nums; color: var(--ink-2); white-space: nowrap; }
+.p2p-cd.is-soon { color: #B26B00; font-weight: 600; }
+.p2p-cd.is-over { color: #B42F2F; }
+[data-theme="dark"] .p2p-cd.is-soon { color: #E2A53A; }
+[data-theme="dark"] .p2p-cd.is-over { color: #FF9B9B; }
+.p2p-cd.is-none { color: var(--ink-3); }
+.p2p-steps { display: grid; gap: 8px; margin: 0 0 14px; padding: 0; list-style: none; }
+.p2p-steps li { display: grid; grid-template-columns: 24px 1fr auto; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r-field, 12px); font-size: 14px; color: var(--ink); }
+.p2p-steps li small { font-size: 12px; color: var(--ink-3); }
+.p2p-steps li.is-current { border-color: var(--ink); }
+.p2p-steps li.is-done { color: var(--ink-2); }
+.p2p-step-n { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--line-2); font-size: 12px; font-weight: 600; }
+.p2p-steps li.is-done .p2p-step-n { border-color: var(--ink); background: var(--ink); color: var(--surface); }
+.p2p-steps li.is-done .p2p-step-n svg { width: 12px; height: 12px; }
+.p2p-done { display: flex; align-items: center; gap: 8px; margin: 0 0 14px; font-weight: 600; color: var(--ink); }
+.p2p-done svg { width: 18px; height: 18px; }
+.p2p-manual { margin: 2px 0 12px; font-size: 13.5px; }
+.p2p-chk { display: flex; align-items: flex-start; gap: 10px; margin: 10px 0 4px; }
+.p2p-chk .chk-box { flex: 0 0 auto; margin-top: 1px; }
+.p2p-chk-t { display: grid; gap: 2px; font-size: 14px; color: var(--ink); }
+.p2p-chk-t small { font-size: 12.5px; line-height: 1.45; color: var(--ink-3); }
+.p2p-perms { display: grid; gap: 2px; }
+.p2p-choice-d { display: block; margin-top: 3px; font-size: 12.5px; line-height: 1.45; color: var(--ink-3); font-weight: 400; }
+.p2p-form-block { display: grid; gap: 4px; margin: 0 0 16px; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--r-pop, 16px); }
+.p2p-form-block .modal-actions { margin-top: 8px; }
+.p2p-account { margin: 6px 0 0; }
+.p2p-copy-line .pf-v { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.p2p-copy-line code { overflow-wrap: anywhere; }
+.modal:has(> .p2p-wide), .modal:has(.modal-body.p2p-wide) { width: min(860px, 100%); }
+.p2p-items { font-size: 13.5px; }
+.p2p-items tr.is-bad td { background: color-mix(in srgb, #B42F2F 5%, transparent); }
+.p2p-row-err { display: block; margin-top: 2px; font-size: 12.5px; line-height: 1.4; color: #B42F2F; }
+[data-theme="dark"] .p2p-row-err { color: #FF9B9B; }
+.p2p-drop { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 16px; border: 1.5px dashed var(--line-2); border-radius: var(--r-pop, 16px); transition: border-color .15s ease, background-color .15s ease; }
+.p2p-drop.on { border-color: var(--ink); background: var(--surface-2); }
+.p2p-drop-t { flex: 1; min-width: 0; font-size: 13.5px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.p2p-csv { max-height: 320px; overflow: auto; border: 1px solid var(--line); border-radius: var(--r-field, 12px); }
+.p2p-csv-sum { margin: 12px 0 8px; font-size: 14px; font-weight: 600; color: var(--ink); }
+.p2p-panel { display: grid; gap: 14px; padding: 18px; }
+.p2p-scopes { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.p2p-scopes li { display: grid; grid-template-columns: 110px 1fr; gap: 12px; align-items: baseline; font-size: 14px; color: var(--ink-2); }
+.p2p-scopes code { font-weight: 600; color: var(--ink); }
+.p2p-match-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0 12px; align-items: end; }
+.p2p-match-go { display: flex; align-items: flex-end; padding-bottom: 14px; }
+.p2p-match-none { margin: 0; font-size: 14px; color: var(--ink-2); }
+@media (max-width: 640px) {
+  .p2p-scopes li { grid-template-columns: 1fr; gap: 2px; }
+  .p2p-steps li { grid-template-columns: 24px 1fr; }
+  .p2p-steps li small { grid-column: 2; }
+}
+.p2p-sec { margin-top: 32px; }
+.inst .tx.p2p-t td { white-space: nowrap; }
