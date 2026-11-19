@@ -34,7 +34,7 @@ test("the challenge names the wallet, the site, the network and its expiry", () 
   assert.match(m, /Network: mainnet/);
   assert.match(m, /Nonce: n1/);
   assert.match(m, /Expires: 1970-01-01T00:05:00\.000Z/);
-  assert.doesNotMatch(m, /—/);
+  assert.doesNotMatch(m, /\u2014/);
   assert.equal(envFromKey("dv_abc"), "dev");
   assert.equal(envFromKey("prod_abc"), "prod");
 });
