@@ -3,9 +3,9 @@
    Amounts: token amounts are base-unit strings where the field says `Units`, otherwise decimal
    strings; local money is always a decimal string. Dates are ISO strings.
 
-   Written against the design contract (route list 3.6) before the server's OpenAPI document
-   listed these routes; every field the screens read is here, so aligning with the server is a
-   change to this file and the screens that read it. */
+   The server's own shapes differ in places (base units, token addresses, flat deadlines, nested
+   rails): src/lib/p2p/normalize.ts turns its answers into these and the screens' requests into its
+   bodies, so the screens read one vocabulary. */
 
 export type P2pTier = "mainnet" | "testnet";
 
@@ -112,6 +112,8 @@ export interface P2pPaymentMethod {
   details: Record<string, string>;
   active: boolean;
   createdAt: string;
+  /* The server's masked one-line description of the account ("alias ana.gomez.mp"). */
+  summary?: string;
 }
 
 export type P2pOfferSide = "SELL_TOKEN" | "BUY_TOKEN";
@@ -236,7 +238,9 @@ export interface P2pOrder {
 
 export interface P2pTransferMatch {
   order: P2pOrder;
+  /* 1 for the amount, plus 1 for the payer's name and 1 for the document. */
   score: number;
+  matchedOn?: string[];
   transaction: P2pTransaction;
 }
 
@@ -284,6 +288,8 @@ export interface P2pPayoutBatch {
   accountId: string;
   status: P2pPayoutBatchStatus;
   items: P2pPayoutItem[];
+  /* How many payouts the batch holds (a list answers without its orders). */
+  itemCount: number;
   createdAt: string;
 }
 
@@ -297,6 +303,7 @@ export const P2P_WEBHOOK_EVENTS = [
   "P2P_ORDER_EXPIRED",
   "P2P_ORDER_DISPUTED",
   "P2P_ORDER_RESOLVED",
+  "P2P_ORDER_FAILED",
   "P2P_CHARGE_SUCCEEDED",
   "P2P_PAYOUT_BATCH_COMPLETED",
 ] as const;

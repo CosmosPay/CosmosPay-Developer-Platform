@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 import {
   RAILS, RAIL_IDS, railsFor, fiatDecimals, checkCbu, checkAlias, checkCuit, checkDni, checkCpf, checkCnpj, checkPixKey,
   checkClabe, checkRfc, checkCurp, checkCci, checkRuc, checkDniRuc, checkRut, checkNitCc, checkAccount, normalizeDetails,
-  checkPayerDocument, checkEmail, checkHolderName, isRailId,
+  checkPayerDocument, checkEmail, checkHolderName, isRailId, checkBeneficiary, documentOf,
 } from "@/lib/p2p/rails";
 
 test("the rail table names each rail once, with its currency and a document", () => {
@@ -92,19 +92,33 @@ test("Peru, Chile and Colombia", () => {
   assert.equal(checkNitCc("12"), "format");
 });
 
-test("an account: holder, document and the rail's fields, with one-of groups", () => {
-  const ar = (details: Record<string, string>, document = "20329642330") => checkAccount("ar_bank_transfer", { holderName: "Ana Gómez", document, details });
-  assert.deepEqual(ar({ cbu: "0170099222000001234561" }), {});
-  assert.deepEqual(ar({ alias: "ana.gomez.mp" }), {}, "an alias alone is enough");
-  assert.deepEqual(ar({}), { cbu: "required" }, "a CBU or an alias");
-  assert.deepEqual(ar({ cbu: "0170099222000001234562", alias: "ana.gomez.mp" }), { cbu: "checksum" }, "a filled member must be valid");
-  assert.deepEqual(ar({ alias: "ana.gomez.mp" }, ""), { document: "required" });
-  assert.deepEqual(checkAccount("br_pix", { holderName: "João", document: "52998224725", details: { pixKeyType: "phone", pixKey: "+5511912345678" } }), {});
-  assert.deepEqual(checkAccount("br_pix", { holderName: "João", document: "52998224725", details: { pixKeyType: "fax", pixKey: "1" } }), { pixKeyType: "format", pixKey: "format" });
-  assert.deepEqual(checkAccount("mx_spei", { holderName: "María", document: "", details: { clabe: "002010077777777771" } }), {}, "the RFC is optional");
-  assert.deepEqual(checkAccount("mx_spei", { holderName: "1", document: "x", details: { clabe: "1" } }), { holderName: "format", document: "format", clabe: "format" });
-  assert.deepEqual(checkAccount("cl_bank_transfer", { holderName: "Pedro", document: "12345678-5", details: { bank: "Banco Estado", accountType: "vista", accountNumber: "12345678" } }), {});
-  assert.deepEqual(checkAccount("unknown_rail", { holderName: "Pedro", document: "", details: { iban: "" } }), { iban: "required" });
+test("an account: holder and the rail's details, as the server names them", () => {
+  const ar = (details: Record<string, string>) => checkAccount("ar_bank_transfer", { holderName: "Ana Gómez", details });
+  assert.deepEqual(ar({ cbu: "0170099222000001234561", cuit: "20329642330" }), {});
+  assert.deepEqual(ar({ alias: "ana.gomez.mp", cuit: "20329642330" }), {}, "an alias alone is enough");
+  assert.deepEqual(ar({ cuit: "20329642330" }), { cbu: "required" }, "a CBU or an alias");
+  assert.deepEqual(ar({ cbu: "0170099222000001234561", alias: "ana.gomez.mp", cuit: "20329642330" }), { alias: "exclusive" }, "never both");
+  assert.deepEqual(ar({ cbu: "0170099222000001234562", cuit: "20329642330" }), { cbu: "checksum" });
+  assert.deepEqual(ar({ alias: "ana.gomez.mp" }), { cuit: "required" }, "the holder's CUIT is a detail");
+  assert.deepEqual(checkAccount("br_pix", { holderName: "João", details: { keyType: "phone", key: "+5511912345678" } }), {});
+  assert.deepEqual(checkAccount("br_pix", { holderName: "João", details: { keyType: "fax", key: "1" } }), { keyType: "format", key: "format" });
+  assert.deepEqual(checkAccount("mx_spei", { holderName: "María", details: { clabe: "002010077777777771" } }), {});
+  assert.deepEqual(checkAccount("mx_spei", { holderName: "1", details: { clabe: "1" } }), { holderName: "format", clabe: "format" });
+  assert.deepEqual(checkAccount("co_bank_transfer", { holderName: "Juan", details: { bank: "Bancolombia", accountType: "savings", accountNumber: "12345", documentType: "CC", documentNumber: "1020304050" } }), { accountNumber: "format" }, "six digits at least in Colombia");
+  assert.deepEqual(checkAccount("pe_bank_transfer", { holderName: "Rosa", details: { cci: "00219300123456789012", documentType: "DNI", documentNumber: "46779354" } }), {});
+  assert.deepEqual(checkAccount("pe_bank_transfer", { holderName: "Rosa", details: { cci: "00219300123456789012", documentType: "XX", documentNumber: "4" } }), { documentType: "format", documentNumber: "format" });
+  assert.deepEqual(checkAccount("cl_bank_transfer", { holderName: "Pedro", details: { bank: "Banco Estado", accountType: "vista", accountNumber: "12345678", rut: "12345678-5" } }), {});
+  assert.deepEqual(checkAccount("unknown_rail", { holderName: "Pedro", details: { iban: "" } }), { iban: "required" });
+});
+
+test("a beneficiary also carries a document, the rail's own when it keeps one", () => {
+  assert.equal(documentOf("ar_bank_transfer", { cuit: "20329642330" }), "20329642330");
+  assert.equal(documentOf("br_pix", { keyType: "cpf", key: "529.982.247-25" }), "52998224725");
+  assert.equal(documentOf("br_pix", { keyType: "email", key: "a@b.co" }), "");
+  assert.deepEqual(checkBeneficiary("ar_bank_transfer", { holderName: "Ana", details: { alias: "ana.gomez.mp", cuit: "20329642330" } }), {});
+  assert.deepEqual(checkBeneficiary("mx_spei", { holderName: "María", details: { clabe: "002010077777777771" } }), { document: "required" });
+  assert.deepEqual(checkBeneficiary("mx_spei", { holderName: "María", document: "GODE561231GR8", details: { clabe: "002010077777777771" } }), {});
+  assert.deepEqual(checkBeneficiary("mx_spei", { holderName: "María", document: "x", details: { clabe: "002010077777777771" } }), { document: "format" });
 });
 
 test("details are kept trimmed, known keys only, account numbers without separators", () => {

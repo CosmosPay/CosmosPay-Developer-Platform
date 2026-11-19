@@ -28,14 +28,15 @@ import { CurrencyMark, currencyName } from "@/components/cosmos/dashboard/compon
 import { FormSteps, FormStep, FormStepsFooter, useFormSteps } from "@/components/cosmos/dashboard/components/FormSteps";
 import { BulkActions, SelectCell, SelectHead, useBulkDelete, useSelection } from "@/components/cosmos/dashboard/components/BulkSelect";
 import { countBy, matchesQuery } from "@/lib/dashboard-filters";
-import { RAILS, checkAccount, isRailId, type FieldKind, type RailField } from "@/lib/p2p/rails";
+import { RAILS, checkAccount, isRailId, normalizeDetails, type FieldKind, type RailField } from "@/lib/p2p/rails";
 import type { P2pAccount, P2pMarket, P2pPaymentMethod } from "@/lib/p2p/types";
 import { p2pApi, useP2pMarket, useP2pList, accountName, railName, fieldErrorText, Check, accountOptions } from "@/components/cosmos/dashboard/p2p/shared";
 
 /** The account as one line: the rail's main field (an alias reads better than a CBU). */
-export function accountSummary(t: any, rail: string, details: Record<string, string>): string {
+export function accountSummary(t: any, rail: string, details: Record<string, string>, summary?: string): string {
+  if (summary) return summary;
   if (details.alias) return details.alias;
-  if (details.pixKey) return details.pixKey;
+  if (details.key) return details.key;
   const first = isRailId(rail) ? RAILS[rail].fields.find((f) => details[f.key] && !f.options) : null;
   const v = first ? details[first.key] : Object.values(details)[0] ?? "";
   return v.length > 12 ? `${v.slice(0, 4)}…${v.slice(-4)}` : v;
@@ -136,11 +137,11 @@ export function P2pMethodsView({ canManage = false, orgId, env = "dev" }: { canM
                   <span className="cell-mark">
                     <CurrencyMark id={m.currency} size={22} />
                     <RecordLink onOpen={() => setEditing(m)} copy={m.id} title={m.id}
-                      preview={() => <PreviewCard label={p.head.method} title={m.id} headline={<b>{nameOf(m)}</b>} fields={[[p.head.holder, m.holderName], [p.head.account, accountSummary(t, m.rail, m.details)], [p.head.wallet, accountName(acc(m.accountId))]]} />}
+                      preview={() => <PreviewCard label={p.head.method} title={m.id} headline={<b>{nameOf(m)}</b>} fields={[[p.head.holder, m.holderName], [p.head.account, accountSummary(t, m.rail, m.details, m.summary)], [p.head.wallet, accountName(acc(m.accountId))]]} />}
                     >{nameOf(m)}</RecordLink>
                   </span>
                 </td>
-                <td className="cust"><code>{accountSummary(t, m.rail, m.details)}</code></td>
+                <td className="cust"><code>{accountSummary(t, m.rail, m.details, m.summary)}</code></td>
                 <td className="cust">{m.holderName}</td>
                 <td className="cust">{accountName(acc(m.accountId))}</td>
                 <td><Pill st={m.active ? "ok" : "ref"} tone={m.active ? "ok" : "off"} label={m.active ? p.active : p.inactive} /></td>
@@ -180,15 +181,15 @@ export function P2pMethodsView({ canManage = false, orgId, env = "dev" }: { canM
 
 /** A rail's account fields with their checks, shown under each field once it is touched. Also
     used by the payouts' beneficiary preview. */
-export function RailFields({ rail, holderName, document, details, onChange, disabled = false, showAll = false }: {
-  rail: string; holderName: string; document: string; details: Record<string, string>;
-  onChange: (patch: { holderName?: string; document?: string; details?: Record<string, string> }) => void;
+export function RailFields({ rail, holderName, details, onChange, disabled = false, showAll = false }: {
+  rail: string; holderName: string; details: Record<string, string>;
+  onChange: (patch: { holderName?: string; details?: Record<string, string> }) => void;
   disabled?: boolean; showAll?: boolean;
 }) {
   const t = useT();
   const fx = t.p2p.fields;
   const [touched, setTouched] = useState<Record<string, boolean>>({});
-  const errors = checkAccount(rail, { holderName, document, details });
+  const errors = checkAccount(rail, { holderName, details });
   const shown = (key: string) => (showAll || touched[key]) && errors[key];
   const touch = (key: string) => setTouched((x) => ({ ...x, [key]: true }));
   const known = isRailId(rail) ? RAILS[rail] : null;
@@ -216,14 +217,10 @@ export function RailFields({ rail, holderName, document, details, onChange, disa
     );
   };
   const holderErr = shown("holderName") ? fieldErrorText(t, "text", errors.holderName) : "";
-  const docKind = known?.document ?? "text";
-  const docErr = shown("document") ? fieldErrorText(t, docKind, errors.document) : "";
   return (
     <>
       <Field label={fx.holderName} value={holderName} disabled={disabled} placeholder={t.p2p.placeholders.holderName} onBlur={() => touch("holderName")} onChange={(e) => onChange({ holderName: e.target.value })} aria-invalid={holderErr ? true : undefined} />
       {holderErr && <p className="field-err" role="alert">{holderErr}</p>}
-      <Field label={`${fx[docKind] ?? fx.document}`} hint={known?.documentOptional ? t.dash.common.optional : t.p2p.hints[docKind]} value={document} disabled={disabled} placeholder={t.p2p.placeholders[docKind] ?? ""} spellCheck={false} onBlur={() => touch("document")} onChange={(e) => onChange({ document: e.target.value })} aria-invalid={docErr ? true : undefined} />
-      {docErr && <p className="field-err" role="alert">{docErr}</p>}
       {fields.map(field)}
     </>
   );
@@ -246,29 +243,29 @@ function MethodModal({ market, accounts, env, orgId, method = null, canManage = 
   const [rail, setRail] = useState(method?.rail ?? railsOf(currency)[0] ?? "");
   const [label, setLabel] = useState(method?.label ?? "");
   const [holderName, setHolderName] = useState(method?.holderName ?? "");
-  const [document, setDocument] = useState(method?.document ?? "");
-  const [details, setDetails] = useState<Record<string, string>>(method?.details ?? (rail === "br_pix" ? { pixKeyType: "email" } : {}));
+  const [details, setDetails] = useState<Record<string, string>>(method?.details ?? (rail === "br_pix" ? { keyType: "email" } : {}));
   const [active, setActive] = useState(method?.active ?? true);
   const [busy, setBusy] = useState(false);
   const [tried, setTried] = useState(false);
   useEffect(() => { if (!editing && !railsOf(currency).includes(rail)) setRail(railsOf(currency)[0] ?? ""); }, [currency]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { if (!editing) setDetails(rail === "br_pix" ? { pixKeyType: "email" } : {}); }, [rail]); // eslint-disable-line react-hooks/exhaustive-deps
-  const errors = checkAccount(rail, { holderName, document, details });
+  useEffect(() => { if (!editing) setDetails(rail === "br_pix" ? { keyType: "email" } : {}); }, [rail]); // eslint-disable-line react-hooks/exhaustive-deps
+  const errors = checkAccount(rail, { holderName, details });
   const ok = Object.keys(errors).length === 0;
   const save = () => {
     setTried(true);
     if (!ok || busy) return;
     setBusy(true);
-    const body = { label: label.trim(), holderName: holderName.trim(), document: document.trim(), details, active };
+    // The holder's document travels among the details (a CUIT, a RUT...), as the server takes it.
+    const body = { label: label.trim() || undefined, holderName: holderName.trim(), details: normalizeDetails(rail, details) };
     const req = editing
-      ? p2pApi.patch(`payment-methods/${encodeURIComponent(method!.id)}`, env, orgId, body)
+      ? p2pApi.patch(`payment-methods/${encodeURIComponent(method!.id)}`, env, orgId, { ...body, active })
       : p2pApi.post("payment-methods", env, orgId, { ...body, accountId, currency, rail });
     req.then(onSaved).catch((e) => showToast(e?.message || p.saveFailed, "error")).finally(() => setBusy(false));
   };
   const accountFields = (
     <>
-      <RailFields rail={rail} holderName={holderName} document={document} details={details} disabled={!canManage} showAll={tried}
-        onChange={(x) => { if (x.holderName !== undefined) setHolderName(x.holderName); if (x.document !== undefined) setDocument(x.document); if (x.details) setDetails(x.details); }} />
+      <RailFields rail={rail} holderName={holderName} details={details} disabled={!canManage} showAll={tried}
+        onChange={(x) => { if (x.holderName !== undefined) setHolderName(x.holderName); if (x.details) setDetails(x.details); }} />
       <Check checked={active} onChange={setActive} label={p.active} hint={f.activeHint} disabled={!canManage} />
     </>
   );

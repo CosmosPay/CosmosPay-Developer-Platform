@@ -1,7 +1,9 @@
 /* rails.ts: the local-money rails the P2P market pays on, and the checks every account number and
    identity document goes through before it leaves the browser. They mirror the community
-   server's rail table (src/p2p constants over there): the server stays the authority, these are
-   its shapes checked early so a typo never becomes an order that cannot be paid.
+   server's rail table (`src/p2p/p2p-rails.ts` over there, the same detail keys: an Argentine
+   account is a CBU or an alias, never both, with the holder's CUIT among its details): the
+   server stays the authority, these are its shapes checked early so a typo never becomes an
+   order that cannot be paid.
 
    One entry per rail. A field is `{ key, kind }`; `kind` names the check and the label the
    screens use (t.p2p.fields[kind]). A rail the market lists that this table does not know is
@@ -30,6 +32,9 @@ export type FieldKind =
   | "bank"
   | "accountTypeCo"
   | "accountTypeCl"
+  | "documentTypeCo"
+  | "documentTypePe"
+  | "documentNumber"
   | "accountNumber"
   | "cci"
   | "dniRuc"
@@ -40,9 +45,11 @@ export type FieldKind =
 export interface RailField {
   key: string;
   kind: FieldKind;
-  /* Optional fields may be left empty; `oneOf` names a group where at least one must be filled. */
+  /* Optional fields may be left empty; `oneOf` names a group where exactly one must be filled. */
   optional?: boolean;
   oneOf?: string;
+  /* An account number's fewest digits (the most is 20). */
+  minDigits?: number;
   /* A field shown as a choice: its options' keys (labels in t.p2p.options[kind][option]). */
   options?: readonly string[];
 }
@@ -52,17 +59,19 @@ export interface Rail {
   currency: string;
   /* The country whose flag marks the rail (ISO 3166-1 alpha-2, lower case). */
   country: string;
-  /* The account the money goes to. */
+  /* The account the money goes to, the holder's document among its details where the rail asks
+     for one. */
   fields: readonly RailField[];
-  /* The holder's identity document, checked by its kind. */
-  document: FieldKind;
-  documentOptional?: boolean;
+  /* The detail that holds the holder's document, when the rail has one. */
+  documentKey?: string;
 }
 
 export const PIX_KEY_TYPES = ["cpf", "cnpj", "email", "phone", "evp"] as const;
 export type PixKeyType = (typeof PIX_KEY_TYPES)[number];
 export const CO_ACCOUNT_TYPES = ["savings", "checking"] as const;
 export const CL_ACCOUNT_TYPES = ["checking", "vista", "savings"] as const;
+export const CO_DOCUMENT_TYPES = ["CC", "CE", "NIT", "PP"] as const;
+export const PE_DOCUMENT_TYPES = ["DNI", "CE", "RUC", "PP"] as const;
 
 export const RAILS: Record<RailId, Rail> = {
   ar_bank_transfer: {
@@ -72,26 +81,24 @@ export const RAILS: Record<RailId, Rail> = {
     fields: [
       { key: "cbu", kind: "cbu", oneOf: "account" },
       { key: "alias", kind: "alias", oneOf: "account" },
+      { key: "cuit", kind: "cuit" },
     ],
-    document: "cuit",
+    documentKey: "cuit",
   },
   br_pix: {
     id: "br_pix",
     currency: "BRL",
     country: "br",
     fields: [
-      { key: "pixKeyType", kind: "pixKeyType", options: PIX_KEY_TYPES },
-      { key: "pixKey", kind: "pixKey" },
+      { key: "keyType", kind: "pixKeyType", options: PIX_KEY_TYPES },
+      { key: "key", kind: "pixKey" },
     ],
-    document: "cpfCnpj",
   },
   mx_spei: {
     id: "mx_spei",
     currency: "MXN",
     country: "mx",
     fields: [{ key: "clabe", kind: "clabe" }],
-    document: "rfc",
-    documentOptional: true,
   },
   co_bank_transfer: {
     id: "co_bank_transfer",
@@ -100,16 +107,22 @@ export const RAILS: Record<RailId, Rail> = {
     fields: [
       { key: "bank", kind: "bank" },
       { key: "accountType", kind: "accountTypeCo", options: CO_ACCOUNT_TYPES },
-      { key: "accountNumber", kind: "accountNumber" },
+      { key: "accountNumber", kind: "accountNumber", minDigits: 6 },
+      { key: "documentType", kind: "documentTypeCo", options: CO_DOCUMENT_TYPES },
+      { key: "documentNumber", kind: "documentNumber" },
     ],
-    document: "nitCc",
+    documentKey: "documentNumber",
   },
   pe_bank_transfer: {
     id: "pe_bank_transfer",
     currency: "PEN",
     country: "pe",
-    fields: [{ key: "cci", kind: "cci" }],
-    document: "dniRuc",
+    fields: [
+      { key: "cci", kind: "cci" },
+      { key: "documentType", kind: "documentTypePe", options: PE_DOCUMENT_TYPES },
+      { key: "documentNumber", kind: "documentNumber" },
+    ],
+    documentKey: "documentNumber",
   },
   cl_bank_transfer: {
     id: "cl_bank_transfer",
@@ -119,8 +132,9 @@ export const RAILS: Record<RailId, Rail> = {
       { key: "bank", kind: "bank" },
       { key: "accountType", kind: "accountTypeCl", options: CL_ACCOUNT_TYPES },
       { key: "accountNumber", kind: "accountNumber" },
+      { key: "rut", kind: "rut" },
     ],
-    document: "rut",
+    documentKey: "rut",
   },
 };
 
@@ -144,7 +158,7 @@ export function fiatDecimals(currency: string): number {
    "format" (the wrong characters or length) or "checksum" (the shape fits, a check digit does
    not). The screens word each reason (t.p2p.errors). --- */
 
-export type FieldError = "required" | "format" | "checksum";
+export type FieldError = "required" | "format" | "checksum" | "exclusive";
 
 const digitsOf = (value: string) => value.replace(/[\s.-]/g, "");
 const allSame = (d: string) => /^(\d)\1*$/.test(d);
@@ -305,14 +319,20 @@ export function checkNitCc(value: string): FieldError | null {
   return /^\d{6,10}$/.test(digitsOf(value)) ? null : "format";
 }
 
-/** A bank account number: 4 to 20 digits. */
-export function checkAccountNumber(value: string): FieldError | null {
-  return /^\d{4,20}$/.test(digitsOf(value)) ? null : "format";
+/** A bank account number: `min` (4 unless said) to 20 digits. */
+export function checkAccountNumber(value: string, min = 4): FieldError | null {
+  const d = digitsOf(value);
+  return d.length >= min && /^\d{1,20}$/.test(d) ? null : "format";
+}
+
+/** A Colombian or Peruvian document number: 5 to 15 letters or digits. */
+export function checkDocumentNumber(value: string): FieldError | null {
+  return /^[A-Za-z0-9]{5,15}$/.test(value.trim()) ? null : "format";
 }
 
 /** One field's value against its kind (`context` carries a sibling the check depends on: the
     PIX key's type). Empty answers "required"; the caller decides whether that matters. */
-export function checkField(kind: FieldKind, value: string, context: Record<string, string> = {}, options?: readonly string[]): FieldError | null {
+export function checkField(kind: FieldKind, value: string, context: Record<string, string> = {}, options?: readonly string[], minDigits?: number): FieldError | null {
   const v = (value ?? "").trim();
   if (!v) return "required";
   switch (kind) {
@@ -325,9 +345,13 @@ export function checkField(kind: FieldKind, value: string, context: Record<strin
     case "pixKeyType":
     case "accountTypeCo":
     case "accountTypeCl":
+    case "documentTypeCo":
+    case "documentTypePe":
       return options && !options.includes(v) ? "format" : null;
     case "pixKey":
-      return checkPixKey(context.pixKeyType ?? "", v);
+      return checkPixKey(context.keyType ?? context.pixKeyType ?? "", v);
+    case "documentNumber":
+      return checkDocumentNumber(v);
     case "cpfCnpj":
       return checkCpfCnpj(v);
     case "clabe":
@@ -338,7 +362,7 @@ export function checkField(kind: FieldKind, value: string, context: Record<strin
     case "text":
       return v.length <= 80 ? null : "format";
     case "accountNumber":
-      return checkAccountNumber(v);
+      return checkAccountNumber(v, minDigits);
     case "cci":
       return checkCci(v);
     case "dniRuc":
@@ -361,13 +385,14 @@ export function checkHolderName(value: string): FieldError | null {
 
 export interface AccountInput {
   holderName: string;
-  document: string;
   details: Record<string, string>;
+  /* A payout's or a sale's beneficiary also carries a document (checkBeneficiary). */
+  document?: string;
 }
 
-/** Every problem with an account on `rail`, by field key ("holderName", "document" or a detail
-    key); empty when it can be sent. A `oneOf` group needs one valid member, and a member that is
-    filled must be valid. */
+/** Every problem with an account on `rail`, by field key ("holderName" or a detail key); empty
+    when it can be sent. In a `oneOf` group exactly one member is filled (the server refuses a CBU
+    and an alias together), and it must be valid. */
 export function checkAccount(railId: string, input: AccountInput): Record<string, FieldError> {
   const errors: Record<string, FieldError> = {};
   const holder = checkHolderName(input.holderName);
@@ -377,30 +402,47 @@ export function checkAccount(railId: string, input: AccountInput): Record<string
     return errors;
   }
   const rail = RAILS[railId];
-  const doc = (input.document ?? "").trim();
-  if (doc || !rail.documentOptional) {
-    const e = checkField(rail.document, doc);
-    if (e) errors.document = e;
-  }
   const groups = new Map<string, RailField[]>();
   for (const field of rail.fields) {
     const value = String(input.details[field.key] ?? "").trim();
     if (field.oneOf) {
       groups.set(field.oneOf, [...(groups.get(field.oneOf) ?? []), field]);
       if (value) {
-        const e = checkField(field.kind, value, input.details, field.options);
+        const e = checkField(field.kind, value, input.details, field.options, field.minDigits);
         if (e) errors[field.key] = e;
       }
       continue;
     }
     if (!value && field.optional) continue;
-    const e = checkField(field.kind, value, input.details, field.options);
+    const e = checkField(field.kind, value, input.details, field.options, field.minDigits);
     if (e) errors[field.key] = e;
   }
   for (const members of groups.values()) {
-    const filled = members.some((f) => String(input.details[f.key] ?? "").trim());
-    if (!filled) errors[members[0].key] = "required";
+    const filled = members.filter((f) => String(input.details[f.key] ?? "").trim());
+    if (!filled.length) errors[members[0].key] = "required";
+    else if (filled.length > 1) errors[filled[filled.length - 1].key] = "exclusive";
   }
+  return errors;
+}
+
+/** The holder's document a rail keeps among its details (a CUIT, a RUT, a document number), or
+    the PIX key itself when it is a CPF or CNPJ; empty when the rail has none. */
+export function documentOf(railId: string, details: Record<string, string>): string {
+  if (!isRailId(railId)) return "";
+  const rail = RAILS[railId];
+  if (rail.documentKey) return String(details[rail.documentKey] ?? "").trim();
+  if (railId === "br_pix" && (details.keyType === "cpf" || details.keyType === "cnpj")) return String(details.key ?? "").replace(/\D/g, "");
+  return "";
+}
+
+/** A beneficiary (a payout's, or the seller's own account on a sale): the account, and the
+    holder's document the server also asks for (4 to 20 letters, digits, dots, hyphens or
+    slashes), taken from the details when the rail keeps one. */
+export function checkBeneficiary(railId: string, input: AccountInput): Record<string, FieldError> {
+  const errors = checkAccount(railId, input);
+  const doc = (input.document ?? "").trim() || documentOf(railId, input.details);
+  if (!doc) errors.document = "required";
+  else if (!/^[A-Za-z0-9./-]{4,20}$/.test(doc)) errors.document = "format";
   return errors;
 }
 

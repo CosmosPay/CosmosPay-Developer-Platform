@@ -47,6 +47,8 @@ export default {
     rut: "RUT",
     nitCc: "Cédula o NIT",
     text: "Valor",
+    documentType: "Tipo de documento",
+    documentNumber: "Número de documento",
   },
   hints: {
     cbu: "22 dígitos",
@@ -62,6 +64,7 @@ export default {
     rut: "Con su dígito verificador",
     nitCc: "De 6 a 10 dígitos",
     oneOf: "Un CBU, un CVU o un alias",
+    documentNumber: "De 5 a 15 letras o dígitos",
   },
   placeholders: {
     holderName: "Ana Gómez",
@@ -83,6 +86,8 @@ export default {
     pixKeyType: { cpf: "CPF", cnpj: "CNPJ", email: "Correo electrónico", phone: "Teléfono", evp: "Clave aleatoria" },
     accountTypeCo: { savings: "Ahorros", checking: "Corriente" },
     accountTypeCl: { checking: "Corriente", vista: "Cuenta vista", savings: "Ahorro" },
+    documentTypeCo: { CC: "Cédula de ciudadanía", CE: "Cédula de extranjería", NIT: "NIT", PP: "Pasaporte" },
+    documentTypePe: { DNI: "DNI", CE: "Carné de extranjería", RUC: "RUC", PP: "Pasaporte" },
   },
   errors: {
     required: "Obligatorio",
@@ -93,6 +98,7 @@ export default {
     currency: "Este medio de pago no admite esa moneda",
     amount: "Ingresa un monto válido",
     duplicate: "Esta referencia está repetida",
+    exclusive: "Indica uno u otro, no ambos",
   },
   deadlines: {
     accept: "Acepta dentro de {time}",
@@ -533,6 +539,7 @@ export default {
       P2P_ORDER_EXPIRED: "Una orden supera su plazo.",
       P2P_ORDER_DISPUTED: "Se abre una disputa.",
       P2P_ORDER_RESOLVED: "Cosmos Pay resuelve una disputa.",
+      P2P_ORDER_FAILED: "No se pudo abrir una orden.",
       P2P_CHARGE_SUCCEEDED: "Se paga un cobro.",
       P2P_PAYOUT_BATCH_COMPLETED: "Terminan todos los pagos a terceros de un lote.",
     },

@@ -18,6 +18,7 @@ import { CurrencyMark, currencyName } from "@/components/cosmos/dashboard/compon
 import { RecordLink } from "@/components/cosmos/dashboard/components/RecordLink";
 import { shortAddress } from "@/components/cosmos/dashboard/components/RecordPreview";
 import { parseFiat } from "@/lib/p2p/amounts";
+import { matchConfidence } from "@/lib/p2p/normalize";
 import { P2P_WEBHOOK_EVENTS, type P2pAccount, type P2pTransferMatch } from "@/lib/p2p/types";
 import {
   p2pApi, useP2pMarket, useP2pList, networkOf, fiatText, tokenText, OrderStatus, WalletTxDialog, accountName,
@@ -45,8 +46,9 @@ export async function onBankTransfer(transfer, wallet) {
     }),
   });
   const { data } = await res.json();
-  const best = data.matches[0];
-  if (!best || best.score < 0.9) return; // leave doubtful ones to a person
+  // score: 1 the amount matched, 2 and the payer's name, 3 and the document too.
+  const best = data[0];
+  if (!best || best.score < 3) return; // leave doubtful ones to a person
   // The bot was granted "release" on this wallet (P2P liquidity > Bots).
   const hash = await wallet.sendTransaction(best.transaction);
   console.log("released", best.order.id, hash);
@@ -78,7 +80,7 @@ export function P2pBotsView({ canManage = false, orgId, env = "dev", keys = [], 
     if (fiat === null || busy) return;
     setBusy(true);
     p2pApi.post("merchant/transfer-matches", env, orgId, { currency, amount: fiat, payerName: payerName.trim() || undefined, payerDocument: payerDocument.trim() || undefined, reference: reference.trim() || undefined, receivedAt: new Date().toISOString() })
-      .then((r) => setMatches(Array.isArray(r?.matches) ? r.matches : []))
+      .then((r) => setMatches(Array.isArray(r) ? r : []))
       .catch((e) => { setMatches(null); showToast(e?.message || p.matches.failed, "error"); })
       .finally(() => setBusy(false));
   };
@@ -170,7 +172,7 @@ export function P2pBotsView({ canManage = false, orgId, env = "dev", keys = [], 
                     <td className="tid"><RecordLink href={`/dashboard?view=p2pOrders&open=${encodeURIComponent(m.order.id)}`} copy={m.order.id} title={m.order.id}><code>{shortAddress(m.order.id)}</code></RecordLink></td>
                     <td className="amt">{fiatText(m.order.fiatAmount, m.order.currency, lang)}</td>
                     <td className="cust">{m.order.payer ? `${m.order.payer.name} · ${m.order.payer.document}` : "-"}</td>
-                    <td className="cust">{new Intl.NumberFormat(lang, { style: "percent", maximumFractionDigits: 0 }).format(m.score)}</td>
+                    <td className="cust">{new Intl.NumberFormat(lang, { style: "percent", maximumFractionDigits: 0 }).format(matchConfidence(m.score))}</td>
                     <td><OrderStatus status={m.order.status} /></td>
                     <td className="row-actions">
                       {canManage && <button type="button" className="btn btn-dark btn-sm" disabled={!walletOf(m) || !networkOf(market, m.order.network)} title={!walletOf(m) ? t.p2p.orders.noWallet : undefined} onClick={() => setReleasing(m)}>{t.p2p.orders.actions.release}</button>}

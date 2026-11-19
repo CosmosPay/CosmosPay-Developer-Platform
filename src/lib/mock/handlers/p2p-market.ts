@@ -13,7 +13,7 @@
 import { badRequest, conflict, created, notFound, ok, page, route, str, type MockEnv, type MockRoute } from "@/lib/mock/http";
 import { mockEnvStore } from "@/lib/mock/store";
 import { daysAgo, evmAddress, evmTxHash, hex, hoursAgo, nowIso, qrImage, rng, uuid } from "@/lib/mock/fixtures";
-import { RAILS, RAIL_IDS, checkAccount, isRailId, normalizeDetails, checkPayerDocument, fiatDecimals } from "@/lib/p2p/rails";
+import { RAILS, RAIL_IDS, checkAccount, checkBeneficiary, isRailId, normalizeDetails, checkPayerDocument, fiatDecimals } from "@/lib/p2p/rails";
 import { fromBaseUnits, toBaseUnits } from "@/lib/p2p/amounts";
 import { isValidMask } from "@/lib/p2p/perms";
 import { merchantSells } from "@/lib/p2p/orders";
@@ -166,8 +166,8 @@ function seed(env: MockEnv): Store {
     [acc2.id]: Object.fromEntries(net.map((n, i) => [n.id, i === 0 ? state(5400, 640, "1500") : state(0, 0, null)])),
   };
   const methods: P2pPaymentMethod[] = [
-    { id: uuid(`pm-ars-${env}`), accountId: acc1.id, currency: "ARS", rail: "ar_bank_transfer", label: "Galicia", holderName: "Lumio Exchange SRL", document: "30714209879", details: { cbu: "0170099222000001234561", alias: "lumio.pagos.ars" }, active: true, createdAt: daysAgo(39) },
-    { id: uuid(`pm-brl-${env}`), accountId: acc1.id, currency: "BRL", rail: "br_pix", label: "Pix CNPJ", holderName: "Lumio Câmbio Ltda", document: "11222333000181", details: { pixKeyType: "cnpj", pixKey: "11222333000181" }, active: true, createdAt: daysAgo(30) },
+    { id: uuid(`pm-ars-${env}`), accountId: acc1.id, currency: "ARS", rail: "ar_bank_transfer", label: "Galicia", holderName: "Lumio Exchange SRL", document: "30714209879", details: { alias: "lumio.pagos.ars", cuit: "30714209879" }, active: true, createdAt: daysAgo(39) },
+    { id: uuid(`pm-brl-${env}`), accountId: acc1.id, currency: "BRL", rail: "br_pix", label: "Pix CNPJ", holderName: "Lumio Câmbio Ltda", document: "11222333000181", details: { keyType: "cnpj", key: "11222333000181" }, active: true, createdAt: daysAgo(30) },
     { id: uuid(`pm-mxn-${env}`), accountId: acc1.id, currency: "MXN", rail: "mx_spei", label: "BBVA", holderName: "Lumio Exchange SA de CV", document: "LEX201015AB1", details: { clabe: "002010077777777771" }, active: false, createdAt: daysAgo(8) },
   ];
   const offer = (i: number, side: P2pOffer["side"], currency: string, rails: string[], spread: number, min: string, max: string, active = true, network = home.id): P2pOffer => ({
@@ -222,8 +222,8 @@ function seed(env: MockEnv): Store {
         settleBy: kind === "SELL" && status === "paid" ? later(300) : null,
       },
       paymentDetails: merchantSells_
-        ? { rail, holderName: ownMerchant ? "Lumio Exchange SRL" : MARKET_MERCHANTS[i % 3].displayName, document: "30714209879", details: rail === "ar_bank_transfer" ? { alias: "lumio.pagos.ars", cbu: "0170099222000001234561" } : rail === "br_pix" ? { pixKeyType: "cnpj", pixKey: "11222333000181" } : { clabe: "002010077777777771" } }
-        : { rail, holderName: person[0], document: person[1], details: { cbu: "0000003110000000123456" } },
+        ? { rail, holderName: ownMerchant ? "Lumio Exchange SRL" : MARKET_MERCHANTS[i % 3].displayName, document: "30714209879", details: rail === "ar_bank_transfer" ? { alias: "lumio.pagos.ars", cuit: "30714209879" } : rail === "br_pix" ? { keyType: "cnpj", key: "11222333000181" } : { clabe: "002010077777777771" } }
+        : { rail, holderName: person[0], document: person[1], details: { cbu: "0000003110000000123456", cuit: person[1] } },
       payer: merchantSells_ ? { name: person[0], document: person[1] } : null,
       paidReference: ["paid", "completed"].includes(status) ? `TRX${hex(`trx-${i}`, 4).toUpperCase()}` : null,
       onchainId: status === "pending" ? null : String(1000 + i),
@@ -400,6 +400,125 @@ function chainState(env: MockEnv, accountId: string, network: string): ChainStat
   return (st[network] ??= { balances: {}, matcher: null, operators: {} });
 }
 
+/* --- The Payments API's own shapes (the community server's src/p2p entities): what the routes
+   answer, so mock mode runs the screens' normalizers (src/lib/p2p/normalize.ts) on them. --- */
+
+const decOf = (env: MockEnv, network: string, symbol: string) => networkOf(env, network)?.tokens.find((t) => t.symbol === symbol)?.decimals ?? 6;
+const addrOf = (env: MockEnv, network: string, symbol: string) => networkOf(env, network)?.tokens.find((t) => t.symbol === symbol)?.address ?? symbol;
+const toUnits = (env: MockEnv, network: string, symbol: string, decimal: string | null | undefined) => toBaseUnits(String(decimal ?? "0"), decOf(env, network, symbol)) ?? "0";
+
+/** The market as GET /v1/p2p/market answers it. */
+export function apiMarket(env: MockEnv) {
+  const m = mockP2pMarket(env);
+  return {
+    available: true,
+    tier: env === "prod" ? "public" : "testnet",
+    networks: m.networks.map(({ explorer: _e, rpcUrl: _r, nativeSymbol: _n, ...n }) => ({ ...n, protocolFeeBps: m.protocolFeeBps, paused: false })),
+    currencies: m.currencies.map((c) => ({
+      code: c.code, decimals: c.code === "CLP" ? 0 : 2,
+      rails: c.rails.map((id) => ({ id, name: id, fields: RAILS[id as keyof typeof RAILS].fields.map((f) => ({ name: f.key, description: f.key, required: !f.optional && !f.oneOf, ...(f.options ? { options: [...f.options] } : {}) })) })),
+    })),
+    windows: { buyPaymentWindow: m.windows.paymentSeconds, sellAcceptWindow: m.windows.acceptSeconds, sellPaymentWindow: m.windows.paymentSeconds, sellSettleWindow: m.windows.settleSeconds },
+    bondBps: m.sellBondBps,
+    matcher: m.matcher,
+    maxIntegratorFeeBps: 500,
+  };
+}
+
+/** A registered wallet as the accounts routes answer it (with its networks on the detail). */
+export function apiAccount(env: MockEnv, a: P2pAccount, withNetworks = false) {
+  const st = p2pStore(env).chains[a.id] ?? {};
+  return {
+    id: a.id, address: a.address, label: a.label, tier: env === "prod" ? "public" : "testnet",
+    displayName: a.merchant?.displayName ?? null, merchantStatus: a.merchant?.status ?? "ACTIVE",
+    stats: { completedOrders: a.merchant?.stats.completed ?? 0, cancelledOrders: a.merchant?.stats.cancelled ?? 0, completionRate: 0.98, disputesLost: a.merchant?.stats.disputesLost ?? 0, medianReleaseSeconds: a.merchant?.stats.medianReleaseSeconds ?? null },
+    lastActiveAt: a.merchant?.stats.lastActiveAt ?? null,
+    createdAt: a.createdAt, updatedAt: a.createdAt,
+    ...(withNetworks ? {
+      networks: networks(env).map((n) => {
+        const s = st[n.id] ?? { balances: {}, matcher: null, operators: {} };
+        return {
+          network: n.id,
+          balances: n.tokens.map((t) => ({ symbol: t.symbol, token: t.address, decimals: t.decimals, amount: (s.balances[t.symbol]?.free ?? 0n).toString(), locked: (s.balances[t.symbol]?.locked ?? 0n).toString() })),
+          matcher: { maxPerOrder: s.matcher?.maxPerOrderUnits ?? "0", autoSettle: s.matcher?.autoSettle ?? false },
+          operators: Object.fromEntries(Object.entries(s.operators)),
+        };
+      }),
+    } : {}),
+  };
+}
+
+export function apiMethod(m: P2pPaymentMethod) {
+  const { document: _d, ...rest } = m;
+  const summary = m.details.alias ? `alias ${m.details.alias}` : m.details.key ? `PIX ${m.details.keyType} ${m.details.key}` : m.details.clabe ? `CLABE ****${m.details.clabe.slice(-4)}` : m.rail;
+  return { ...rest, summary, updatedAt: m.createdAt };
+}
+
+export function apiOffer(env: MockEnv, o: P2pOffer) {
+  return { ...o, token: addrOf(env, o.network, o.token), tokenSymbol: o.token, priceFresh: Date.parse(o.priceUpdatedAt) + o.priceTtlSeconds * 1000 > Date.now(), updatedAt: o.priceUpdatedAt };
+}
+
+export function apiQuote(env: MockEnv, q: MockQuote) {
+  const { offerId: _o, merchantAccountId: _m, consumer: _c, ...rest } = q;
+  const u = (v: string) => toUnits(env, q.network, q.token, v);
+  return {
+    ...rest, token: addrOf(env, q.network, q.token), tokenSymbol: q.token, tokenDecimals: decOf(env, q.network, q.token),
+    tokenAmount: u(q.tokenAmount), protocolFee: u(q.protocolFee), integratorFee: u(q.integratorFee), netAmount: q.side === "BUY" ? u(q.netAmount) : q.netAmount,
+    protocolFeeBps: 30, integratorFeeBps: 0, bond: q.side === "SELL" ? u(floorFixed(Number(q.tokenAmount) * 0.1, 6)) : "0",
+    windows: { acceptWindow: q.side === "SELL" ? 300 : 0, paymentWindow: 1800, settleWindow: q.side === "SELL" ? 21600 : 0 },
+    merchant: { displayName: q.merchant.displayName, completedOrders: q.merchant.completed, cancelledOrders: 3, completionRate: q.merchant.completionRate, disputesLost: q.merchant.disputesLost ?? 0, medianReleaseSeconds: q.merchant.medianReleaseSeconds },
+  };
+}
+
+/** An order as the client's routes (role "client") or the merchant's (role "merchant") answer it. */
+export function apiOrder(env: MockEnv, o: MockOrder, role: "client" | "merchant") {
+  const sells = merchantSells(o.kind);
+  const network = networkOf(env, o.network);
+  const u = (v: string | null | undefined) => toUnits(env, o.network, o.token, v);
+  const base = {
+    id: o.id, kind: o.kind, status: o.status, tier: env === "prod" ? "public" : "testnet", network: o.network, chainId: network?.chainId ?? 0, contract: network?.contract ?? "",
+    token: addrOf(env, o.network, o.token), tokenSymbol: o.token, tokenDecimals: decOf(env, o.network, o.token),
+    currency: o.currency, rail: o.rail, price: o.price, fiatAmount: o.fiatAmount, tokenAmount: u(o.tokenAmount), netAmount: u(floorFixed(Number(o.tokenAmount) * 0.997, 6)),
+    bond: o.bond ? u(o.bond) : "0", sellerAddress: o.seller, buyerAddress: o.buyer, onchainId: o.onchainId ?? null,
+    acceptDeadline: o.deadlines.acceptBy, paymentDeadline: o.deadlines.payBy, paidAt: o.status === "paid" ? o.updatedAt ?? null : null, endedAt: null,
+    txHashes: { open: null, accept: null, paid: null, release: null, cancel: null, dispute: null, resolve: null, ...(o.txs ?? {}) },
+    paidReference: o.paidReference ?? null, createdAt: o.createdAt, updatedAt: o.updatedAt ?? o.createdAt,
+  };
+  if (role === "merchant") {
+    return {
+      ...base, merchantAccountId: o.merchantAccountId, merchantSide: sells ? "seller" : "buyer",
+      payer: sells && o.payer && !["completed", "cancelled", "expired", "resolved", "failed"].includes(o.status) ? o.payer : null,
+      beneficiary: !sells && o.paymentDetails ? { holderName: o.paymentDetails.holderName, document: o.paymentDetails.document ?? "", rail: o.paymentDetails.rail, details: o.paymentDetails.details } : null,
+    };
+  }
+  return {
+    ...base, protocolFeeBps: 30, integratorFeeBps: 0, merchant: { displayName: o.merchant?.displayName ?? null },
+    settlement: null, failureReason: null, chargeId: o.chargeId ?? null, payoutBatchId: o.payoutBatchId ?? null, externalReference: o.externalReference ?? null,
+    paymentDetails: sells && o.paymentDetails ? { rail: o.paymentDetails.rail, holderName: o.paymentDetails.holderName, details: o.paymentDetails.details } : null,
+    transactions: o.transactions ? o.transactions.map(({ action: _a, ...t }) => t) : [],
+  };
+}
+
+export function apiCharge(env: MockEnv, c: Store["charges"][number]) {
+  const { consumer: _c, recipient, orders, qr: _q, ...rest } = c;
+  return {
+    ...rest, token: addrOf(env, c.network, c.token), tokenSymbol: c.token, recipientAccountId: p2pStore(env).accounts.find((a) => a.address === recipient)?.id ?? null,
+    recipientAddress: recipient, paidCount: orders ?? 0, tier: env === "prod" ? "public" : "testnet", updatedAt: c.createdAt,
+  };
+}
+
+export function apiBatch(env: MockEnv, b: P2pPayoutBatch, withOrders = true) {
+  const s = batchStatus(b, env);
+  const orders = b.items.filter((i) => i.orderId).map((i) => p2pStore(env).orders.find((o) => o.id === i.orderId)).filter((o): o is MockOrder => !!o);
+  return {
+    id: b.id, network: b.network, token: addrOf(env, b.network, b.token), accountId: b.accountId, tier: env === "prod" ? "public" : "testnet",
+    status: s.status === "partial" ? "partially_completed" : s.status, itemCount: b.items.length,
+    orders: withOrders ? orders.map((o) => ({ ...apiOrder(env, o, "client"), beneficiary: o.paymentDetails ? { holderName: o.paymentDetails.holderName, document: o.paymentDetails.document ?? "", rail: o.rail, details: o.paymentDetails.details } : null })) : [],
+    failedItems: b.items.filter((i) => !i.orderId).map((i) => ({ index: i.index, currency: i.currency, fiatAmount: i.fiatAmount, externalReference: i.externalReference, reason: i.error ?? "" })),
+    completedAt: null, createdAt: b.createdAt,
+  };
+}
+
 /* The calldata a sample transaction carries: the function's selector and its arguments as 32-byte
    words, so a wallet shows a contract call of the right shape. */
 const SELECTORS: Record<P2pTxAction, string> = {
@@ -459,7 +578,8 @@ export function buildFor(env: MockEnv, body: Record<string, unknown> | null, con
   const token = network.tokens.find((t) => t.symbol === args.token) ?? null;
   if (["approve", "deposit", "withdraw"].includes(action)) {
     if (!token) return "Unknown token on this network.";
-    const amountUnits = toBaseUnits(String(args.amount ?? ""), token.decimals);
+    // Base units, as the server takes them.
+    const amountUnits = /^\d+$/.test(String(args.amount ?? "")) ? String(args.amount) : null;
     if (!amountUnits || amountUnits === "0") return "Enter an amount above zero.";
     const st = chainState(env, account.id, network.id);
     const bal = (st.balances[token.symbol] ??= { free: 0n, locked: 0n });
@@ -471,7 +591,8 @@ export function buildFor(env: MockEnv, body: Record<string, unknown> | null, con
   }
   if (action === "setMatcher") {
     const token6 = network.tokens[0];
-    const maxUnits = toBaseUnits(String(args.maxPerOrder ?? ""), token6?.decimals ?? 6);
+    const maxUnits = /^\d+$/.test(String(args.maxPerOrder ?? "")) ? String(args.maxPerOrder) : null;
+    void token6;
     if (maxUnits === null) return "Enter the most one order may lock.";
     const autoSettle = args.autoSettle === true;
     if (autoSettle && s.offers.some((o) => o.accountId === account.id && o.side === "SELL_TOKEN" && o.active)) return "Automatic settlement is not offered to a wallet with active sell offers.";
@@ -481,7 +602,7 @@ export function buildFor(env: MockEnv, body: Record<string, unknown> | null, con
   }
   if (action === "setOperator") {
     const operator = String(args.operator ?? "");
-    const perms = Number(args.perms);
+    const perms = Number(args.permissions ?? args.perms);
     if (!EVM.test(operator)) return "The bot's address is not an EVM address.";
     if (operator.toLowerCase() === account.address.toLowerCase()) return "A wallet cannot be its own bot.";
     if (!isValidMask(perms)) return "Unknown permissions.";
@@ -505,7 +626,9 @@ export function quoteFor(env: MockEnv, body: Record<string, unknown> | null, con
   const rail = str(body, "rail") ?? "";
   if (!isRailId(rail) || RAILS[rail].currency !== currency) return "That payment method does not pay in this currency.";
   const fiatIn = str(body, "fiatAmount");
-  const tokenIn = str(body, "tokenAmount");
+  // The API takes a token amount in base units, as the server does.
+  const tokenRaw = str(body, "tokenAmount");
+  const tokenIn = tokenRaw && /^\d+$/.test(tokenRaw) ? fromBaseUnits(tokenRaw, token.decimals) : tokenRaw;
   const own = p2pStore(env).offers.filter((o) => o.active && o.network === network.id && o.token === token.symbol && o.currency === currency && o.rails.includes(rail) && o.side === (side === "BUY" ? "SELL_TOKEN" : "BUY_TOKEN"));
   // A merchant of the market quotes too, a little worse than the sample account's own offers.
   const marketPrice = (PRICES[currency] ?? 1) * (side === "BUY" ? 1.018 : 0.985);
@@ -552,7 +675,7 @@ export function orderFor(env: MockEnv, body: Record<string, unknown> | null, con
   const network = networkOf(env, q.network)!;
   const token = network.tokens.find((t) => t.symbol === q.token)!;
   const payer = (body?.payer ?? null) as { name?: string; document?: string; email?: string } | null;
-  const payout = (body?.payout ?? null) as { holderName?: string; document?: string; details?: Record<string, string> } | null;
+  const payout = (body?.beneficiary ?? body?.payout ?? null) as { holderName?: string; document?: string; details?: Record<string, string> } | null;
   const recipient = str(body, "recipient") ?? "";
   const seller = str(body, "seller") ?? "";
   let kind: P2pOrderKind = (str(body, "kind") as P2pOrderKind) || (q.side === "BUY" ? "BUY" : "SELL");
@@ -563,7 +686,7 @@ export function orderFor(env: MockEnv, body: Record<string, unknown> | null, con
     if (checkPayerDocument(q.currency, payer.document)) return "The payer's document is not valid.";
   } else {
     if (!EVM.test(seller)) return "The seller must be an EVM address.";
-    if (!payout || Object.keys(checkAccount(q.rail, { holderName: payout.holderName ?? "", document: payout.document ?? "", details: payout.details ?? {} })).length) return "The payout account is not valid.";
+    if (!payout || Object.keys(checkBeneficiary(q.rail, { holderName: payout.holderName ?? "", document: payout.document ?? "", details: payout.details ?? {} })).length) return "The beneficiary is not valid.";
   }
   s.quotes.delete(q.id);
   const id = uuid(`p2p-order-${Date.now()}-${++s.seq}`);
@@ -584,7 +707,7 @@ export function orderFor(env: MockEnv, body: Record<string, unknown> | null, con
     paymentDetails: sells
       ? (ownMethod
         ? { rail: q.rail, holderName: ownMethod.holderName, document: ownMethod.document, details: ownMethod.details }
-        : { rail: q.rail, holderName: `${q.merchant.displayName}`, document: q.currency === "BRL" ? "11222333000181" : "30714209879", details: q.rail === "br_pix" ? { pixKeyType: "email", pixKey: "pagos@example.com" } : q.rail === "mx_spei" ? { clabe: "002010077777777771" } : { alias: "cambio.andes.ars", cbu: "0170099222000001234561" } })
+        : { rail: q.rail, holderName: `${q.merchant.displayName}`, document: q.currency === "BRL" ? "11222333000181" : "30714209879", details: q.rail === "br_pix" ? { keyType: "email", key: "pagos@example.com" } : q.rail === "mx_spei" ? { clabe: "002010077777777771" } : { alias: "cambio.andes.ars", cuit: "30714209879" } })
       : { rail: q.rail, holderName: payout!.holderName!, document: payout!.document ?? null, details: normalizeDetails(q.rail, payout!.details ?? {}) },
     payer: sells ? { name: payer!.name!.trim(), document: payer!.document!.trim() } : null,
     paidReference: null,
@@ -658,7 +781,7 @@ function batchStatus(b: P2pPayoutBatch, env: MockEnv): P2pPayoutBatch {
 const P = "/api/p2p";
 
 export const routes: MockRoute[] = [
-  route("GET", `${P}/market`, (req) => ok(mockP2pMarket(req.env))),
+  route("GET", `${P}/market`, (req) => ok(apiMarket(req.env))),
 
   // Registered wallets.
   route("POST", `${P}/accounts/challenge`, (req) => {
@@ -668,49 +791,57 @@ export const routes: MockRoute[] = [
     const id = uuid(`p2p-challenge-${Date.now()}-${Math.random()}`);
     const expiresAt = new Date(Date.now() + 10 * 60_000);
     p2pStore(req.env).challenges.set(id, { address, expiresAt: expiresAt.getTime(), used: false });
+    // The server's message: what is registered, for whom, on which tier, until when.
     const message = [
-      "Cosmos Pay wants you to register this wallet on the P2P market.",
-      "",
-      `Wallet: ${address}`,
-      `Purpose: p2p-account`,
+      "Cosmos Pay P2P market",
+      `Register wallet: ${address}`,
+      `For: ${req.user.email}`,
+      `Tier: ${req.env === "prod" ? "public" : "testnet"}`,
       `Nonce: ${hex(id, 16)}`,
       `Expires: ${expiresAt.toISOString()}`,
     ].join("\n");
-    return created({ id, message, expiresAt: expiresAt.toISOString() });
+    // No id: the register call names the address, and the server takes its open challenge.
+    return created({ message, expiresAt: expiresAt.toISOString() });
   }),
   route("POST", `${P}/accounts`, (req) => {
     const s = p2pStore(req.env);
-    const ch = s.challenges.get(str(req.body, "challengeId") ?? "");
     const address = str(req.body, "address") ?? "";
-    if (!ch || ch.used || ch.expiresAt < Date.now()) return badRequest("The challenge expired or was used. Ask for a new one.");
-    if (ch.address.toLowerCase() !== address.toLowerCase()) return badRequest("The challenge is for another wallet.");
+    if (req.body && "challengeId" in req.body) return badRequest("property challengeId should not exist");
+    const ch = [...s.challenges.values()].reverse().find((c) => c.address.toLowerCase() === address.toLowerCase() && !c.used && c.expiresAt > Date.now());
+    if (!ch) return badRequest("The challenge expired or was used. Ask for a new one.");
     if (!/^0x[0-9a-fA-F]{130}$/.test(str(req.body, "signature") ?? "")) return badRequest("The signature is not an EIP-191 signature.");
     ch.used = true;
-    const label = (str(req.body, "label") ?? "").trim().slice(0, 60) || null;
-    const a: P2pAccount = { id: uuid(`p2p-acc-${Date.now()}`), address: ch.address, label, verifiedAt: nowIso(), createdAt: nowIso(), merchant: null };
+    const label = (str(req.body, "label") ?? "").trim().slice(0, 140) || null;
+    const displayName = (str(req.body, "displayName") ?? "").trim();
+    const a: P2pAccount = {
+      id: uuid(`p2p-acc-${Date.now()}`), address: ch.address, label, verifiedAt: nowIso(), createdAt: nowIso(),
+      merchant: displayName ? { displayName: displayName.slice(0, 40), status: "ACTIVE", stats: { completed: 0, cancelled: 0, disputesLost: 0, medianReleaseSeconds: null, lastActiveAt: null } } : null,
+    };
     s.accounts.push(a);
     s.chains[a.id] = {};
-    return created(a);
+    return created(apiAccount(req.env, a));
   }),
-  route("GET", `${P}/accounts`, (req) => ok({ data: p2pStore(req.env).accounts, total: p2pStore(req.env).accounts.length })),
+  route("GET", `${P}/accounts`, (req) => ok(page(p2pStore(req.env).accounts.map((a) => apiAccount(req.env, a)), req.url, 100))),
   route("GET", `${P}/accounts/:id`, (req) => {
     const a = p2pStore(req.env).accounts.find((x) => x.id === req.params.id);
-    return a ? ok(detailsOf(req.env, a)) : notFound("Account not found");
+    return a ? ok(apiAccount(req.env, a, true)) : notFound("Account not found");
   }),
   route("PATCH", `${P}/accounts/:id`, (req) => {
     const a = p2pStore(req.env).accounts.find((x) => x.id === req.params.id);
     if (!a) return notFound("Account not found");
     const label = str(req.body, "label");
     if (label !== undefined) a.label = label.trim().slice(0, 60) || null;
-    const m = req.body?.merchant as { displayName?: string; status?: string } | undefined;
-    if (m) {
-      if (m.status && !["ACTIVE", "PAUSED"].includes(m.status)) return badRequest("A merchant is ACTIVE or PAUSED.");
+    if (req.body && "merchant" in req.body) return badRequest("property merchant should not exist");
+    const displayName = str(req.body, "displayName");
+    const status = str(req.body, "merchantStatus");
+    if (displayName !== undefined || status !== undefined) {
+      if (status && !["ACTIVE", "PAUSED"].includes(status)) return badRequest("merchantStatus must be ACTIVE or PAUSED.");
       if (a.merchant?.status === "SUSPENDED") return badRequest("This merchant is suspended. Contact support.");
-      const name = (m.displayName ?? a.merchant?.displayName ?? "").trim();
-      if (!name) return badRequest("A merchant needs a display name.");
-      a.merchant = { displayName: name.slice(0, 40), status: (m.status as "ACTIVE" | "PAUSED") ?? a.merchant?.status ?? "ACTIVE", stats: a.merchant?.stats ?? { completed: 0, cancelled: 0, disputesLost: 0, medianReleaseSeconds: null, lastActiveAt: null } };
+      const name = (displayName ?? a.merchant?.displayName ?? "").trim();
+      if (name.length < 2) return badRequest("A merchant needs a display name.");
+      a.merchant = { displayName: name.slice(0, 40), status: (status as "ACTIVE" | "PAUSED") ?? a.merchant?.status ?? "ACTIVE", stats: a.merchant?.stats ?? { completed: 0, cancelled: 0, disputesLost: 0, medianReleaseSeconds: null, lastActiveAt: null } };
     }
-    return ok(a);
+    return ok(apiAccount(req.env, a));
   }),
   route("DELETE", `${P}/accounts/:id`, (req) => {
     const s = p2pStore(req.env);
@@ -725,24 +856,25 @@ export const routes: MockRoute[] = [
   }),
 
   // Payment methods.
-  route("GET", `${P}/payment-methods`, (req) => ok({ data: p2pStore(req.env).methods, total: p2pStore(req.env).methods.length })),
+  route("GET", `${P}/payment-methods`, (req) => ok(page(p2pStore(req.env).methods.map(apiMethod), req.url, 100))),
   route("POST", `${P}/payment-methods`, (req) => {
     const s = p2pStore(req.env);
     const accountId = str(req.body, "accountId") ?? "";
     if (!isOwnAccount(req.env, accountId)) return badRequest("Choose one of your registered wallets.");
     const rail = str(req.body, "rail") ?? "";
     if (!isRailId(rail)) return badRequest("Unknown payment method.");
+    if (req.body && ("document" in req.body || "active" in req.body)) return badRequest("property document should not exist");
     const details = (req.body?.details ?? {}) as Record<string, string>;
-    const errors = checkAccount(rail, { holderName: str(req.body, "holderName") ?? "", document: str(req.body, "document") ?? "", details });
+    const errors = checkAccount(rail, { holderName: str(req.body, "holderName") ?? "", details });
     if (Object.keys(errors).length) return badRequest(`Check ${Object.keys(errors).join(", ")}.`);
     const m: P2pPaymentMethod = {
       id: uuid(`pm-${Date.now()}`), accountId, currency: RAILS[rail].currency, rail,
       label: (str(req.body, "label") ?? "").trim().slice(0, 40) || null,
-      holderName: (str(req.body, "holderName") ?? "").trim(), document: (str(req.body, "document") ?? "").trim() || null,
-      details: normalizeDetails(rail, details), active: req.body?.active !== false, createdAt: nowIso(),
+      holderName: (str(req.body, "holderName") ?? "").trim(), document: null,
+      details: normalizeDetails(rail, details), active: true, createdAt: nowIso(),
     };
     s.methods.unshift(m);
-    return created(m);
+    return created(apiMethod(m));
   }),
   route("PATCH", `${P}/payment-methods/:id`, (req) => {
     const m = p2pStore(req.env).methods.find((x) => x.id === req.params.id);
@@ -750,15 +882,15 @@ export const routes: MockRoute[] = [
     if (typeof req.body?.active === "boolean") m.active = req.body.active;
     const label = str(req.body, "label");
     if (label !== undefined) m.label = label.trim().slice(0, 40) || null;
-    if (req.body?.details || req.body?.holderName || req.body?.document) {
+    if (req.body && "document" in req.body) return badRequest("property document should not exist");
+    if (req.body?.details || req.body?.holderName) {
       const details = (req.body?.details ?? m.details) as Record<string, string>;
       const holderName = str(req.body, "holderName") ?? m.holderName;
-      const document = str(req.body, "document") ?? m.document ?? "";
-      const errors = checkAccount(m.rail, { holderName, document, details });
+      const errors = checkAccount(m.rail, { holderName, details });
       if (Object.keys(errors).length) return badRequest(`Check ${Object.keys(errors).join(", ")}.`);
-      Object.assign(m, { holderName: holderName.trim(), document: document.trim() || null, details: normalizeDetails(m.rail, details) });
+      Object.assign(m, { holderName: holderName.trim(), details: normalizeDetails(m.rail, details) });
     }
-    return ok(m);
+    return ok(apiMethod(m));
   }),
   route("DELETE", `${P}/payment-methods/:id`, (req) => {
     const s = p2pStore(req.env);
@@ -768,7 +900,7 @@ export const routes: MockRoute[] = [
   }),
 
   // Offers.
-  route("GET", `${P}/offers`, (req) => ok({ data: p2pStore(req.env).offers, total: p2pStore(req.env).offers.length })),
+  route("GET", `${P}/offers`, (req) => ok(page(p2pStore(req.env).offers.map((o) => apiOffer(req.env, o)), req.url, 100))),
   route("POST", `${P}/offers`, (req) => {
     const s = p2pStore(req.env);
     const b = req.body ?? {};
@@ -779,7 +911,8 @@ export const routes: MockRoute[] = [
     const side = str(b, "side");
     if (side !== "SELL_TOKEN" && side !== "BUY_TOKEN") return badRequest("Choose whether the offer sells or buys tokens.");
     const network = networkOf(req.env, str(b, "network") ?? "");
-    if (!network || !network.tokens.some((t) => t.symbol === str(b, "token"))) return badRequest("Unknown network or token.");
+    const offerToken = network?.tokens.find((t) => t.symbol === str(b, "token") || t.address.toLowerCase() === (str(b, "token") ?? "").toLowerCase());
+    if (!network || !offerToken) return badRequest("Unknown network or token.");
     const currency = str(b, "currency") ?? "";
     const rails = Array.isArray(b.rails) ? (b.rails as unknown[]).filter((x): x is string => typeof x === "string") : [];
     if (!rails.length || rails.some((x) => !isRailId(x) || RAILS[x].currency !== currency)) return badRequest("Choose the payment methods for this currency.");
@@ -789,9 +922,9 @@ export const routes: MockRoute[] = [
     if (!(min > 0) || !(max >= min)) return badRequest("The limits must be above zero, the maximum at least the minimum.");
     const ttl = Math.trunc(Number(b.priceTtlSeconds ?? 900));
     if (!(ttl >= 60 && ttl <= 86_400)) return badRequest("The price lasts between 1 minute and 1 day.");
-    const o: P2pOffer = { id: uuid(`offer-${Date.now()}`), accountId, side, network: network.id, token: str(b, "token")!, currency, rails, price: String(str(b, "price")), priceUpdatedAt: nowIso(), priceTtlSeconds: ttl, minFiat: String(str(b, "minFiat")), maxFiat: String(str(b, "maxFiat")), active: b.active !== false, createdAt: nowIso() };
+    const o: P2pOffer = { id: uuid(`offer-${Date.now()}`), accountId, side, network: network.id, token: offerToken.symbol, currency, rails, price: String(str(b, "price")), priceUpdatedAt: nowIso(), priceTtlSeconds: ttl, minFiat: String(str(b, "minFiat")), maxFiat: String(str(b, "maxFiat")), active: b.active !== false, createdAt: nowIso() };
     s.offers.unshift(o);
-    return created(o);
+    return created(apiOffer(req.env, o));
   }),
   route("PATCH", `${P}/offers/:id`, (req) => {
     const o = p2pStore(req.env).offers.find((x) => x.id === req.params.id);
@@ -803,7 +936,7 @@ export const routes: MockRoute[] = [
     if (b.maxFiat !== undefined) o.maxFiat = String(b.maxFiat);
     if (b.priceTtlSeconds !== undefined) o.priceTtlSeconds = Math.trunc(Number(b.priceTtlSeconds));
     if (Array.isArray(b.rails)) o.rails = (b.rails as string[]).filter(isRailId);
-    return ok(o);
+    return ok(apiOffer(req.env, o));
   }),
   route("DELETE", `${P}/offers/:id`, (req) => {
     const s = p2pStore(req.env);
@@ -816,41 +949,41 @@ export const routes: MockRoute[] = [
   route("POST", `${P}/quotes`, (req) => {
     const q = quoteFor(req.env, req.body, "org");
     if (typeof q === "string") return badRequest(q);
-    const { offerId: _o, merchantAccountId: _m, consumer: _c, ...view } = q;
-    return created(view);
+    return created(apiQuote(req.env, q));
   }),
   route("GET", `${P}/orders`, (req) => {
     const kind = req.url.searchParams.get("kind");
-    const rows = p2pStore(req.env).orders.filter((o) => o.consumer === "org" && (!kind || o.kind === kind)).map((o) => orderView(o, "client"));
+    const status = req.url.searchParams.get("status");
+    const rows = p2pStore(req.env).orders.filter((o) => o.consumer === "org" && (!kind || o.kind === kind) && (!status || o.status === status)).map((o) => ({ ...apiOrder(req.env, o, "client"), paymentDetails: null }));
     return ok(page(rows, req.url, 100));
   }),
   route("POST", `${P}/orders`, (req) => {
     const o = orderFor(req.env, req.body, "org");
-    return typeof o === "string" ? badRequest(o) : created(orderView(o, "client"));
+    return typeof o === "string" ? badRequest(o) : created(apiOrder(req.env, o, "client"));
   }),
   route("GET", `${P}/orders/:id`, (req) => {
     const o = p2pStore(req.env).orders.find((x) => x.id === req.params.id && x.consumer === "org");
-    return o ? ok(orderView(o, "client")) : notFound("Order not found");
+    return o ? ok(apiOrder(req.env, o, "client")) : notFound("Order not found");
   }),
   route("POST", `${P}/orders/:id/:action`, (req) => {
     const o = p2pStore(req.env).orders.find((x) => x.id === req.params.id && x.consumer === "org");
     if (!o) return notFound("Order not found");
     const err = clientOrderAction(req.env, o, req.params.action);
     if (err) return badRequest(err);
-    if (req.params.action === "paid") o.paidReference = (str(req.body, "reference") ?? "").trim().slice(0, 60) || o.paidReference || null;
-    return ok(orderView(o, "client"));
+    if (req.params.action === "paid") o.paidReference = (str(req.body, "reference") ?? "").trim().slice(0, 140) || o.paidReference || null;
+    return ok(apiOrder(req.env, o, "client"));
   }),
 
   // The merchant's orders.
   route("GET", `${P}/merchant/orders`, (req) => {
     const own = accountIds(req.env);
-    const rows = p2pStore(req.env).orders.filter((o) => o.merchantAccountId && own.has(o.merchantAccountId)).map((o) => orderView(o, "merchant"));
+    const rows = p2pStore(req.env).orders.filter((o) => o.merchantAccountId && own.has(o.merchantAccountId)).map((o) => apiOrder(req.env, o, "merchant"));
     return ok(page(rows, req.url, 100));
   }),
   route("GET", `${P}/merchant/orders/:id`, (req) => {
     const own = accountIds(req.env);
     const o = p2pStore(req.env).orders.find((x) => x.id === req.params.id && x.merchantAccountId && own.has(x.merchantAccountId));
-    return o ? ok(orderView(o, "merchant")) : notFound("Order not found");
+    return o ? ok(apiOrder(req.env, o, "merchant")) : notFound("Order not found");
   }),
   route("POST", `${P}/merchant/transfer-matches`, (req) => {
     const currency = (str(req.body, "currency") ?? "").toUpperCase();
@@ -863,24 +996,29 @@ export const routes: MockRoute[] = [
     const matches = s.orders
       .filter((o) => o.merchantAccountId && own.has(o.merchantAccountId) && merchantSells(o.kind) && ["awaiting_payment", "paid"].includes(o.status) && o.currency === currency && Math.abs(Number(o.fiatAmount) - amount) < 0.005)
       .map((o) => {
-        let score = 0.6;
-        if (name && o.payer?.name.toLowerCase().includes(name)) score += 0.3;
-        if (doc && o.payer?.document.replace(/\D/g, "") === doc) score += 0.1;
+        // As the server scores it: 1 for the amount, 1 more for the name, 1 more for the document.
+        const matchedOn = ["amount"];
+        if (name && o.payer?.name.toLowerCase().includes(name)) matchedOn.push("name");
+        if (doc && o.payer?.document.replace(/\D/g, "") === doc) matchedOn.push("document");
         const network = networkOf(req.env, o.network)!;
-        return { order: orderView(o, "merchant"), score: Number(score.toFixed(2)), transaction: buildTransaction(req.env, network, "release", { orderId: o.id }) };
+        const { action: _a, ...transaction } = buildTransaction(req.env, network, "release", { orderId: o.id });
+        return { order: apiOrder(req.env, o, "merchant"), score: matchedOn.length, matchedOn, transaction };
       })
-      .sort((a, b) => b.score - a.score);
-    return ok({ matches });
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 10);
+    return ok({ data: matches });
   }),
 
   // Unsigned transactions for the person's wallet.
   route("POST", `${P}/transactions`, (req) => {
     const tx = buildFor(req.env, req.body, "org");
-    return typeof tx === "string" ? badRequest(tx) : created(tx);
+    if (typeof tx === "string") return badRequest(tx);
+    const { action: _a, ...answer } = tx;
+    return ok(answer);
   }),
 
   // Charges.
-  route("GET", `${P}/charges`, (req) => ok(page(p2pStore(req.env).charges.filter((c) => c.consumer === "org").map(({ consumer: _c, ...c }) => c), req.url, 100))),
+  route("GET", `${P}/charges`, (req) => ok(page(p2pStore(req.env).charges.filter((c) => c.consumer === "org").map((c) => apiCharge(req.env, c)), req.url, 100))),
   route("POST", `${P}/charges`, (req) => {
     const s = p2pStore(req.env);
     const b = req.body ?? {};
@@ -890,26 +1028,25 @@ export const routes: MockRoute[] = [
     if (!(Number(fiat) > 0)) return badRequest("Enter an amount above zero.");
     const network = networkOf(req.env, str(b, "network") ?? "");
     if (!network || !network.tokens.some((t) => t.symbol === str(b, "token"))) return badRequest("Unknown network or token.");
-    const recipient = s.accounts.find((a) => a.id === str(b, "recipient"));
+    const recipient = s.accounts.find((a) => a.id === str(b, "recipient") || a.address.toLowerCase() === (str(b, "recipient") ?? "").toLowerCase());
     if (!recipient) return badRequest("The recipient must be one of your registered wallets.");
     const expiresAt = str(b, "expiresAt");
     if (expiresAt && !(Date.parse(expiresAt) > Date.now())) return badRequest("The expiry must be in the future.");
+    if (expiresAt && Date.parse(expiresAt) > Date.now() + 30 * 86_400_000) return badRequest("A charge lasts 30 days at most.");
     const id = uuid(`p2p-charge-${Date.now()}`);
     const c = {
       id, currency, fiatAmount: Number(fiat).toFixed(fiatDecimals(currency)), network: network.id, token: str(b, "token")!, recipient: recipient.address,
       description: (str(b, "description") ?? "").trim().slice(0, 120) || null, status: "open" as const,
       url: `${PAYMENTS_ORIGIN}/p2p/${id}`, qr: qrImage(id), multiUse: b.multiUse === true,
-      expiresAt: expiresAt ?? null, paidAt: null, orders: 0, createdAt: nowIso(), consumer: "org" as const,
+      expiresAt: expiresAt ?? new Date(Date.now() + 86_400_000).toISOString(), paidAt: null, orders: 0, createdAt: nowIso(), consumer: "org" as const,
     };
     s.charges.unshift(c);
-    const { consumer: _c, ...view } = c;
-    return created(view);
+    return created(apiCharge(req.env, c));
   }),
   route("GET", `${P}/charges/:id`, (req) => {
     const c = chargeById(req.env, req.params.id);
     if (!c || c.consumer !== "org") return notFound("Charge not found");
-    const { consumer: _c, ...view } = c;
-    return ok(view);
+    return ok(apiCharge(req.env, c));
   }),
   route("DELETE", `${P}/charges/:id`, (req) => {
     const s = p2pStore(req.env);
@@ -922,10 +1059,10 @@ export const routes: MockRoute[] = [
   }),
 
   // Payouts.
-  route("GET", `${P}/payouts`, (req) => ok(page(p2pStore(req.env).payouts.map((b) => batchStatus(b, req.env)), req.url, 100))),
+  route("GET", `${P}/payouts`, (req) => ok(page(p2pStore(req.env).payouts.map((b) => apiBatch(req.env, b, false)), req.url, 100))),
   route("GET", `${P}/payouts/:id`, (req) => {
     const b = p2pStore(req.env).payouts.find((x) => x.id === req.params.id);
-    return b ? ok(batchStatus(b, req.env)) : notFound("Payout batch not found");
+    return b ? ok(apiBatch(req.env, b)) : notFound("Payout batch not found");
   }),
   route("POST", `${P}/payouts`, (req) => {
     const s = p2pStore(req.env);
@@ -944,7 +1081,7 @@ export const routes: MockRoute[] = [
       const currency = String(item.currency ?? "");
       const ben = (item.beneficiary ?? {}) as { holderName?: string; document?: string; details?: Record<string, string> };
       const base = { index, currency, fiatAmount: String(item.fiatAmount ?? ""), rail, beneficiaryName: ben.holderName ?? "", externalReference: (item.externalReference as string) ?? null };
-      if (!isRailId(rail) || Object.keys(checkAccount(rail, { holderName: ben.holderName ?? "", document: ben.document ?? "", details: ben.details ?? {} })).length) {
+      if (!isRailId(rail) || Object.keys(checkBeneficiary(rail, { holderName: ben.holderName ?? "", document: ben.document ?? "", details: ben.details ?? {} })).length) {
         batch.items.push({ ...base, orderId: null, status: "rejected", error: "The beneficiary's account is not valid." });
         return;
       }
@@ -962,6 +1099,6 @@ export const routes: MockRoute[] = [
       batch.items.push({ ...base, orderId: o.id, status: o.status, error: null });
     });
     s.payouts.unshift(batch);
-    return created(batchStatus(batch, req.env));
+    return created(apiBatch(req.env, batch));
   }),
 ];

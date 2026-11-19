@@ -93,15 +93,17 @@ export function merchantActions(order: Pick<P2pOrder, "kind" | "status" | "deadl
 export type ClientAction = "paid" | "cancel" | "dispute" | "release";
 
 /** What the client (the organization that created the order for its user) can do now. A
-    purchase: report the transfer, cancel before paying, dispute once paid. A sale or payout (the
-    client's user or the client is the seller): release once the merchant marked it paid, cancel
-    before the merchant accepts, dispute inside the settle window. */
+    purchase: report the transfer, cancel before paying, dispute once paid. A payout (the client is
+    the seller): cancel before the merchant accepts, release once the merchant marked it paid,
+    dispute inside a settle window. A sale is its user's: the user's wallet releases or cancels it,
+    so the client only follows it. */
 export function clientActions(order: Pick<P2pOrder, "kind" | "status" | "deadlines">, now = Date.now()): ClientAction[] {
   if (merchantSells(order.kind)) {
     if (order.status === "awaiting_payment") return msLeft(order.deadlines?.payBy, now) > 0 || !order.deadlines?.payBy ? ["paid", "cancel"] : ["cancel"];
     if (order.status === "paid") return ["dispute"];
     return [];
   }
+  if (order.kind === "SELL") return [];
   switch (order.status) {
     case "awaiting_acceptance":
       return ["cancel"];

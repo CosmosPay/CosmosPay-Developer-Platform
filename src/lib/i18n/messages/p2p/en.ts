@@ -46,6 +46,8 @@ export default {
     rut: "RUT",
     nitCc: "ID card or NIT",
     text: "Value",
+    documentType: "Document type",
+    documentNumber: "Document number",
   },
   hints: {
     cbu: "22 digits",
@@ -61,6 +63,7 @@ export default {
     rut: "With its check digit",
     nitCc: "6 to 10 digits",
     oneOf: "A CBU, a CVU or an alias",
+    documentNumber: "5 to 15 letters or digits",
   },
   placeholders: {
     holderName: "Ana Gómez",
@@ -82,6 +85,8 @@ export default {
     pixKeyType: { cpf: "CPF", cnpj: "CNPJ", email: "Email", phone: "Phone", evp: "Random key" },
     accountTypeCo: { savings: "Savings", checking: "Checking" },
     accountTypeCl: { checking: "Checking", vista: "Demand account", savings: "Savings" },
+    documentTypeCo: { CC: "Citizenship card", CE: "Foreigner ID card", NIT: "NIT", PP: "Passport" },
+    documentTypePe: { DNI: "DNI", CE: "Foreigner ID card", RUC: "RUC", PP: "Passport" },
   },
   errors: {
     required: "Required",
@@ -92,6 +97,7 @@ export default {
     currency: "This payment method does not pay in that currency",
     amount: "Enter a valid amount",
     duplicate: "This reference is repeated",
+    exclusive: "Give one or the other, not both",
   },
   deadlines: {
     accept: "Accept within {time}",
@@ -532,6 +538,7 @@ export default {
       P2P_ORDER_EXPIRED: "An order runs past its deadline.",
       P2P_ORDER_DISPUTED: "A dispute is opened.",
       P2P_ORDER_RESOLVED: "Cosmos Pay resolves a dispute.",
+      P2P_ORDER_FAILED: "An order could not be opened.",
       P2P_CHARGE_SUCCEEDED: "A charge is paid.",
       P2P_PAYOUT_BATCH_COMPLETED: "Every payout of a batch is over.",
     },

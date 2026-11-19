@@ -37,8 +37,9 @@ import {
 } from "@/components/cosmos/dashboard/p2p/shared";
 
 const STATES: P2pChargeStatus[] = ["open", "paid", "expired", "cancelled"];
-const EXPIRIES = ["1h", "24h", "7d", "30d", "never"] as const;
-const EXPIRY_MS: Record<string, number> = { "1h": 3_600_000, "24h": 86_400_000, "7d": 7 * 86_400_000, "30d": 30 * 86_400_000 };
+/* A charge lasts 30 days at most (the server's limit); the longest choice stays a few minutes short of it. */
+const EXPIRIES = ["1h", "24h", "7d", "30d"] as const;
+const EXPIRY_MS: Record<string, number> = { "1h": 3_600_000, "24h": 86_400_000, "7d": 7 * 86_400_000, "30d": 30 * 86_400_000 - 10 * 60_000 };
 /* Only a PNG data URL is drawn as the QR (what the Payments API answers). */
 const PNG = /^data:image\/png;base64,[A-Za-z0-9+/=]+$/;
 const tone = (s: string) => (s === "paid" ? "ok" : s === "open" ? "wait" : s === "expired" ? "fail" : "off");
@@ -255,7 +256,7 @@ function ChargeModal({ market, accounts, env, orgId, onClose, onCreated }: { mar
     p2pApi.post("charges", env, orgId, {
       currency, fiatAmount: fiat, network, token, recipient,
       description: description.trim() || undefined,
-      expiresAt: expiry === "never" ? undefined : new Date(Date.now() + EXPIRY_MS[expiry]).toISOString(),
+      expiresAt: new Date(Date.now() + EXPIRY_MS[expiry]).toISOString(),
       multiUse,
     })
       .then(onCreated)

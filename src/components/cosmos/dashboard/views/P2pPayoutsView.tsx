@@ -78,6 +78,7 @@ export function P2pPayoutsView({ canManage = false, orgId, env = "dev" }: { canM
   const tref = useRef(null); useGsapRows(tref, pg.page + "|" + view.length);
   const items = rows.flatMap((b) => b.items);
   const toRelease = items.filter((i) => i.status === "paid").length;
+  const itemCount = rows.reduce((n, b) => n + (b.itemCount ?? b.items.length), 0);
   const loading = batches.loading;
 
   return (
@@ -87,7 +88,7 @@ export function P2pPayoutsView({ canManage = false, orgId, env = "dev" }: { canM
         label={p.figuresLabel} loading={loading} failed={batches.error}
         items={[
           { key: "batches", label: p.figures.batches, value: rows.length },
-          { key: "items", label: p.figures.items, value: items.length },
+          { key: "items", label: p.figures.items, value: itemCount },
           { key: "done", label: p.figures.completed, value: items.filter((i) => i.status === "completed").length },
           { key: "release", label: p.figures.toRelease, value: toRelease, sub: p.figures.toReleaseSub },
         ]}
@@ -118,6 +119,8 @@ export function P2pPayoutsView({ canManage = false, orgId, env = "dev" }: { canM
             <tbody>{!batches.error && pg.slice.map((b) => {
               const done = b.items.filter((i) => i.status === "completed").length;
               const paid = b.items.filter((i) => i.status === "paid").length;
+              // A list answers each batch without its orders: its count, and the rest in its detail.
+              const whole = b.items.length >= (b.itemCount ?? 0);
               return (
                 <tr key={b.id} className="row-click" onClick={() => setDetail(b)}>
                   <td className="tid" onClick={(e) => e.stopPropagation()}>
@@ -128,8 +131,8 @@ export function P2pPayoutsView({ canManage = false, orgId, env = "dev" }: { canM
                       ><code>{shortAddress(b.id)}</code></RecordLink>
                     </span>
                   </td>
-                  <td className="cust">{fmt(p.doneOf, { done, total: b.items.length })}{paid ? ` · ${fmt(p.paidN, { n: paid })}` : ""}</td>
-                  <td className="amt">{totals(b.items, lang)}</td>
+                  <td className="cust">{whole ? <>{fmt(p.doneOf, { done, total: b.items.length })}{paid ? ` · ${fmt(p.paidN, { n: paid })}` : ""}</> : (b.itemCount ?? "-")}</td>
+                  <td className="amt">{whole ? totals(b.items, lang) : "-"}</td>
                   <td className="cust">{accountName(accounts.rows.find((a) => a.id === b.accountId))}</td>
                   <td><Pill st={pillOf(b.status)} tone={tone(b.status)} label={p.state[b.status]} /></td>
                   <td className="cust">{fmtWhen(b.createdAt)}</td>
@@ -163,13 +166,23 @@ export function P2pPayoutsView({ canManage = false, orgId, env = "dev" }: { canM
 
 /* A batch's payouts, each with its order and status; those the merchant marked paid can be
    released, one by one or together (one signature each). */
-function BatchDetail({ batch: b, market, account, env, orgId, canManage, onClose, onSoon }: {
+function BatchDetail({ batch: listed, market, account, env, orgId, canManage, onClose, onSoon }: {
   batch: P2pPayoutBatch; market: P2pMarket | null | undefined; account: P2pAccount | null; env: string; orgId: string; canManage: boolean; onClose: () => void; onSoon: () => void;
 }) {
   const t = useT();
   const lang = useLang();
   const p = t.p2p.payouts;
   const [releasing, setReleasing] = useState<P2pPayoutItem[] | null>(null);
+  // The list carries no orders: the batch itself does, read on open and again while it moves.
+  const [full, setFull] = useState<P2pPayoutBatch | null>(null);
+  useEffect(() => {
+    let alive = true;
+    const read = () => p2pApi.get(`payouts/${encodeURIComponent(listed.id)}`, env, orgId).then((x) => { if (alive && x?.id) setFull(x); }).catch(() => {});
+    read();
+    const id = setInterval(() => { if (!document.hidden) read(); }, 10_000);
+    return () => { alive = false; clearInterval(id); };
+  }, [listed.id, env, orgId]);
+  const b = full ?? listed;
   const net = networkOf(market, b.network);
   const paid = b.items.filter((i) => i.status === "paid" && i.orderId);
   if (releasing && account && net) {

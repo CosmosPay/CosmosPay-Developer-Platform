@@ -46,6 +46,8 @@ export default {
     rut: "RUT",
     nitCc: "पहचान पत्र या NIT",
     text: "मान",
+    documentType: "दस्तावेज़ का प्रकार",
+    documentNumber: "दस्तावेज़ संख्या",
   },
   hints: {
     cbu: "22 अंक",
@@ -61,6 +63,7 @@ export default {
     rut: "चेक डिजिट सहित",
     nitCc: "6 से 10 अंक",
     oneOf: "कोई CBU, CVU या उपनाम",
+    documentNumber: "5 से 15 अक्षर या अंक",
   },
   placeholders: {
     holderName: "Ana Gómez",
@@ -82,6 +85,8 @@ export default {
     pixKeyType: { cpf: "CPF", cnpj: "CNPJ", email: "ईमेल", phone: "फ़ोन", evp: "रैंडम कुंजी" },
     accountTypeCo: { savings: "बचत", checking: "चालू" },
     accountTypeCl: { checking: "चालू", vista: "डिमांड खाता", savings: "बचत" },
+    documentTypeCo: { CC: "नागरिकता कार्ड", CE: "विदेशी पहचान पत्र", NIT: "NIT", PP: "पासपोर्ट" },
+    documentTypePe: { DNI: "DNI", CE: "विदेशी पहचान पत्र", RUC: "RUC", PP: "पासपोर्ट" },
   },
   errors: {
     required: "ज़रूरी",
@@ -92,6 +97,7 @@ export default {
     currency: "यह भुगतान का तरीका उस मुद्रा में भुगतान नहीं करता",
     amount: "मान्य राशि दर्ज करें",
     duplicate: "यह संदर्भ दोहराया गया है",
+    exclusive: "दोनों में से केवल एक दें",
   },
   deadlines: {
     accept: "{time} के भीतर स्वीकार करें",
@@ -532,6 +538,7 @@ export default {
       P2P_ORDER_EXPIRED: "कोई ऑर्डर अपनी समय सीमा पार कर जाता है।",
       P2P_ORDER_DISPUTED: "कोई विवाद खोला जाता है।",
       P2P_ORDER_RESOLVED: "Cosmos Pay किसी विवाद को सुलझाता है।",
+      P2P_ORDER_FAILED: "कोई ऑर्डर खोला नहीं जा सका।",
       P2P_CHARGE_SUCCEEDED: "किसी भुगतान अनुरोध का भुगतान होता है।",
       P2P_PAYOUT_BATCH_COMPLETED: "किसी बैच के सभी पेआउट खत्म हो जाते हैं।",
     },

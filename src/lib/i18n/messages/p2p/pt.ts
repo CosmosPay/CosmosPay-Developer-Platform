@@ -46,6 +46,8 @@ export default {
     rut: "RUT",
     nitCc: "Documento de identidade ou NIT",
     text: "Valor",
+    documentType: "Tipo de documento",
+    documentNumber: "Número do documento",
   },
   hints: {
     cbu: "22 dígitos",
@@ -61,6 +63,7 @@ export default {
     rut: "Com o dígito verificador",
     nitCc: "6 a 10 dígitos",
     oneOf: "Um CBU, um CVU ou um alias",
+    documentNumber: "De 5 a 15 letras ou dígitos",
   },
   placeholders: {
     holderName: "Ana Gómez",
@@ -82,6 +85,8 @@ export default {
     pixKeyType: { cpf: "CPF", cnpj: "CNPJ", email: "E-mail", phone: "Telefone", evp: "Chave aleatória" },
     accountTypeCo: { savings: "Poupança", checking: "Corrente" },
     accountTypeCl: { checking: "Corrente", vista: "Conta à vista", savings: "Poupança" },
+    documentTypeCo: { CC: "Cédula de cidadania", CE: "Cédula de estrangeiro", NIT: "NIT", PP: "Passaporte" },
+    documentTypePe: { DNI: "DNI", CE: "Carteira de estrangeiro", RUC: "RUC", PP: "Passaporte" },
   },
   errors: {
     required: "Obrigatório",
@@ -92,6 +97,7 @@ export default {
     currency: "Este meio de pagamento não opera nessa moeda",
     amount: "Informe um valor válido",
     duplicate: "Esta referência está repetida",
+    exclusive: "Informe um ou outro, não ambos",
   },
   deadlines: {
     accept: "Aceite em até {time}",
@@ -532,6 +538,7 @@ export default {
       P2P_ORDER_EXPIRED: "Uma ordem passa do prazo.",
       P2P_ORDER_DISPUTED: "Uma disputa é aberta.",
       P2P_ORDER_RESOLVED: "A Cosmos Pay resolve uma disputa.",
+      P2P_ORDER_FAILED: "Não foi possível abrir uma ordem.",
       P2P_CHARGE_SUCCEEDED: "Uma cobrança é paga.",
       P2P_PAYOUT_BATCH_COMPLETED: "Todos os pagamentos a terceiros de um lote terminaram.",
     },

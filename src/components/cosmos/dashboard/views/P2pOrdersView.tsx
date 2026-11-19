@@ -267,7 +267,9 @@ function OrderDetail({ order: o, side, market, accounts, env, orgId, canManage, 
       .finally(() => { setBusy(false); setConfirm(null); });
   };
   const run = (a: MerchantAction | ClientAction) => {
-    if (side === "client" && a !== "release") {
+    // The API reports a purchase's transfer and cancels or disputes it through Cosmos Pay; a
+    // payout's release and dispute are the client wallet's own transactions.
+    if (side === "client" && a !== "release" && (sells || a !== "dispute")) {
       if (a === "paid") callApi("paid"); else setConfirm(a);
       return;
     }
@@ -332,7 +334,7 @@ function OrderDetail({ order: o, side, market, accounts, env, orgId, canManage, 
         {actions.length > 0 && !signer && (side === "merchant" || actions.includes("release")) && <Notice id="p2p-od-nowallet" title={p.noWalletTitle}>{p.noWallet}</Notice>}
         <div className="paylink-actions">
           {actions.map((a, i) => {
-            const needsWallet = side === "merchant" || a === "release";
+            const needsWallet = side === "merchant" || a === "release" || (a === "dispute" && !sells);
             const danger = a === "cancel" || a === "dispute";
             return (
               <button key={a} type="button" className={`btn btn-sm ${i === 0 && !danger ? "btn-dark" : danger ? "btn-soft danger-soft" : "btn-soft"}`}

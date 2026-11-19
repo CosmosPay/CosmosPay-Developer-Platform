@@ -6,7 +6,7 @@
    Pay never holds a key that can move these funds. */
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useT, useLang, fmt } from "@/lib/i18n/index";
-import { p2p as p2pApi } from "@/lib/api-client";
+import { p2p as rawP2p } from "@/lib/api-client";
 import { Modal, showToast } from "@/components/cosmos/shared";
 import { IcCheck } from "@/components/cosmos/icons";
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
@@ -21,8 +21,41 @@ import { NETWORK_NAMES } from "@/lib/chains";
 import { activeDeadline, countdown, msLeft, orderPill, orderTone } from "@/lib/p2p/orders";
 import { fiatDecimals, type FieldError, type FieldKind } from "@/lib/p2p/rails";
 import type { P2pAccount, P2pMarket, P2pNetwork, P2pOrder, P2pTransaction } from "@/lib/p2p/types";
+import {
+  normalizeAccount, normalizeCharge, normalizeMarket, normalizeMethod, normalizeOffer, normalizeOrder, normalizePayoutBatch, normalizeQuote,
+  normalizeTransferMatches, txArgs,
+} from "@/lib/p2p/normalize";
 
-export { p2pApi };
+/* The Payments API's answers in the screens' shapes (src/lib/p2p/normalize.ts): each path names
+   what it answers, a list page keeps its page with each row turned. */
+function normalizerFor(path: string): ((raw: unknown) => unknown) | null {
+  const p = path.split("?")[0];
+  if (p === "market") return normalizeMarket;
+  if (p === "accounts/challenge") return null;
+  if (p.startsWith("accounts")) return normalizeAccount;
+  if (p.startsWith("payment-methods")) return normalizeMethod;
+  if (p.startsWith("offers")) return normalizeOffer;
+  if (p === "quotes") return (raw) => normalizeQuote(raw);
+  if (p === "merchant/transfer-matches") return null;
+  if (p.startsWith("orders") || p.startsWith("merchant/orders")) return (raw) => normalizeOrder(raw);
+  if (p.startsWith("charges")) return normalizeCharge;
+  if (p.startsWith("payouts")) return (raw) => normalizePayoutBatch(raw);
+  return null;
+}
+function adapt(path: string, res: any) {
+  if (path === "merchant/transfer-matches") return normalizeTransferMatches(res);
+  const fn = normalizerFor(path);
+  if (!fn || res === null || res === undefined) return res;
+  if (Array.isArray(res)) return res.map(fn);
+  if (Array.isArray(res?.data) && ("total" in res || "take" in res)) return { ...res, data: res.data.map(fn) };
+  return fn(res);
+}
+export const p2pApi = {
+  get: (path: string, env: string, org: string, query: Record<string, unknown> = {}) => rawP2p.get(path, env, org, query).then((r: unknown) => adapt(path, r)),
+  post: (path: string, env: string, org: string, body?: unknown) => rawP2p.post(path, env, org, body).then((r: unknown) => adapt(path, r)),
+  patch: (path: string, env: string, org: string, body?: unknown) => rawP2p.patch(path, env, org, body).then((r: unknown) => adapt(path, r)),
+  remove: (path: string, env: string, org: string) => rawP2p.remove(path, env, org),
+};
 
 /* --- The market, read once per environment and shared by every view --- */
 
@@ -329,9 +362,10 @@ export function WalletTxDialog({ eyebrow, title, signer, network, market, fields
   );
 }
 
-/** Build one transaction through the Payments API (`from` is a registered wallet's id). */
-export const buildTx = (env: string, orgId: string, body: { network: string; from: string; action: string; args: Record<string, unknown> }) =>
-  p2pApi.post("transactions", env, orgId, body) as Promise<P2pTransaction>;
+/** Build one transaction through the Payments API (`from` is a registered wallet's id). Token
+    amounts go in base units of the token's `decimals`, a bot's bits as `permissions`. */
+export const buildTx = (env: string, orgId: string, body: { network: string; from: string; action: string; args: Record<string, unknown> }, decimals = 6) =>
+  p2pApi.post("transactions", env, orgId, { ...body, args: txArgs(body.action, body.args, decimals) }) as Promise<P2pTransaction>;
 
 /** A registered wallet's name for a person: its label, else its address shortened. */
 export const accountName = (a: P2pAccount | null | undefined) => (a ? a.label || shortAddress(a.address) : "-");

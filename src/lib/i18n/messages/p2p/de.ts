@@ -46,6 +46,8 @@ export default {
     rut: "RUT",
     nitCc: "Personalausweis oder NIT",
     text: "Wert",
+    documentType: "Dokumenttyp",
+    documentNumber: "Dokumentnummer",
   },
   hints: {
     cbu: "22 Ziffern",
@@ -61,6 +63,7 @@ export default {
     rut: "Mit Prüfziffer",
     nitCc: "6 bis 10 Ziffern",
     oneOf: "Eine CBU, eine CVU oder ein Alias",
+    documentNumber: "5 bis 15 Buchstaben oder Ziffern",
   },
   placeholders: {
     holderName: "Ana Gómez",
@@ -82,6 +85,8 @@ export default {
     pixKeyType: { cpf: "CPF", cnpj: "CNPJ", email: "E-Mail", phone: "Telefon", evp: "Zufallsschlüssel" },
     accountTypeCo: { savings: "Sparkonto", checking: "Girokonto" },
     accountTypeCl: { checking: "Girokonto", vista: "Sichtkonto", savings: "Sparkonto" },
+    documentTypeCo: { CC: "Personalausweis", CE: "Ausländerausweis", NIT: "NIT", PP: "Reisepass" },
+    documentTypePe: { DNI: "DNI", CE: "Ausländerausweis", RUC: "RUC", PP: "Reisepass" },
   },
   errors: {
     required: "Pflichtfeld",
@@ -92,6 +97,7 @@ export default {
     currency: "Dieser Zahlungsweg zahlt nicht in dieser Währung",
     amount: "Geben Sie einen gültigen Betrag ein",
     duplicate: "Diese Referenz kommt mehrfach vor",
+    exclusive: "Geben Sie nur eines von beiden an",
   },
   deadlines: {
     accept: "Innerhalb von {time} annehmen",
@@ -532,6 +538,7 @@ export default {
       P2P_ORDER_EXPIRED: "Ein Auftrag überschreitet seine Frist.",
       P2P_ORDER_DISPUTED: "Ein Streitfall wird eröffnet.",
       P2P_ORDER_RESOLVED: "Cosmos Pay entscheidet einen Streitfall.",
+      P2P_ORDER_FAILED: "Ein Auftrag konnte nicht eröffnet werden.",
       P2P_CHARGE_SUCCEEDED: "Eine Zahlungsanforderung wird bezahlt.",
       P2P_PAYOUT_BATCH_COMPLETED: "Alle Auszahlungen eines Stapels sind abgeschlossen.",
     },

@@ -237,7 +237,7 @@ function OfferModal({ market, accounts, methods, env, orgId, offer = null, canMa
   const methodFor = (rail: string) => methods.find((m) => m.accountId === accountId && m.rail === rail && m.active);
   const missing = side === "SELL_TOKEN" ? rails.filter((r) => !methodFor(r)) : [];
   const dec = fiatDecimals(currency);
-  const priceOk = parseDecimal(price, 8) !== null && Number(price) > 0;
+  const priceOk = parseDecimal(price, 6) !== null && Number(price) > 0;
   const minOk = parseDecimal(min, dec) !== null && Number(min) > 0;
   const maxOk = parseDecimal(max, dec) !== null && Number(max) >= Number(min);
   const step1Ok = !!accountId && !!net && !!token && !!currency && rails.length > 0 && missing.length === 0;

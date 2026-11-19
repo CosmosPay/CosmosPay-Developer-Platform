@@ -95,8 +95,9 @@ test("who may act on an order, as the contract allows", () => {
   assert.deepEqual(clientActions({ kind: "BUY", status: "awaiting_payment", deadlines: d({ payBy: earlier }) }, now), ["cancel"]);
   assert.deepEqual(clientActions({ kind: "BUY", status: "paid", deadlines: d() }, now), ["dispute"]);
   assert.deepEqual(clientActions({ kind: "PAYOUT", status: "paid", deadlines: d() }, now), ["release"]);
-  assert.deepEqual(clientActions({ kind: "SELL", status: "paid", deadlines: d({ settleBy: later }) }, now), ["release", "dispute"]);
-  assert.deepEqual(clientActions({ kind: "SELL", status: "awaiting_acceptance", deadlines: d() }, now), ["cancel"]);
+  assert.deepEqual(clientActions({ kind: "PAYOUT", status: "paid", deadlines: d({ settleBy: later }) }, now), ["release", "dispute"]);
+  assert.deepEqual(clientActions({ kind: "PAYOUT", status: "awaiting_acceptance", deadlines: d() }, now), ["cancel"]);
+  assert.deepEqual(clientActions({ kind: "SELL", status: "paid", deadlines: d() }, now), [], "a sale is its user's wallet's to release");
 });
 
 test("CSV: quotes, separators and line ends", () => {
@@ -121,12 +122,12 @@ test("a payouts file: every row checked, problems by column", () => {
   assert.equal(parsed.rows[0].line, 2);
   assert.deepEqual(parsed.rows[1].errors, {}, "a decimal comma is read as a point");
   assert.equal(parsed.rows[1].fiatAmount, "10.5");
-  assert.deepEqual(parsed.rows[2].errors, { amount: "amount", document: "checksum", cbu: "checksum", reference: "duplicate" });
+  assert.deepEqual(parsed.rows[2].errors, { amount: "amount", cbu: "checksum", cuit: "checksum", reference: "duplicate" }, "the document column fills the CUIT");
   assert.deepEqual(parsed.rows[3].errors, { currency: "currency" }, "the rail's currency");
   assert.equal(parsed.rows[4].errors.rail, "rail");
   const items = payoutItems(parsed.rows);
   assert.equal(items.length, 2);
-  assert.deepEqual(items[0], { currency: "ARS", fiatAmount: "150000", rail: "ar_bank_transfer", beneficiary: { holderName: "Ana Gómez", document: "20329642330", details: { cbu: "0170099222000001234561" } }, externalReference: "inv-1" });
+  assert.deepEqual(items[0], { currency: "ARS", fiatAmount: "150000", rail: "ar_bank_transfer", beneficiary: { holderName: "Ana Gómez", document: "20329642330", details: { cbu: "0170099222000001234561", cuit: "20329642330" } }, externalReference: "inv-1" });
   assert.deepEqual(parsePayoutCsv("currency,amount\nARS,1").missing, ["rail", "holderName"]);
   assert.deepEqual(parsePayoutCsv("currency,amount,rail,holderName\nARS,1,ar_bank_transfer,Ana", ["BRL"]).rows[0].errors.currency, "currency", "a currency the market does not list");
   const many = ["currency,amount,rail,holderName", ...Array.from({ length: PAYOUT_MAX_ITEMS + 1 }, () => "ARS,1,ar_bank_transfer,Ana")].join("\n");

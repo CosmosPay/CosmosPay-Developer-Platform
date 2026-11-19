@@ -46,6 +46,8 @@ export default {
     rut: "RUT",
     nitCc: "身份证或 NIT",
     text: "值",
+    documentType: "证件类型",
+    documentNumber: "证件号码",
   },
   hints: {
     cbu: "22 位数字",
@@ -61,6 +63,7 @@ export default {
     rut: "包含校验位",
     nitCc: "6 至 10 位数字",
     oneOf: "填写 CBU、CVU 或别名",
+    documentNumber: "5 到 15 个字母或数字",
   },
   placeholders: {
     holderName: "Ana Gómez",
@@ -82,6 +85,8 @@ export default {
     pixKeyType: { cpf: "CPF", cnpj: "CNPJ", email: "邮箱", phone: "手机号", evp: "随机密钥" },
     accountTypeCo: { savings: "储蓄账户", checking: "支票账户" },
     accountTypeCl: { checking: "支票账户", vista: "活期账户", savings: "储蓄账户" },
+    documentTypeCo: { CC: "公民身份证", CE: "外国人身份证", NIT: "NIT", PP: "护照" },
+    documentTypePe: { DNI: "DNI", CE: "外国人身份证", RUC: "RUC", PP: "护照" },
   },
   errors: {
     required: "必填",
@@ -92,6 +97,7 @@ export default {
     currency: "该收款方式不支持此货币",
     amount: "请输入有效金额",
     duplicate: "此参考号重复",
+    exclusive: "只填写其中一项，不要同时填写",
   },
   deadlines: {
     accept: "请在 {time} 内接受",
@@ -532,6 +538,7 @@ export default {
       P2P_ORDER_EXPIRED: "订单超过期限时。",
       P2P_ORDER_DISPUTED: "发起争议时。",
       P2P_ORDER_RESOLVED: "Cosmos Pay 裁定争议时。",
+      P2P_ORDER_FAILED: "订单无法开启。",
       P2P_CHARGE_SUCCEEDED: "收款单已付款时。",
       P2P_PAYOUT_BATCH_COMPLETED: "批次中的每笔付款均已结束时。",
     },

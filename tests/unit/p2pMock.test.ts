@@ -80,6 +80,7 @@ test("the market lists EVM networks with tokens, every rail and the matcher", as
   const { status, json } = await call("GET", "/api/p2p/market");
   assert.equal(status, 200);
   assert.equal(json.data.tier, "testnet");
+  assert.ok(Array.isArray(json.data.currencies[0].rails) && typeof json.data.currencies[0].rails[0] === "object", "the server's shape: rails nested in currencies");
 });
 
 test("a wallet registers with a single-use challenge", async () => {
@@ -87,10 +88,13 @@ test("a wallet registers with a single-use challenge", async () => {
   const ch = await call("POST", "/api/p2p/accounts/challenge", { address });
   assert.equal(ch.status, 201);
   assert.match(ch.json.data.message, /0x1111111111111111111111111111111111111111/);
+  assert.equal(ch.json.data.id, undefined, "the server keeps the challenge; the register call names the address");
   const sig = `0x${"ab".repeat(65)}`;
-  const reg = await call("POST", "/api/p2p/accounts", { challengeId: ch.json.data.id, address, signature: sig });
+  assert.equal((await call("POST", "/api/p2p/accounts", { challengeId: "x", address, signature: sig })).status, 400, "an unknown field is refused, as the server does");
+  const reg = await call("POST", "/api/p2p/accounts", { address, signature: sig, label: "Ops", displayName: "Ops Exchange" });
   assert.equal(reg.status, 201);
-  const again = await call("POST", "/api/p2p/accounts", { challengeId: ch.json.data.id, address, signature: sig });
+  assert.equal(reg.json.data.displayName, "Ops Exchange");
+  const again = await call("POST", "/api/p2p/accounts", { address, signature: sig });
   assert.equal(again.status, 400, "a challenge is used once");
   const dup = await call("POST", "/api/p2p/accounts/challenge", { address });
   assert.equal(dup.status, 409, "a registered wallet is not registered twice");
@@ -115,9 +119,10 @@ test("a purchase is opened from a quote and needs the payer's identity", async (
 });
 
 test("a sale answers the seller's unsigned approve and openWithDeposit", () => {
-  const q = quoteFor("dev", { side: "SELL", network: "base", token: "USDC", currency: "ARS", rail: "ar_bank_transfer", tokenAmount: "25" }, "app");
+  const q = quoteFor("dev", { side: "SELL", network: "base", token: "USDC", currency: "ARS", rail: "ar_bank_transfer", tokenAmount: "25000000" }, "app");
   if (typeof q === "string") return assert.fail(q);
-  const o = orderFor("dev", { quoteId: q.id, seller: "0x3333333333333333333333333333333333333333", payout: { holderName: "Ana Gómez", document: "20329642330", details: { alias: "ana.gomez.mp" } } }, "app");
+  assert.equal(q.tokenAmount, "25.000000", "the API's token amounts are base units");
+  const o = orderFor("dev", { quoteId: q.id, seller: "0x3333333333333333333333333333333333333333", beneficiary: { holderName: "Ana Gómez", document: "20329642330", details: { alias: "ana.gomez.mp", cuit: "20329642330" } } }, "app");
   if (typeof o === "string") return assert.fail(o);
   assert.deepEqual(o.transactions?.map((t) => t.action), ["approve", "openWithDeposit"]);
   assert.ok(o.transactions?.every((t) => /^0x[0-9a-f]+$/.test(t.data) && t.value === "0"));
@@ -127,9 +132,10 @@ test("the transaction builder checks what each action names", () => {
   const s = p2pStore("dev");
   const acc = s.accounts[0];
   assert.equal(buildFor("dev", { network: "base", from: acc.id, action: "nope", args: {} }, "org"), "Unknown action.");
-  assert.equal(typeof buildFor("dev", { network: "base", from: acc.id, action: "deposit", args: { token: "USDC", amount: "10" } }, "org"), "object");
-  assert.equal(buildFor("dev", { network: "base", from: acc.id, action: "withdraw", args: { token: "USDC", amount: "999999999" } }, "org"), "The free balance is lower than that.");
-  assert.equal(buildFor("dev", { network: "base", from: acc.id, action: "setOperator", args: { operator: acc.address, perms: 2 } }, "org"), "A wallet cannot be its own bot.");
+  assert.equal(typeof buildFor("dev", { network: "base", from: acc.id, action: "deposit", args: { token: "USDC", amount: "10000000" } }, "org"), "object");
+  assert.equal(buildFor("dev", { network: "base", from: acc.id, action: "deposit", args: { token: "USDC", amount: "10.5" } }, "org"), "Enter an amount above zero.", "base units only");
+  assert.equal(buildFor("dev", { network: "base", from: acc.id, action: "withdraw", args: { token: "USDC", amount: "99999999999999" } }, "org"), "The free balance is lower than that.");
+  assert.equal(buildFor("dev", { network: "base", from: acc.id, action: "setOperator", args: { operator: acc.address, permissions: 2 } }, "org"), "A wallet cannot be its own bot.");
   assert.equal(buildFor("dev", { network: "base", from: acc.id, action: "setMatcher", args: { maxPerOrder: "100", autoSettle: true } }, "org"), "Automatic settlement is not offered to a wallet with active sell offers.");
   const order = s.orders.find((o) => o.kind === "BUY" && o.merchantAccountId === acc.id && o.status === "awaiting_payment")!;
   const tx = buildFor("dev", { network: order.network, from: acc.id, action: "release", args: { orderId: order.id } }, "org");
@@ -142,10 +148,10 @@ test("transfer matches find the merchant's order by amount and score the payer",
   const s = p2pStore("prod");
   const order = s.orders.find((o) => o.kind === "BUY" && o.merchantAccountId && o.status === "awaiting_payment")!;
   const { json } = await call("POST", "/api/p2p/merchant/transfer-matches", { currency: order.currency, amount: order.fiatAmount, payerName: order.payer!.name.split(" ")[0] }, "prod");
-  assert.ok(json.data.matches.length >= 1);
-  assert.equal(json.data.matches[0].order.id, order.id);
-  assert.ok(json.data.matches[0].score > 0.6);
-  assert.equal(json.data.matches[0].transaction.description, "release");
+  assert.ok(json.data.data.length >= 1);
+  assert.equal(json.data.data[0].order.id, order.id);
+  assert.ok(json.data.data[0].score >= 2, "the amount and the name");
+  assert.equal(json.data.data[0].transaction.description, "release");
 });
 
 test("a payout batch needs the matcher on its network", async () => {

@@ -383,8 +383,8 @@ function RegisterWalletModal({ env, orgId, onClose, onRegistered }: { env: strin
       progress(fmt(t.dash.wallet.confirmIn, { wallet: wallet.name }));
       const signature = await wallet.provider.request({ method: "personal_sign", params: [utf8Hex(ch.message), address] });
       progress(r.checking);
-      let account: P2pAccount = await p2pApi.post("accounts", env, orgId, { challengeId: ch.id, address, signature, label: label.trim() || undefined });
-      if (merchant) account = { ...account, ...(await p2pApi.patch(`accounts/${encodeURIComponent(account.id)}`, env, orgId, { merchant: { displayName: displayName.trim(), status: "ACTIVE" } })) };
+      // The server takes the open challenge it issued for this address; a merchant is named at once.
+      const account: P2pAccount = await p2pApi.post("accounts", env, orgId, { address, signature, label: label.trim() || undefined, displayName: merchant ? displayName.trim() : undefined });
       showToast(r.done);
       onRegistered(account);
     } finally {
@@ -435,7 +435,7 @@ function WalletDetail({ account, chains, market, env, orgId, canManage, onClose,
   const save = () => {
     setBusy(true);
     const body: Record<string, unknown> = { label: label.trim() };
-    if (name.trim() && !suspended) body.merchant = { displayName: name.trim(), status };
+    if (name.trim() && !suspended) Object.assign(body, { displayName: name.trim(), merchantStatus: status });
     p2pApi.patch(`accounts/${encodeURIComponent(account.id)}`, env, orgId, body)
       .then((a) => { showToast(p.saved); onSaved(a); })
       .catch((e) => showToast(e?.message || p.saveFailed, "error"))
@@ -528,15 +528,15 @@ function ActionDialog({ action, market, accounts, balances, env, orgId, onClose,
     if (action.kind === "deposit") {
       fields.push([p.form.amount, tokenText(amount, token.symbol, lang)]);
       steps = [
-        { key: "approve", label: fmt(p.form.approveStep, { token: token.symbol }), build: () => buildTx(env, orgId, { ...base, action: "approve", args: { token: token.symbol, amount } }) },
-        { key: "deposit", label: p.form.depositStep, build: () => buildTx(env, orgId, { ...base, action: "deposit", args: { token: token.symbol, amount } }) },
+        { key: "approve", label: fmt(p.form.approveStep, { token: token.symbol }), build: () => buildTx(env, orgId, { ...base, action: "approve", args: { token: token.symbol, amount } }, token.decimals) },
+        { key: "deposit", label: p.form.depositStep, build: () => buildTx(env, orgId, { ...base, action: "deposit", args: { token: token.symbol, amount } }, token.decimals) },
       ];
     } else if (action.kind === "withdraw") {
       fields.push([p.form.amount, tokenText(amount, token.symbol, lang)]);
-      steps = [{ key: "withdraw", label: p.withdraw, build: () => buildTx(env, orgId, { ...base, action: "withdraw", args: { token: token.symbol, amount } }) }];
+      steps = [{ key: "withdraw", label: p.withdraw, build: () => buildTx(env, orgId, { ...base, action: "withdraw", args: { token: token.symbol, amount } }, token.decimals) }];
     } else if (action.kind === "matcher") {
       fields.push([p.form.cap, Number(amount) > 0 ? tokenText(amount, token.symbol, lang) : p.form.revoked], [p.form.matcher, <code>{shortAddress(market.matcher)}</code>]);
-      steps = [{ key: "matcher", label: p.authorise, build: () => buildTx(env, orgId, { ...base, action: "setMatcher", args: { maxPerOrder: amount, autoSettle: !isMerchant && autoSettle } }) }];
+      steps = [{ key: "matcher", label: p.authorise, build: () => buildTx(env, orgId, { ...base, action: "setMatcher", args: { maxPerOrder: amount, autoSettle: !isMerchant && autoSettle } }, token.decimals) }];
     } else {
       fields.push([p.bots.address, <code>{bot.trim()}</code>], [p.bots.perms, perms.map((k) => p.perms[k].title).join(", ")]);
       steps = [{ key: "bot", label: kindTitle, build: () => buildTx(env, orgId, { ...base, action: "setOperator", args: { operator: bot.trim(), perms: permsToMask(perms) } }) }];

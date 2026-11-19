@@ -46,6 +46,8 @@ export default {
     rut: "RUT",
     nitCc: "Carte d’identité ou NIT",
     text: "Valeur",
+    documentType: "Type de pièce d’identité",
+    documentNumber: "Numéro de pièce",
   },
   hints: {
     cbu: "22 chiffres",
@@ -61,6 +63,7 @@ export default {
     rut: "Avec son chiffre de contrôle",
     nitCc: "6 à 10 chiffres",
     oneOf: "Un CBU, un CVU ou un alias",
+    documentNumber: "5 à 15 lettres ou chiffres",
   },
   placeholders: {
     holderName: "Ana Gómez",
@@ -82,6 +85,8 @@ export default {
     pixKeyType: { cpf: "CPF", cnpj: "CNPJ", email: "E-mail", phone: "Téléphone", evp: "Clé aléatoire" },
     accountTypeCo: { savings: "Compte d’épargne", checking: "Compte courant" },
     accountTypeCl: { checking: "Compte courant", vista: "Compte à vue", savings: "Compte d’épargne" },
+    documentTypeCo: { CC: "Carte de citoyenneté", CE: "Carte d’étranger", NIT: "NIT", PP: "Passeport" },
+    documentTypePe: { DNI: "DNI", CE: "Carte d’étranger", RUC: "RUC", PP: "Passeport" },
   },
   errors: {
     required: "Obligatoire",
@@ -92,6 +97,7 @@ export default {
     currency: "Ce moyen de paiement n’accepte pas cette devise",
     amount: "Saisissez un montant valide",
     duplicate: "Cette référence est en double",
+    exclusive: "Indiquez l’un ou l’autre, pas les deux",
   },
   deadlines: {
     accept: "Acceptez sous {time}",
@@ -532,6 +538,7 @@ export default {
       P2P_ORDER_EXPIRED: "Un ordre dépasse son délai.",
       P2P_ORDER_DISPUTED: "Un litige est ouvert.",
       P2P_ORDER_RESOLVED: "Cosmos Pay résout un litige.",
+      P2P_ORDER_FAILED: "Un ordre n’a pas pu être ouvert.",
       P2P_CHARGE_SUCCEEDED: "Un encaissement est payé.",
       P2P_PAYOUT_BATCH_COMPLETED: "Tous les versements d’un lot sont terminés.",
     },
