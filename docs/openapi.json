@@ -20808,7 +20808,7 @@
             }
           },
           "400": {
-            "description": "`network_unsupported`: the P2P market does not run on the key’s tier yet, or not on that network (the message lists the networks it runs on). `invalid_state_transition`: The resource cannot move to that state from the one it is in.",
+            "description": "`network_unsupported`: the P2P market does not run on the key’s tier yet, or not on that network (the message lists the networks it runs on). `invalid_state_transition`: The order is not where this action needs it.",
             "content": {
               "application/json": {
                 "schema": {
@@ -21302,7 +21302,7 @@
             }
           },
           "400": {
-            "description": "`network_unsupported`: the P2P market does not run on the key’s tier yet, or not on that network (the message lists the networks it runs on). `asset_unsupported`: The cross-chain route cannot swap this asset on the named chain.",
+            "description": "`network_unsupported`: the P2P market does not run on the key’s tier yet, or not on that network (the message lists the networks it runs on). `asset_unsupported`: The token is not traded on that network.",
             "content": {
               "application/json": {
                 "schema": {
@@ -21662,7 +21662,7 @@
             }
           },
           "400": {
-            "description": "`network_unsupported`: the P2P market does not run on the key’s tier yet, or not on that network (the message lists the networks it runs on). `asset_unsupported`: The cross-chain route cannot swap this asset on the named chain.",
+            "description": "`network_unsupported`: the P2P market does not run on the key’s tier yet, or not on that network (the message lists the networks it runs on). `asset_unsupported`: The token is not traded on that network.",
             "content": {
               "application/json": {
                 "schema": {
@@ -21833,7 +21833,7 @@
             }
           },
           "400": {
-            "description": "`network_unsupported`: the P2P market does not run on the key’s tier yet, or not on that network (the message lists the networks it runs on). `quote_expired`: The quote is ours and yours, but past its expiry.",
+            "description": "`network_unsupported`: the P2P market does not run on the key’s tier yet, or not on that network (the message lists the networks it runs on). `quote_expired`: The quote expired.",
             "content": {
               "application/json": {
                 "schema": {
@@ -21896,7 +21896,7 @@
             }
           },
           "409": {
-            "description": "`p2p_no_match`: no merchant can take the trade right now (price, limits, liquidity, rail, or the market is paused for new orders), or the quote’s merchant no longer can. Quote again, or try another amount, rail or network. `idempotency_conflict`: This Idempotency-Key was already used for a different request.",
+            "description": "`p2p_no_match`: no merchant can take the trade right now (price, limits, liquidity, rail, or the market is paused for new orders), or the quote’s merchant no longer can. Quote again, or try another amount, rail or network. `idempotency_conflict`: This quote already made an order with another wallet.",
             "content": {
               "application/json": {
                 "schema": {
@@ -22212,7 +22212,7 @@
             }
           },
           "400": {
-            "description": "`network_unsupported`: the P2P market does not run on the key’s tier yet, or not on that network (the message lists the networks it runs on). `invalid_state_transition`: The resource cannot move to that state from the one it is in.",
+            "description": "`network_unsupported`: the P2P market does not run on the key’s tier yet, or not on that network (the message lists the networks it runs on). `invalid_state_transition`: The order is not where this action needs it.",
             "content": {
               "application/json": {
                 "schema": {
@@ -22341,7 +22341,7 @@
             }
           },
           "400": {
-            "description": "`network_unsupported`: the P2P market does not run on the key’s tier yet, or not on that network (the message lists the networks it runs on). `invalid_state_transition`: The resource cannot move to that state from the one it is in.",
+            "description": "`network_unsupported`: the P2P market does not run on the key’s tier yet, or not on that network (the message lists the networks it runs on). `invalid_state_transition`: The order is not where this action needs it.",
             "content": {
               "application/json": {
                 "schema": {
@@ -22470,7 +22470,7 @@
             }
           },
           "400": {
-            "description": "`network_unsupported`: the P2P market does not run on the key’s tier yet, or not on that network (the message lists the networks it runs on). `invalid_state_transition`: The resource cannot move to that state from the one it is in.",
+            "description": "`network_unsupported`: the P2P market does not run on the key’s tier yet, or not on that network (the message lists the networks it runs on). `invalid_state_transition`: The order is not where this action needs it.",
             "content": {
               "application/json": {
                 "schema": {
@@ -22831,7 +22831,7 @@
             }
           },
           "400": {
-            "description": "`network_unsupported`: the P2P market does not run on the key’s tier yet, or not on that network (the message lists the networks it runs on). `asset_unsupported`: The cross-chain route cannot swap this asset on the named chain.",
+            "description": "`network_unsupported`: the P2P market does not run on the key’s tier yet, or not on that network (the message lists the networks it runs on). `asset_unsupported`: The token is not traded on that network.",
             "content": {
               "application/json": {
                 "schema": {
@@ -23213,7 +23213,7 @@
             }
           },
           "400": {
-            "description": "`network_unsupported`: the P2P market does not run on the key’s tier yet, or not on that network (the message lists the networks it runs on). `asset_unsupported`: The cross-chain route cannot swap this asset on the named chain. `invalid_state_transition`: The resource cannot move to that state from the one it is in.",
+            "description": "`network_unsupported`: the P2P market does not run on the key’s tier yet, or not on that network (the message lists the networks it runs on). `asset_unsupported`: The token is not traded on that network. `invalid_state_transition`: The order is not where this action needs it.",
             "content": {
               "application/json": {
                 "schema": {
@@ -23676,7 +23676,7 @@
             "$ref": "#/components/responses/NotFound"
           },
           "409": {
-            "description": "`p2p_no_match`: no merchant can take the trade right now (price, limits, liquidity, rail, or the market is paused for new orders), or the quote’s merchant no longer can. Quote again, or try another amount, rail or network. `operation_in_flight`: A conflicting operation is still settling. `request_closed`: The payment request was paid, cancelled or expired.",
+            "description": "`p2p_no_match`: no merchant can take the trade right now (price, limits, liquidity, rail, or the market is paused for new orders), or the quote’s merchant no longer can. Quote again, or try another amount, rail or network. `operation_in_flight`: Someone is paying this charge right now. `request_closed`: The charge can no longer be paid.",
             "content": {
               "application/json": {
                 "schema": {
@@ -23975,7 +23975,7 @@
             }
           },
           "400": {
-            "description": "`network_unsupported`: the P2P market does not run on the key’s tier yet, or not on that network (the message lists the networks it runs on). `invalid_state_transition`: The resource cannot move to that state from the one it is in.",
+            "description": "`network_unsupported`: the P2P market does not run on the key’s tier yet, or not on that network (the message lists the networks it runs on). `invalid_state_transition`: The order is not where this action needs it.",
             "content": {
               "application/json": {
                 "schema": {
@@ -24112,7 +24112,7 @@
             }
           },
           "400": {
-            "description": "`network_unsupported`: the P2P market does not run on the key’s tier yet, or not on that network (the message lists the networks it runs on). `invalid_state_transition`: The resource cannot move to that state from the one it is in.",
+            "description": "`network_unsupported`: the P2P market does not run on the key’s tier yet, or not on that network (the message lists the networks it runs on). `invalid_state_transition`: The order is not where this action needs it.",
             "content": {
               "application/json": {
                 "schema": {
