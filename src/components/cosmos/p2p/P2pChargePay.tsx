@@ -190,6 +190,7 @@ export function P2pChargePay({ id, apiBase, lang }: { id: string; apiBase: strin
         <div className="ck-amount">
           <span className="ck-caption">{y.toPay}</span>
           <h1 className="pp-amount">{money(L, charge.fiatAmount, charge.currency)}</h1>
+          {charge.payeeName && <p className="pp-hint">{fmt(y.payee, { payee: charge.payeeName })}</p>}
           {charge.description && <p className="pp-msg">{charge.description}</p>}
         </div>
 

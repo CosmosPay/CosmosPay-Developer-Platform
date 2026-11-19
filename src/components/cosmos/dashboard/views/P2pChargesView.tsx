@@ -44,7 +44,7 @@ const EXPIRY_MS: Record<string, number> = { "1h": 3_600_000, "24h": 86_400_000, 
 const PNG = /^data:image\/png;base64,[A-Za-z0-9+/=]+$/;
 const tone = (s: string) => (s === "paid" ? "ok" : s === "open" ? "wait" : s === "expired" ? "fail" : "off");
 
-export function P2pChargesView({ canManage = false, orgId, env = "dev" }: { canManage?: boolean; orgId: string; env?: string }) {
+export function P2pChargesView({ canManage = false, orgId, env = "dev", orgName = "" }: { canManage?: boolean; orgId: string; env?: string; orgName?: string }) {
   const t = useT();
   const lang = useLang();
   const p = t.p2p.charges;
@@ -178,7 +178,7 @@ export function P2pChargesView({ canManage = false, orgId, env = "dev" }: { canM
         {!loading && <Pagination {...pg} />}
       </div>
       {creating && market && (
-        <ChargeModal market={market} accounts={accounts.rows} env={env} orgId={orgId} onClose={() => setCreating(false)}
+        <ChargeModal market={market} accounts={accounts.rows} env={env} orgId={orgId} orgName={orgName} onClose={() => setCreating(false)}
           onCreated={(c) => { charges.setRows((x) => [c, ...x]); setCreating(false); setShare(c); showToast(p.created); }} />
       )}
       {share && <ShareCharge charge={share} market={market} canManage={canManage} onClose={() => setShare(null)} onDelete={() => setToDelete(share)} />}
@@ -208,6 +208,7 @@ function ShareCharge({ charge: c, market, canManage, onClose, onDelete }: { char
         <CopyBlock label={p.link} value={c.url} />
         <div className="paylink-fields" style={{ margin: "14px 0" }}>
           {([
+            [p.payee, c.payeeName],
             [p.description, c.description],
             [p.head.settles, <span className="cell-mark"><P2pTokenMark market={market} network={c.network} symbol={c.token} size={18} /><span>{`${c.token} · ${networkName(market, c.network)}`}</span></span>],
             [p.recipient, <P2pAddress market={market} network={c.network} address={c.recipient} label={p.recipient} />],
@@ -229,7 +230,10 @@ function ShareCharge({ charge: c, market, canManage, onClose, onDelete }: { char
 }
 
 /* Creating a charge: the amount and what it is for, then where it settles and for how long. */
-function ChargeModal({ market, accounts, env, orgId, onClose, onCreated }: { market: P2pMarket; accounts: P2pAccount[]; env: string; orgId: string; onClose: () => void; onCreated: (c: P2pCharge) => void }) {
+/* The name the payer page shows, as the server takes it: 2 to 60 letters, digits, spaces and . , & ' ( ) - */
+const PAYEE = /^[\p{L}\p{M}\p{N}][\p{L}\p{M}\p{N} .,&'()-]{1,59}$/u;
+
+function ChargeModal({ market, accounts, env, orgId, orgName = "", onClose, onCreated }: { market: P2pMarket; accounts: P2pAccount[]; env: string; orgId: string; orgName?: string; onClose: () => void; onCreated: (c: P2pCharge) => void }) {
   const t = useT();
   const lang = useLang();
   const p = t.p2p.charges;
@@ -239,6 +243,7 @@ function ChargeModal({ market, accounts, env, orgId, onClose, onCreated }: { mar
   const [currency, setCurrency] = useState(market.currencies[0]?.code ?? "");
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
+  const [payeeName, setPayeeName] = useState(PAYEE.test(orgName.trim()) ? orgName.trim() : "");
   const [network, setNetwork] = useState(market.networks[0]?.id ?? "");
   const net = networkOf(market, network);
   const [token, setToken] = useState(net?.tokens[0]?.symbol ?? "");
@@ -248,13 +253,14 @@ function ChargeModal({ market, accounts, env, orgId, onClose, onCreated }: { mar
   const [busy, setBusy] = useState(false);
   useEffect(() => { if (net && !net.tokens.some((x) => x.symbol === token)) setToken(net.tokens[0]?.symbol ?? ""); }, [network]); // eslint-disable-line react-hooks/exhaustive-deps
   const fiat = parseFiat(amount, currency);
-  const step1Ok = !!currency && fiat !== null;
+  const payeeOk = PAYEE.test(payeeName.trim());
+  const step1Ok = !!currency && fiat !== null && payeeOk;
   const step2Ok = !!net && !!token && !!recipient;
   const create = () => {
     if (!step1Ok || !step2Ok || busy) return;
     setBusy(true);
     p2pApi.post("charges", env, orgId, {
-      currency, fiatAmount: fiat, network, token, recipient,
+      currency, fiatAmount: fiat, network, token, recipient, payeeName: payeeName.trim(),
       description: description.trim() || undefined,
       expiresAt: new Date(Date.now() + EXPIRY_MS[expiry]).toISOString(),
       multiUse,
@@ -279,6 +285,7 @@ function ChargeModal({ market, accounts, env, orgId, onClose, onCreated }: { mar
                   <Select value={currency} onChange={setCurrency} labelledBy="p2p-ch-c" options={market.currencies.map((c) => ({ value: c.code, label: `${currencyName(c.code, lang)} (${c.code})`, icon: <CurrencyMark id={c.code} size={18} /> }))} />
                 </div>
               </div>
+              <Field label={f.payeeName} hint={f.payeeHint} value={payeeName} onChange={(e) => setPayeeName(e.target.value)} maxLength={60} placeholder={t.dash.examples.customerName} aria-invalid={payeeName && !payeeOk ? true : undefined} />
               <Field label={p.description} hint={f.descriptionHint} value={description} onChange={(e) => setDescription(e.target.value)} maxLength={120} placeholder={t.dash.examples.order} />
             </>
           )}

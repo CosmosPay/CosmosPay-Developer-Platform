@@ -12,7 +12,7 @@ const MARKET = {
   available: true,
   tier: "public",
   networks: [
-    { id: "base", name: "Base", chainId: 8453, contract: "0x1111111111111111111111111111111111111111", tokens: [{ symbol: "USDC", address: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", decimals: 6 }], protocolFeeBps: 30, paused: false },
+    { id: "base", name: "Base", chainId: 8453, contract: "0x1111111111111111111111111111111111111111", tokens: [{ symbol: "USDC", address: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", decimals: 6 }], protocolFeeBps: 30, paused: false, nativeSymbol: "ETH", explorerUrl: "https://basescan.org", rpcUrl: "https://mainnet.base.org" },
     { id: "arb", name: "Arbitrum", chainId: 42161, contract: "0x2222222222222222222222222222222222222222", tokens: [], protocolFeeBps: 25, paused: true },
   ],
   currencies: [{ code: "ARS", decimals: 2, rails: [{ id: "ar_bank_transfer", name: "Bank transfer", fields: [{ name: "cbu", description: "", required: false }, { name: "cuit", description: "", required: true }] }] }],
@@ -32,6 +32,7 @@ test("the market: flat rails, windows and fee, paused networks left out", () => 
   assert.equal(m.sellBondBps, 1000);
   assert.equal(m.protocolFeeBps, 30);
   assert.equal(m.matcher, "");
+  assert.deepEqual([m.networks[0].explorer, m.networks[0].rpcUrl, m.networks[0].nativeSymbol], ["https://basescan.org", "https://mainnet.base.org", "ETH"], "what a wallet needs to add the chain, and its explorer");
   assert.equal(normalizeMarket({ nope: 1 }), null);
   assert.deepEqual(normalizeMarket(m), m, "the screens' own shape stays as it is");
   assert.equal(decimalsOf(m, "base", "USDC"), 6);
@@ -44,12 +45,13 @@ test("an account: the merchant profile and the chain state", () => {
     stats: { completedOrders: 12, cancelledOrders: 1, completionRate: 0.9, disputesLost: 0, medianReleaseSeconds: 240 }, lastActiveAt: "2026-11-19T10:00:00Z",
     tier: "public", createdAt: "2026-11-01T00:00:00Z", updatedAt: "2026-11-02T00:00:00Z",
     networks: [
-      { network: "base", balances: [{ symbol: "USDC", token: "0xusdc", amount: "1500000", decimals: 6 }], matcher: { maxPerOrder: "0", autoSettle: false }, operators: { "0xbot": 6, "0xold": 0 } },
+      { network: "base", balances: [{ symbol: "USDC", token: "0xusdc", amount: "1500000", locked: "250000", decimals: 6 }], matcher: { maxPerOrder: "0", autoSettle: false }, operators: { "0xbot": 6, "0xold": 0 } },
       { network: "arb", balances: [], matcher: { maxPerOrder: "1000000000", autoSettle: true }, operators: {} },
     ],
   });
   assert.deepEqual(a.merchant, { displayName: "Lumio", status: "PAUSED", stats: { completed: 12, cancelled: 1, disputesLost: 0, medianReleaseSeconds: 240, lastActiveAt: "2026-11-19T10:00:00.000Z" } });
   assert.equal(a.chains![0].balances[0].freeUnits, "1500000");
+  assert.equal(a.chains![0].balances[0].lockedUnits, "250000");
   assert.equal(a.chains![0].matcher, null, "\"0\" is not authorised");
   assert.deepEqual(a.chains![0].operators, [{ address: "0xbot", perms: 6 }]);
   assert.deepEqual(a.chains![1].matcher, { maxPerOrderUnits: "1000000000", autoSettle: true });
@@ -81,6 +83,7 @@ test("an order, from the client's and the merchant's views", () => {
   assert.deepEqual(client.deadlines, { acceptBy: null, payBy: "2026-11-19T12:30:00.000Z", settleBy: null });
   assert.deepEqual(client.txs, { open: "0xopen" });
   assert.equal(client.paymentDetails?.holderName, "Lumio SRL");
+  assert.equal(normalizeOrder({ ...base, kind: "SELL", status: "paid", settleDeadline: "2026-11-19T18:00:00Z" }).deadlines.settleBy, "2026-11-19T18:00:00.000Z", "a seller may dispute before it");
   const merchant = normalizeOrder({ ...base, kind: "PAYOUT", bond: "10000000", merchantAccountId: "acc", merchantSide: "buyer", beneficiary: { holderName: "Ana", document: "20329642330", rail: "ar_bank_transfer", details: { cbu: "0170099222000001234561" } }, payer: null });
   assert.equal(merchant.role, "merchant");
   assert.equal(merchant.bond, "10");
@@ -99,6 +102,8 @@ test("transfer matches, charges and payout batches", () => {
   assert.equal(c.token, "USDC");
   assert.equal(c.recipient, "0xr");
   assert.equal(c.qr, null);
+  const withQr = normalizeCharge({ id: "c", status: "open", qr: "data:image/png;base64,iVBORw0KGgo=", payeeName: "Tienda Salta" });
+  assert.deepEqual([withQr.qr, withQr.payeeName], ["data:image/png;base64,iVBORw0KGgo=", "Tienda Salta"]);
   const b = normalizePayoutBatch({ id: "b", network: "base", token: "0xusdc", accountId: "acc", status: "partially_completed", itemCount: 3, orders: [{ id: "o1", kind: "PAYOUT", status: "completed", tokenDecimals: 6, tokenAmount: "1", currency: "ARS", fiatAmount: "1000", rail: "ar_bank_transfer", price: "1", merchantSide: "buyer", beneficiary: { holderName: "Ana", details: {} }, externalReference: "inv-1", createdAt: "2026-11-19T12:00:00Z" }], failedItems: [{ index: 1, currency: "CLP", fiatAmount: "95000", externalReference: "inv-2", reason: "No merchant" }], createdAt: "2026-11-19T12:00:00Z" });
   assert.equal(b.status, "partial");
   assert.equal(b.itemCount, 3);

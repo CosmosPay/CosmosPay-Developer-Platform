@@ -271,7 +271,7 @@ function seed(env: MockEnv): Store {
   const charge = (i: number, status: P2pCharge["status"], fiat: string, currency: string, description: string, ageD: number, multiUse = false): Store["charges"][number] => {
     const id = uuid(`p2p-charge-${i}-${env}`);
     return {
-      id, currency, fiatAmount: fiat, network: home.id, token: "USDC", recipient: acc2.address, description, status,
+      id, currency, fiatAmount: fiat, network: home.id, token: "USDC", recipient: acc2.address, description, status, payeeName: "Andes Commerce",
       url: `${PAYMENTS_ORIGIN}/p2p/${id}`, qr: qrImage(id), multiUse,
       expiresAt: status === "expired" ? daysAgo(ageD - 1) : new Date(Date.now() + 7 * 86_400_000).toISOString(),
       paidAt: status === "paid" ? daysAgo(ageD - 0.5) : null, orders: status === "paid" ? 1 : 0, createdAt: daysAgo(ageD), consumer: "org",
@@ -413,7 +413,7 @@ export function apiMarket(env: MockEnv) {
   return {
     available: true,
     tier: env === "prod" ? "public" : "testnet",
-    networks: m.networks.map(({ explorer: _e, rpcUrl: _r, nativeSymbol: _n, ...n }) => ({ ...n, protocolFeeBps: m.protocolFeeBps, paused: false })),
+    networks: m.networks.map(({ explorer, rpcUrl, nativeSymbol, ...n }) => ({ ...n, nativeSymbol: nativeSymbol ?? "ETH", explorerUrl: explorer ?? null, rpcUrl: rpcUrl ?? null, protocolFeeBps: m.protocolFeeBps, paused: false })),
     currencies: m.currencies.map((c) => ({
       code: c.code, decimals: c.code === "CLP" ? 0 : 2,
       rails: c.rails.map((id) => ({ id, name: id, fields: RAILS[id as keyof typeof RAILS].fields.map((f) => ({ name: f.key, description: f.key, required: !f.optional && !f.oneOf, ...(f.options ? { options: [...f.options] } : {}) })) })),
@@ -480,7 +480,7 @@ export function apiOrder(env: MockEnv, o: MockOrder, role: "client" | "merchant"
     token: addrOf(env, o.network, o.token), tokenSymbol: o.token, tokenDecimals: decOf(env, o.network, o.token),
     currency: o.currency, rail: o.rail, price: o.price, fiatAmount: o.fiatAmount, tokenAmount: u(o.tokenAmount), netAmount: u(floorFixed(Number(o.tokenAmount) * 0.997, 6)),
     bond: o.bond ? u(o.bond) : "0", sellerAddress: o.seller, buyerAddress: o.buyer, onchainId: o.onchainId ?? null,
-    acceptDeadline: o.deadlines.acceptBy, paymentDeadline: o.deadlines.payBy, paidAt: o.status === "paid" ? o.updatedAt ?? null : null, endedAt: null,
+    acceptDeadline: o.deadlines.acceptBy, paymentDeadline: o.deadlines.payBy, settleDeadline: o.deadlines.settleBy, paidAt: o.status === "paid" ? o.updatedAt ?? null : null, endedAt: null,
     txHashes: { open: null, accept: null, paid: null, release: null, cancel: null, dispute: null, resolve: null, ...(o.txs ?? {}) },
     paidReference: o.paidReference ?? null, createdAt: o.createdAt, updatedAt: o.updatedAt ?? o.createdAt,
   };
@@ -500,7 +500,7 @@ export function apiOrder(env: MockEnv, o: MockOrder, role: "client" | "merchant"
 }
 
 export function apiCharge(env: MockEnv, c: Store["charges"][number]) {
-  const { consumer: _c, recipient, orders, qr: _q, ...rest } = c;
+  const { consumer: _c, recipient, orders, ...rest } = c;
   return {
     ...rest, token: addrOf(env, c.network, c.token), tokenSymbol: c.token, recipientAccountId: p2pStore(env).accounts.find((a) => a.address === recipient)?.id ?? null,
     recipientAddress: recipient, paidCount: orders ?? 0, tier: env === "prod" ? "public" : "testnet", updatedAt: c.createdAt,
@@ -1030,13 +1030,15 @@ export const routes: MockRoute[] = [
     if (!network || !network.tokens.some((t) => t.symbol === str(b, "token"))) return badRequest("Unknown network or token.");
     const recipient = s.accounts.find((a) => a.id === str(b, "recipient") || a.address.toLowerCase() === (str(b, "recipient") ?? "").toLowerCase());
     if (!recipient) return badRequest("The recipient must be one of your registered wallets.");
+    const payeeName = (str(b, "payeeName") ?? "").trim();
+    if (!/^[\p{L}\p{M}\p{N}][\p{L}\p{M}\p{N} .,&'()-]{1,59}$/u.test(payeeName)) return badRequest("payeeName must be 2 to 60 letters, digits, spaces and . , & ' ( ) -");
     const expiresAt = str(b, "expiresAt");
     if (expiresAt && !(Date.parse(expiresAt) > Date.now())) return badRequest("The expiry must be in the future.");
     if (expiresAt && Date.parse(expiresAt) > Date.now() + 30 * 86_400_000) return badRequest("A charge lasts 30 days at most.");
     const id = uuid(`p2p-charge-${Date.now()}`);
     const c = {
       id, currency, fiatAmount: Number(fiat).toFixed(fiatDecimals(currency)), network: network.id, token: str(b, "token")!, recipient: recipient.address,
-      description: (str(b, "description") ?? "").trim().slice(0, 120) || null, status: "open" as const,
+      description: (str(b, "description") ?? "").trim().slice(0, 120) || null, status: "open" as const, payeeName,
       url: `${PAYMENTS_ORIGIN}/p2p/${id}`, qr: qrImage(id), multiUse: b.multiUse === true,
       expiresAt: expiresAt ?? new Date(Date.now() + 86_400_000).toISOString(), paidAt: null, orders: 0, createdAt: nowIso(), consumer: "org" as const,
     };

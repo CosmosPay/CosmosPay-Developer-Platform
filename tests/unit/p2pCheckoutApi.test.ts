@@ -12,7 +12,7 @@ import { checkTransaction, evmChainOf, explorerTx } from "@/lib/p2p/tx-check";
 /* The community server's P2pCheckoutChargeEntity and P2pCheckoutOrderEntity, as it answers them. */
 const CHARGE = {
   id: "cm3p2pchg0001l70g8v5q3z2w", network: "base", tokenSymbol: "USDC", currency: "ARS", fiatAmount: "85000.00",
-  description: "Order #1042", status: "open", rails: ["ar_bank_transfer"], expiresAt: "2026-11-26T12:00:00.000Z",
+  description: "Order #1042", merchantName: "Tienda Salta", status: "open", rails: ["ar_bank_transfer"], expiresAt: "2026-11-26T12:00:00.000Z",
 };
 const ORDER = {
   id: "5f0c2a9e-1b3d-4e5f-8a7b-9c0d1e2f3a4b", chargeId: CHARGE.id, status: "awaiting_payment", currency: "ARS", fiatAmount: "85000.00",
@@ -23,8 +23,10 @@ const ORDER = {
 
 test("a charge: every field checked, the symbol from tokenSymbol, rails possibly none", () => {
   assert.deepEqual(parseCheckoutCharge(CHARGE), {
-    id: CHARGE.id, network: "base", token: "USDC", currency: "ARS", fiatAmount: "85000.00", description: "Order #1042", status: "open", rails: ["ar_bank_transfer"], expiresAt: CHARGE.expiresAt,
+    id: CHARGE.id, network: "base", token: "USDC", currency: "ARS", fiatAmount: "85000.00", description: "Order #1042", payeeName: "Tienda Salta", status: "open", rails: ["ar_bank_transfer"], expiresAt: CHARGE.expiresAt,
   });
+  assert.equal(parseCheckoutCharge({ ...CHARGE, merchantName: undefined })?.payeeName, null, "the payee is the charge creator's name, when given");
+  assert.equal(parseCheckoutCharge({ ...CHARGE, merchantName: "x".repeat(61) }), null, "60 characters at most");
   assert.deepEqual(parseCheckoutCharge({ ...CHARGE, rails: [] })?.rails, [], "no merchant takes it right now");
   assert.equal(parseCheckoutCharge({ ...CHARGE, description: null })?.description, null);
   for (const bad of [

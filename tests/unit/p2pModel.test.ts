@@ -5,7 +5,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { toBaseUnits, fromBaseUnits, parseDecimal, parseFiat, gteUnits, bpsOf, bpsLabel } from "@/lib/p2p/amounts";
 import { OPERATOR_PERMS, permsToMask, maskToPerms, isValidMask } from "@/lib/p2p/perms";
-import { activeDeadline, clientActions, countdown, isTerminal, merchantActions, msLeft, orderPill, orderTone, pollDelay } from "@/lib/p2p/orders";
+import { activeDeadline, clientActions, countdown, isTerminal, merchantActions, msLeft, orderPill, orderTone, pollDelay, userActions } from "@/lib/p2p/orders";
 import { parsePayoutCsv, payoutItems, payoutTemplate, splitCsv, PAYOUT_MAX_ITEMS } from "@/lib/p2p/csv";
 import { P2P_ORDER_STATUSES } from "@/lib/p2p/types";
 
@@ -98,6 +98,11 @@ test("who may act on an order, as the contract allows", () => {
   assert.deepEqual(clientActions({ kind: "PAYOUT", status: "paid", deadlines: d({ settleBy: later }) }, now), ["release", "dispute"]);
   assert.deepEqual(clientActions({ kind: "PAYOUT", status: "awaiting_acceptance", deadlines: d() }, now), ["cancel"]);
   assert.deepEqual(clientActions({ kind: "SELL", status: "paid", deadlines: d() }, now), [], "a sale is its user's wallet's to release");
+  // The sale's own seller (the public app): cancel before acceptance, release, dispute before the settle deadline.
+  assert.deepEqual(userActions({ kind: "SELL", status: "awaiting_acceptance", deadlines: d() }, now), ["cancel"]);
+  assert.deepEqual(userActions({ kind: "SELL", status: "paid", deadlines: d({ settleBy: later }) }, now), ["release", "dispute"]);
+  assert.deepEqual(userActions({ kind: "SELL", status: "paid", deadlines: d({ settleBy: earlier }) }, now), ["release"], "too late to dispute");
+  assert.deepEqual(userActions({ kind: "BUY", status: "awaiting_payment", deadlines: d() }, now), ["paid", "cancel"]);
 });
 
 test("CSV: quotes, separators and line ends", () => {

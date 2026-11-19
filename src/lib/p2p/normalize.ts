@@ -40,7 +40,7 @@ export function normalizeMarket(raw: unknown): P2pMarket | null {
     name: String(n.name ?? n.id),
     chainId: Number(n.chainId),
     contract: String(n.contract ?? ""),
-    explorer: str(n.explorer),
+    explorer: str(n.explorer ?? n.explorerUrl),
     rpcUrl: str(n.rpcUrl),
     nativeSymbol: str(n.nativeSymbol),
     tokens: (Array.isArray(n.tokens) ? n.tokens : []).filter(isObj).map((t: Obj) => ({ symbol: String(t.symbol), address: String(t.address), decimals: Number(t.decimals) })),
@@ -254,7 +254,7 @@ export function normalizeCharge(raw: unknown): P2pCharge {
     id: String(c.id), currency: String(c.currency), fiatAmount: String(c.fiatAmount), network: String(c.network),
     token: String(c.tokenSymbol ?? c.token), recipient: String(c.recipientAddress ?? c.recipient ?? ""),
     description: str(c.description), status: (["open", "paid", "expired", "cancelled"].includes(c.status) ? c.status : "open"),
-    url: String(c.url ?? ""), qr: str(c.qr), multiUse: c.multiUse === true, expiresAt: iso(c.expiresAt),
+    url: String(c.url ?? ""), qr: str(c.qr), multiUse: c.multiUse === true, expiresAt: iso(c.expiresAt), payeeName: str(c.payeeName),
     paidAt: iso(c.paidAt), orders: Number(c.orders ?? c.paidCount ?? 0), createdAt: iso(c.createdAt) ?? "",
   };
 }

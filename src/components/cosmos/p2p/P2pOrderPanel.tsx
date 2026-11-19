@@ -12,7 +12,7 @@ import { CopyField } from "@/components/cosmos/dashboard/components/PayLinkDetai
 import { StatusIcon } from "@/components/cosmos/dashboard/components/StatusIcon";
 import { TokenMark } from "@/components/cosmos/dashboard/components/TokenMark";
 import { ConfirmModal } from "@/components/cosmos/ui/ConfirmModal";
-import { activeDeadline, clientActions, isTerminal, orderTone, pollDelay } from "@/lib/p2p/orders";
+import { activeDeadline, userActions, isTerminal, orderTone, pollDelay } from "@/lib/p2p/orders";
 import { explorerTx } from "@/lib/p2p/tx-check";
 import { explorerTxUrl } from "@/lib/chains";
 import { AppApiError, appApi } from "@/lib/p2p/app-api";
@@ -100,7 +100,7 @@ export function P2pOrderPanel({ id, address, market, onNew, onSessionEnded, onSt
 
   const network = market.networks.find((n) => n.id === order.network) ?? null;
   const buy = order.kind === "BUY";
-  const actions = clientActions(order, now);
+  const actions = userActions(order, now);
   const deadline = activeDeadline(order);
   const tone = orderTone(order.status);
   const msgs = { mismatch: a.errors.txMismatch, reverted: a.errors.reverted };

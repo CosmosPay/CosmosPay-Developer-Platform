@@ -260,6 +260,8 @@ export interface P2pCharge {
   qr?: string | null;
   multiUse: boolean;
   expiresAt: string | null;
+  /* The name the payer page shows: who the payer is paying. */
+  payeeName?: string | null;
   paidAt?: string | null;
   orders?: number;
   createdAt: string;

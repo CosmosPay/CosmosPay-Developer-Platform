@@ -118,6 +118,20 @@ export function clientActions(order: Pick<P2pOrder, "kind" | "status" | "deadlin
   }
 }
 
+/** What the order's own user can do: the buyer of a purchase (reports the transfer, cancels before
+    paying, disputes once paid: through the API, Cosmos Pay acting for the buyer) or the seller of a
+    sale (cancels before a merchant accepts, releases once the merchant marked it paid, disputes
+    only before the settle deadline: each its own wallet's transaction). The public P2P app. */
+export function userActions(order: Pick<P2pOrder, "kind" | "status" | "deadlines">, now = Date.now()): ClientAction[] {
+  if (merchantSells(order.kind)) return clientActions(order, now);
+  if (order.status === "awaiting_acceptance") return ["cancel"];
+  if (order.status === "paid") {
+    const settle = order.deadlines?.settleBy;
+    return settle && msLeft(settle, now) > 0 ? ["release", "dispute"] : ["release"];
+  }
+  return [];
+}
+
 /** How often to read an order again while it moves: every 4 s while something is about to
     happen on-chain, 10 s while a person has to act, never once it is over. */
 export function pollDelay(status: string): number | null {

@@ -28,7 +28,7 @@ const ok = (body: unknown, status = 200): UpstreamAnswer => ({ status, body });
 const fail = (status: number, message: string, code = "validation_failed"): UpstreamAnswer => ({ status, body: { statusCode: status, code, message } });
 const live = (status: string) => !["completed", "cancelled", "expired", "resolved", "failed"].includes(status);
 /* The list routes take only these (the server's ValidationPipe refuses any other field). */
-const ORDER_QUERY = new Set(["status", "kind", "take", "skip"]);
+const ORDER_QUERY = new Set(["status", "kind", "address", "take", "skip"]);
 
 /** One upstream call of the public P2P app, for the consumer "app" (path without /v1/p2p/). */
 export function mockAppUpstream(env: MockEnv, method: string, path: string, query: URLSearchParams, body: Record<string, unknown> | null): UpstreamAnswer {
@@ -48,7 +48,8 @@ export function mockAppUpstream(env: MockEnv, method: string, path: string, quer
     if (unknown.length) return fail(400, `property ${unknown[0]} should not exist`);
     const take = Math.min(100, Math.max(1, Number(query.get("take")) || 20));
     const skip = Math.max(0, Number(query.get("skip")) || 0);
-    const all = s.orders.filter((o) => o.consumer === "app" && (!query.get("kind") || o.kind === query.get("kind")) && (!query.get("status") || o.status === query.get("status")));
+    const wallet = (query.get("address") ?? "").toLowerCase();
+    const all = s.orders.filter((o) => o.consumer === "app" && (!query.get("kind") || o.kind === query.get("kind")) && (!query.get("status") || o.status === query.get("status")) && (!wallet || o.buyer?.toLowerCase() === wallet || o.seller?.toLowerCase() === wallet));
     return ok({ data: all.slice(skip, skip + take).map((o) => apiOrder(env, o, "client")), total: all.length, take, skip });
   }
   if (a === "orders" && b) {
@@ -113,6 +114,8 @@ function chargeView(env: MockEnv, c: NonNullable<ReturnType<typeof chargeById>>)
     fiatAmount: c.fiatAmount,
     description: c.description,
     status: expired ? "expired" : c.status,
+    // Who the payer is paying: the name the charge's creator chose.
+    merchantName: c.payeeName ?? "",
     rails: railsFor(c.currency).map((r) => r.id),
     expiresAt: c.expiresAt ?? new Date(Date.now() + 7 * 86_400_000).toISOString(),
   };

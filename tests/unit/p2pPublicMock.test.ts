@@ -69,7 +69,9 @@ test("the public app's upstream: market, quote, the wallet's order and the integ
   assert.equal((created.body as { buyerAddress: string }).buyerAddress, me);
   const order = normalizeOrder(created.body);
   assert.ok(ownsOrder(order, me));
-  assert.equal(mockAppUpstream("prod", "GET", "orders", new URLSearchParams({ address: me }), null).status, 400, "the API takes no address filter");
+  const mine = mockAppUpstream("prod", "GET", "orders", new URLSearchParams({ address: me }), null).body as { data: { buyerAddress: string; sellerAddress: string }[] };
+  assert.ok(mine.data.length >= 1 && mine.data.every((o) => [o.buyerAddress, o.sellerAddress].some((a) => a?.toLowerCase() === me.toLowerCase())), "the API filters by the wallet");
+  assert.equal(mockAppUpstream("prod", "GET", "orders", new URLSearchParams({ wallet: me }), null).status, 400, "any other filter is refused");
   const list = mockAppUpstream("prod", "GET", "orders", new URLSearchParams({ take: "100", skip: "0" }), null).body as { data: unknown[]; total: number };
   assert.ok(list.data.some((o) => (o as { id: string }).id === order.id));
   assert.equal(mockAppUpstream("prod", "GET", "orders/unknown-order-id", new URLSearchParams(), null).status, 404);

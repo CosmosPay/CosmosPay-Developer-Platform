@@ -139,6 +139,7 @@ export function P2pBotsView({ canManage = false, orgId, env = "dev", keys = [], 
           <div className="vh-actions"><button type="button" className="btn btn-outline-w btn-sm" onClick={() => goFiltered(onGo, "webhook")}>{DI.webhook} {p.webhooks.manage}</button></div>
         </div>
         <div className="panel">
+          <p className="p2p-panel-note">{p.webhooks.note}</p>
           <div className="t-scroll" tabIndex={0}><table className="tx p2p-t"><thead><tr><th>{p.webhooks.event}</th><th>{p.webhooks.when}</th></tr></thead>
             <tbody>{events.map(([e, d]) => (
               <tr key={e}><td className="tid"><code>{e}</code></td><td className="cust">{d}</td></tr>

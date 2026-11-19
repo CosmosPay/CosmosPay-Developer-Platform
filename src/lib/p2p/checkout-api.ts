@@ -26,6 +26,8 @@ export interface CheckoutCharge {
   currency: string;
   fiatAmount: string;
   description: string | null;
+  /* Who the payer is paying (the charge creator's name), never the merchant who settles it. */
+  payeeName: string | null;
   status: ChargeStatus;
   /* The rails a merchant takes for this amount right now; empty when none does. */
   rails: string[];
@@ -90,6 +92,8 @@ export function parseCheckoutCharge(json: unknown): CheckoutCharge | null {
   if (!Array.isArray(o.rails) || !o.rails.every((r) => typeof r === "string" && RAIL.test(r))) return null;
   const description = optional(o.description, (x) => line(x, 200));
   const expiresAt = optional(o.expiresAt, date);
+  // The charge's payee (its creator's `payeeName`), not the merchant who settles the order.
+  const payeeName = optional(o.merchantName, (x) => line(x, 60));
   const c = {
     id: str(o.id, ID),
     network: str(o.network, NETWORK),
@@ -98,10 +102,11 @@ export function parseCheckoutCharge(json: unknown): CheckoutCharge | null {
     fiatAmount: str(o.fiatAmount, FIAT),
   };
   if (Object.values(c).some((v) => v === null)) return null;
-  if (description === undefined || expiresAt === undefined) return null;
+  if (description === undefined || expiresAt === undefined || payeeName === undefined) return null;
   return {
     ...(c as { id: string; network: string; token: string; currency: string; fiatAmount: string }),
     description,
+    payeeName,
     status,
     rails: o.rails as string[],
     expiresAt,

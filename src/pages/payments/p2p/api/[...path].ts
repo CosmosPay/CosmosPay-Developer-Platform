@@ -29,7 +29,7 @@ import {
   type AppEnv, type AppSession,
 } from "@/lib/p2p/app-session";
 import {
-  HISTORY_PAGES, HISTORY_TAKE, LIMITS, MAX_BODY, challengeAddress, clientKey, needsSession, orderBody, originAllowed, ownOrders, ownsOrder, paidBody, quoteBody, routeOf, transactionBody,
+  HISTORY_TAKE, LIMITS, MAX_BODY, challengeAddress, clientKey, needsSession, orderBody, originAllowed, ownOrders, ownsOrder, paidBody, quoteBody, routeOf, transactionBody,
   type AppRoute,
 } from "@/lib/p2p/app-guard";
 import { normalizeMarket, normalizeOrder, normalizeQuote } from "@/lib/p2p/normalize";
@@ -201,16 +201,10 @@ export const ALL: APIRoute = async ({ request, url, clientAddress }) => {
       return pass(u, order);
     }
     case "listOrders": {
-      // The API takes no address filter: the integrator's newest pages, the wallet's rows kept.
-      const own: P2pOrder[] = [];
-      for (let p = 0; p < HISTORY_PAGES; p++) {
-        const u = await upstream(cfg, "GET", "orders", undefined, new URLSearchParams({ take: String(HISTORY_TAKE), skip: String(p * HISTORY_TAKE) }));
-        if (u.status >= 400) return p === 0 ? pass(u) : reply(200, own);
-        const rows = rowsOf(u.data);
-        own.push(...ownOrders(rows.map(asOrder).filter((o): o is P2pOrder => !!o), session!.address));
-        if (rows.length < HISTORY_TAKE) break;
-      }
-      return reply(200, own);
+      // The API filters by the wallet (buyer or seller); the rows are checked again here.
+      const u = await upstream(cfg, "GET", "orders", undefined, new URLSearchParams({ address: session!.address, take: String(HISTORY_TAKE) }));
+      if (u.status >= 400) return pass(u);
+      return reply(200, ownOrders(rowsOf(u.data).map(asOrder).filter((o): o is P2pOrder => !!o), session!.address));
     }
     case "getOrder": {
       const got = await readOwnOrder(cfg, r.id, session!.address);

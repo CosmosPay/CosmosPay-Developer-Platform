@@ -436,7 +436,7 @@ export default function Dashboard({ user: initialUser, lang, features, env = "de
       case "p2pOffers": return <P2pOffersView canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "p2pMethods": return <P2pMethodsView canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "p2pOrders": return <P2pOrdersView canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
-      case "p2pCharges": return <P2pChargesView canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
+      case "p2pCharges": return <P2pChargesView canManage={can("payments:create")} orgId={org.id} orgName={org.name} env={live ? "prod" : "dev"} />;
       case "p2pPayouts": return <P2pPayoutsView canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "p2pBots": return <P2pBotsView canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} keys={keys} onGo={go} onCreateKey={canCreateKeys ? () => setModal("key") : null} />;
       case "developers": return <ApiKeysView keys={keys} env={live ? "prod" : "dev"} loading={keysLoading} error={keysError} limit={orgLimits.maxApiKeys} lockedIds={lockedKeyIds} canCreate={canCreateKeys} canEdit={canEditKeys} canDelete={canDeleteKeys} liveLocked={liveKeysLocked} onUpgrade={keyUpgrade} onCreate={() => setModal("key")} onRevoke={requestRevoke} onEdit={setEditing} />;
