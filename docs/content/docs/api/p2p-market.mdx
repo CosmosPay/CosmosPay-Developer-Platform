@@ -1,0 +1,219 @@
+---
+title: "P2P Market"
+metaDescription: "Trade stablecoins for local money between people with the Cosmos Pay API: wallets, offers, quotes, orders, charges, payouts and bots."
+description: Stablecoins for local money between people, with Cosmos Pay picking
+  the merchant for each order. Register wallets, publish offers, quote and open
+  orders, collect with charges, pay out in batches, and build the unsigned
+  transactions your wallets and bots sign. Funds stay locked in the market
+  contract until the seller releases them.
+full: true
+_openapi:
+  preload:
+    - ./openapi.json
+  toc:
+    - depth: 2
+      title: 'The P2P market for this API key: networks, contracts, tokens, rails, fee
+        and matcher'
+      url: '#the-p2p-market-for-this-api-key-networks-contracts-tokens-rails-fee-and-matcher'
+    - depth: 2
+      title: Build an unsigned transaction for a wallet or a bot to sign
+      url: '#build-an-unsigned-transaction-for-a-wallet-or-a-bot-to-sign'
+    - depth: 2
+      title: 'Quote a purchase or a sale: the merchant, the price and the fees, for a
+        minute'
+      url: '#quote-a-purchase-or-a-sale-the-merchant-the-price-and-the-fees-for-a-minute'
+    - depth: 2
+      title: List the orders you created
+      url: '#list-the-orders-you-created'
+    - depth: 2
+      title: Create an order from a quote
+      url: '#create-an-order-from-a-quote'
+    - depth: 2
+      title: Get one of your orders
+      url: '#get-one-of-your-orders'
+    - depth: 2
+      title: Report that the person sent the local money (purchases and charges)
+      url: '#report-that-the-person-sent-the-local-money-purchases-and-charges'
+    - depth: 2
+      title: Give up a purchase before paying, or withdraw a payout nobody accepted
+      url: '#give-up-a-purchase-before-paying-or-withdraw-a-payout-nobody-accepted'
+    - depth: 2
+      title: Escalate a paid purchase the merchant does not release
+      url: '#escalate-a-paid-purchase-the-merchant-does-not-release'
+    - depth: 2
+      title: List the orders your merchant accounts fill
+      url: '#list-the-orders-your-merchant-accounts-fill'
+    - depth: 2
+      title: Get one order your merchant account fills
+      url: '#get-one-order-your-merchant-account-fills'
+    - depth: 2
+      title: Find the orders an incoming bank transfer settles, with their release
+        ready
+      url: '#find-the-orders-an-incoming-bank-transfer-settles-with-their-release-ready'
+  structuredData:
+    headings:
+      - content: 'The P2P market for this API key: networks, contracts, tokens, rails,
+          fee and matcher'
+        id: the-p2p-market-for-this-api-key-networks-contracts-tokens-rails-fee-and-matcher
+      - content: Build an unsigned transaction for a wallet or a bot to sign
+        id: build-an-unsigned-transaction-for-a-wallet-or-a-bot-to-sign
+      - content: 'Quote a purchase or a sale: the merchant, the price and the fees, for
+          a minute'
+        id: quote-a-purchase-or-a-sale-the-merchant-the-price-and-the-fees-for-a-minute
+      - content: List the orders you created
+        id: list-the-orders-you-created
+      - content: Create an order from a quote
+        id: create-an-order-from-a-quote
+      - content: Get one of your orders
+        id: get-one-of-your-orders
+      - content: Report that the person sent the local money (purchases and charges)
+        id: report-that-the-person-sent-the-local-money-purchases-and-charges
+      - content: Give up a purchase before paying, or withdraw a payout nobody accepted
+        id: give-up-a-purchase-before-paying-or-withdraw-a-payout-nobody-accepted
+      - content: Escalate a paid purchase the merchant does not release
+        id: escalate-a-paid-purchase-the-merchant-does-not-release
+      - content: List the orders your merchant accounts fill
+        id: list-the-orders-your-merchant-accounts-fill
+      - content: Get one order your merchant account fills
+        id: get-one-order-your-merchant-account-fills
+      - content: Find the orders an incoming bank transfer settles, with their release
+          ready
+        id: find-the-orders-an-incoming-bank-transfer-settles-with-their-release-ready
+    contents:
+      - content: >-
+          Everything an integration needs on the key’s tier (a `prod` key:
+          mainnet; a `dev` key: test networks): each network the market runs on,
+          with its contract (checked against this service’s build), its tokens,
+          the protocol fee and whether it is paused; the currencies and the
+          fields of each payment rail; the order windows and the bond rate; and
+          the matcher address a seller authorises with `setMatcher`. `available`
+          is false, and `networks` empty, where the market does not run yet. A
+          network whose node does not answer is left out of this answer.
+
+
+          Requires the `p2p:read` scope.
+        heading: the-p2p-market-for-this-api-key-networks-contracts-tokens-rails-fee-and-matcher
+      - content: >-
+          One of: `approve` / `deposit` / `withdraw` (`args`: `token`, `amount`
+          in base units), `setOperator` (`operator`, `permissions` as bits or
+          names: open, release, trade, withdraw; 0 revokes), `setMatcher`
+          (`maxPerOrder` in base units, 0 revokes; `autoSettle`, refused for an
+          account that sells tokens through offers), and the order actions
+          `accept`, `markPaid`, `release`, `cancel`, `dispute` (`orderId`).
+          `from` is one of your account ids (or addresses), or the seller’s
+          address of one of your sales. An order action checks the order (yours
+          as client or as merchant), its status and that `from` is the party
+          that may act, so a wallet never signs what the contract would revert.
+          Nothing is signed or sent here.
+
+
+          Requires the `p2p:write` scope.
+        heading: build-an-unsigned-transaction-for-a-wallet-or-a-bot-to-sign
+      - content: >-
+          The person types an amount; the market picks the merchant: the best
+          price among those that can fill it right now (a fresh price, the
+          amount within their limits, the rail, room for another order, and
+          on-chain liquidity: for a purchase the merchant’s balance and its
+          matcher cap, for a sale its bond), then reputation. The answer names
+          the merchant by its display name and track record only. Create the
+          order with `POST /v1/p2p/orders` before `expiresAt`.
+
+
+          Requires the `p2p:write` scope.
+        heading: quote-a-purchase-or-a-sale-the-merchant-the-price-and-the-fees-for-a-minute
+      - content: >-
+          Purchases, sales, charges’ orders and payouts, newest first, on the
+          key’s tier, optionally by `status` and `kind`; paginated with `take`
+          and `skip`. Payment details are left out of lists: read one order for
+          them.
+
+
+          Requires the `p2p:read` scope.
+        heading: list-the-orders-you-created
+      - content: >-
+          A purchase (BUY) is opened by the matcher on the merchant’s balance,
+          delivering to `recipient`; the answer carries the merchant’s payment
+          details at once, and `paymentDeadline` once the chain shows the order
+          open (`P2P_ORDER_CREATED`). A sale (SELL) answers `transactions`: the
+          exact approval and `openWithDeposit`, for the `seller` wallet to sign;
+          the merchant accepts it with a bond and pays `beneficiary`. One order
+          per quote: the same quote and wallet again answer the same order.
+
+
+          Requires the `p2p:write` scope.
+        heading: create-an-order-from-a-quote
+      - content: >-
+          Its status as the chain last showed it, its deadlines and
+          transactions, and, on a live purchase or charge, the merchant’s
+          account to pay (`paymentDetails`).
+
+
+          Requires the `p2p:read` scope.
+        heading: get-one-of-your-orders
+      - content: >-
+          The matcher marks the order paid on-chain for the buyer, with the
+          transfer `reference` kept for the merchant; from then on the merchant
+          can no longer take the tokens back alone. Only for a purchase or a
+          charge awaiting payment, before its deadline.
+
+
+          Requires the `p2p:write` scope.
+        heading: report-that-the-person-sent-the-local-money-purchases-and-charges
+      - content: >-
+          The matcher cancels the order for the buyer and its tokens go back to
+          the seller. A purchase or a charge awaiting payment, or a payout
+          awaiting acceptance; a sale is cancelled by the seller’s own wallet
+          (`POST /v1/p2p/transactions`).
+
+
+          Requires the `p2p:write` scope.
+        heading: give-up-a-purchase-before-paying-or-withdraw-a-payout-nobody-accepted
+      - content: >-
+          The matcher disputes the order for the buyer and the arbiter decides
+          how it is split, paying only the order’s own buyer and seller. A paid
+          purchase or charge; a sale’s or a payout’s dispute is signed by its
+          own wallet (`POST /v1/p2p/transactions`).
+
+
+          Requires the `p2p:write` scope.
+        heading: escalate-a-paid-purchase-the-merchant-does-not-release
+      - content: >-
+          Newest first, on the key’s tier, optionally by `status` and `kind`;
+          paginated with `take` and `skip`. A live order carries what you need
+          to settle it: the payer’s name and document on a purchase or a charge,
+          the beneficiary’s account on a sale or a payout.
+
+
+          Requires the `p2p:read` scope.
+        heading: list-the-orders-your-merchant-accounts-fill
+      - content: >-
+          As in the list. Nothing about the client that created it; the other
+          party’s details only while it is live.
+
+
+          Requires the `p2p:read` scope.
+        heading: get-one-order-your-merchant-account-fills
+      - content: >-
+          For a merchant’s bot: forward each bank notification. The answer lists
+          your live purchases and charges for that exact amount and currency
+          (created before `receivedAt`), best first: a reported payment, a
+          matching payer name and document score higher. Each carries its
+          `release` transaction for your wallet or bot to sign; nothing moves
+          until it does.
+
+
+          Requires the `p2p:read` scope.
+        heading: find-the-orders-an-incoming-bank-transfer-settles-with-their-release-ready
+---
+
+{/* This file was generated by Fumadocs. Do not edit this file directly. Any changes should be made by running the generation command again. */}
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="./openapi.json" webhooks={[]} operations={[{"path":"/v1/p2p/market","method":"get"},{"path":"/v1/p2p/transactions","method":"post"},{"path":"/v1/p2p/quotes","method":"post"},{"path":"/v1/p2p/orders","method":"get"},{"path":"/v1/p2p/orders","method":"post"},{"path":"/v1/p2p/orders/{id}","method":"get"},{"path":"/v1/p2p/orders/{id}/paid","method":"post"},{"path":"/v1/p2p/orders/{id}/cancel","method":"post"},{"path":"/v1/p2p/orders/{id}/dispute","method":"post"},{"path":"/v1/p2p/merchant/orders","method":"get"},{"path":"/v1/p2p/merchant/orders/{id}","method":"get"},{"path":"/v1/p2p/merchant/transfer-matches","method":"post"}]} showTitle />
+    </>
+  );
+}

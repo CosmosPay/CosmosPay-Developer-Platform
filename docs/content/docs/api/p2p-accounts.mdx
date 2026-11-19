@@ -1,0 +1,213 @@
+---
+title: "P2P Wallets and Offers"
+metaDescription: "Register P2P market wallets with a signature, add the bank accounts buyers pay into and publish offers with the Cosmos Pay API."
+description: 'The merchant side of the P2P market: wallets registered with a
+  signature, the payment methods buyers transfer to, and the offers Cosmos Pay
+  matches orders to.'
+full: true
+_openapi:
+  preload:
+    - ./openapi.json
+  toc:
+    - depth: 2
+      title: Get the message a wallet signs to register
+      url: '#get-the-message-a-wallet-signs-to-register'
+    - depth: 2
+      title: List your registered wallets
+      url: '#list-your-registered-wallets'
+    - depth: 2
+      title: Register a wallet with its signature over a challenge
+      url: '#register-a-wallet-with-its-signature-over-a-challenge'
+    - depth: 2
+      title: Get a wallet with its live balances and matcher terms
+      url: '#get-a-wallet-with-its-live-balances-and-matcher-terms'
+    - depth: 2
+      title: Rename a wallet, set its merchant name, or pause it as a merchant
+      url: '#rename-a-wallet-set-its-merchant-name-or-pause-it-as-a-merchant'
+    - depth: 2
+      title: Forget a wallet, its payment methods and offers
+      url: '#forget-a-wallet-its-payment-methods-and-offers'
+    - depth: 2
+      title: List your payment methods
+      url: '#list-your-payment-methods'
+    - depth: 2
+      title: Add where an account receives local money
+      url: '#add-where-an-account-receives-local-money'
+    - depth: 2
+      title: Change a payment method
+      url: '#change-a-payment-method'
+    - depth: 2
+      title: Delete a payment method
+      url: '#delete-a-payment-method'
+    - depth: 2
+      title: List your offers
+      url: '#list-your-offers'
+    - depth: 2
+      title: Publish a standing price as a merchant
+      url: '#publish-a-standing-price-as-a-merchant'
+    - depth: 2
+      title: Refresh a price, change limits or rails, or switch an offer off
+      url: '#refresh-a-price-change-limits-or-rails-or-switch-an-offer-off'
+    - depth: 2
+      title: Delete an offer
+      url: '#delete-an-offer'
+  structuredData:
+    headings:
+      - content: Get the message a wallet signs to register
+        id: get-the-message-a-wallet-signs-to-register
+      - content: List your registered wallets
+        id: list-your-registered-wallets
+      - content: Register a wallet with its signature over a challenge
+        id: register-a-wallet-with-its-signature-over-a-challenge
+      - content: Get a wallet with its live balances and matcher terms
+        id: get-a-wallet-with-its-live-balances-and-matcher-terms
+      - content: Rename a wallet, set its merchant name, or pause it as a merchant
+        id: rename-a-wallet-set-its-merchant-name-or-pause-it-as-a-merchant
+      - content: Forget a wallet, its payment methods and offers
+        id: forget-a-wallet-its-payment-methods-and-offers
+      - content: List your payment methods
+        id: list-your-payment-methods
+      - content: Add where an account receives local money
+        id: add-where-an-account-receives-local-money
+      - content: Change a payment method
+        id: change-a-payment-method
+      - content: Delete a payment method
+        id: delete-a-payment-method
+      - content: List your offers
+        id: list-your-offers
+      - content: Publish a standing price as a merchant
+        id: publish-a-standing-price-as-a-merchant
+      - content: Refresh a price, change limits or rails, or switch an offer off
+        id: refresh-a-price-change-limits-or-rails-or-switch-an-offer-off
+      - content: Delete an offer
+        id: delete-an-offer
+    contents:
+      - content: >-
+          Answers a single-use message naming the wallet, this API consumer, the
+          tier, a nonce and an expiry ten minutes away. Sign it with the wallet
+          (`personal_sign`, EIP-191) and send the signature to `POST
+          /v1/p2p/accounts`.
+
+
+          Requires the `p2p:write` scope.
+        heading: get-the-message-a-wallet-signs-to-register
+      - content: >-
+          Newest first, on the key’s tier only, paginated with `take` (default
+          20, max 100) and `skip`; the answer is `{ data, total, take, skip }`.
+
+
+          Requires the `p2p:read` scope.
+        heading: list-your-registered-wallets
+      - content: >-
+          The signature must recover the wallet over one of its open challenges
+          for this consumer; that challenge is then used up. A wallet belongs to
+          one consumer per tier. A registered account can hold a balance in the
+          contract, publish offers as a merchant (with a `displayName`), receive
+          charges and pay out.
+
+
+          Requires the `p2p:write` scope.
+        heading: register-a-wallet-with-its-signature-over-a-challenge
+      - content: >-
+          The account, and per network the market runs on: its free balance of
+          each token in the contract, what it allows the matcher (`maxPerOrder`,
+          `autoSettle`) and the operators it granted, read from the chain now.
+
+
+          Requires the `p2p:read` scope.
+        heading: get-a-wallet-with-its-live-balances-and-matcher-terms
+      - content: >-
+          PAUSED stops new orders from matching the account; its live orders go
+          on. A suspension set by the platform cannot be lifted here
+          (`invalid_state_transition`).
+
+
+          Requires the `p2p:write` scope.
+        heading: rename-a-wallet-set-its-merchant-name-or-pause-it-as-a-merchant
+      - content: >-
+          Refused while an order it is the merchant or the seller of is live.
+          Its tokens are never touched: they stay in the contract, withdrawable
+          by the wallet.
+
+
+          Requires the `p2p:write` scope.
+        heading: forget-a-wallet-its-payment-methods-and-offers
+      - content: >-
+          Newest first, on the key’s tier, optionally for one `accountId`;
+          paginated with `take` and `skip`. Each is shown in full: they are
+          yours.
+
+
+          Requires the `p2p:read` scope.
+        heading: list-your-payment-methods
+      - content: >-
+          The details are checked per rail (CBU/CVU and CUIT check digits,
+          CLABE, PIX keys by type, and the rest by shape) and sealed at rest. A
+          merchant’s method on a rail is what a person pays on a purchase; it is
+          shown to that counterparty only while the order is live.
+
+
+          Requires the `p2p:write` scope.
+        heading: add-where-an-account-receives-local-money
+      - content: >-
+          New details are checked like a new method’s; the rail and currency
+          never change. An inactive method is no longer shown on new orders, and
+          an account with none active on a rail is not matched for purchases on
+          it.
+
+
+          Requires the `p2p:write` scope.
+        heading: change-a-payment-method
+      - content: >-
+          A live order that named it no longer shows payment details to its
+          payer: deactivate it instead while orders are open.
+
+
+          Requires the `p2p:write` scope.
+        heading: delete-a-payment-method
+      - content: >-
+          Newest first, on the key’s tier, optionally for one `accountId`;
+          paginated with `take` and `skip`. `priceFresh` says whether each can
+          be matched now.
+
+
+          Requires the `p2p:read` scope.
+        heading: list-your-offers
+      - content: >-
+          A price in local money per token on one network, token and currency,
+          on the rails you take, with order limits. SELL_TOKEN offers fill
+          purchases from your balance in the contract through the matcher
+          (authorise it with `setMatcher`, and keep an active payment method on
+          each rail); BUY_TOKEN offers fill sales and payouts, accepted by you
+          with a 10% bond. A price older than `priceTtlSeconds` is not matched:
+          refresh it with a PATCH.
+
+
+          Requires the `p2p:write` scope.
+        heading: publish-a-standing-price-as-a-merchant
+      - content: >-
+          A new `price` restarts its lifetime: this is the call a merchant’s bot
+          makes on every price tick. Orders already open keep the price they
+          were matched at.
+
+
+          Requires the `p2p:write` scope.
+        heading: refresh-a-price-change-limits-or-rails-or-switch-an-offer-off
+      - content: |-
+          Orders already matched to it go on; nothing new matches it.
+
+          Requires the `p2p:write` scope.
+        heading: delete-an-offer
+---
+
+{/* This file was generated by Fumadocs. Do not edit this file directly. Any changes should be made by running the generation command again. */}
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="./openapi.json" webhooks={[]} operations={[{"path":"/v1/p2p/accounts/challenge","method":"post"},{"path":"/v1/p2p/accounts","method":"get"},{"path":"/v1/p2p/accounts","method":"post"},{"path":"/v1/p2p/accounts/{id}","method":"get"},{"path":"/v1/p2p/accounts/{id}","method":"patch"},{"path":"/v1/p2p/accounts/{id}","method":"delete"},{"path":"/v1/p2p/payment-methods","method":"get"},{"path":"/v1/p2p/payment-methods","method":"post"},{"path":"/v1/p2p/payment-methods/{id}","method":"patch"},{"path":"/v1/p2p/payment-methods/{id}","method":"delete"},{"path":"/v1/p2p/offers","method":"get"},{"path":"/v1/p2p/offers","method":"post"},{"path":"/v1/p2p/offers/{id}","method":"patch"},{"path":"/v1/p2p/offers/{id}","method":"delete"}]} showTitle />
+    </>
+  );
+}

@@ -147,6 +147,44 @@ export const TAGS = [
     description: 'Local money out through P2P buyers: the market, a firm quote, and sale sessions that open a hosted sale the seller sends the stablecoin from.',
   },
   {
+    name: 'p2p-market',
+    title: 'P2P Market',
+    meta: 'Trade stablecoins for local money between people with the Cosmos Pay API: wallets, offers, quotes, orders, charges, payouts and bots.',
+    description:
+      'Stablecoins for local money between people, with Cosmos Pay picking the merchant for each order. ' +
+      'Register wallets, publish offers, quote and open orders, collect with charges, pay out in batches, ' +
+      'and build the unsigned transactions your wallets and bots sign. Funds stay locked in the market ' +
+      'contract until the seller releases them.',
+  },
+  {
+    // Not server tags: transformSpec moves the P2P market's wallet, payment-method and offer
+    // operations (P2P_ACCOUNTS) and its charge and payout operations (P2P_COLLECTIONS) here, as it
+    // does for KYC, so no page passes the 500 KB HTML budget (scripts/build-docs.mjs): the market's
+    // 33 operations on one page weighed 745 KB.
+    name: 'p2p-accounts',
+    title: 'P2P Wallets and Offers',
+    meta: 'Register P2P market wallets with a signature, add the bank accounts buyers pay into and publish offers with the Cosmos Pay API.',
+    description:
+      'The merchant side of the P2P market: wallets registered with a signature, the payment methods ' +
+      'buyers transfer to, and the offers Cosmos Pay matches orders to.',
+  },
+  {
+    name: 'p2p-collections',
+    title: 'P2P Charges and Payouts',
+    meta: 'Collect local money into stablecoins with P2P charges and pay bank accounts in batches from your balance with the Cosmos Pay API.',
+    description:
+      'Charges that collect local money into stablecoins through a hosted payer page, and payout ' +
+      'batches that pay bank accounts from your balance in the market contract.',
+  },
+  {
+    name: 'p2p-checkout',
+    title: 'P2P Checkout',
+    meta: 'The payer side of a Cosmos Pay P2P charge, without an API key: read the charge, start paying, follow the order and report the transfer.',
+    description:
+      'The payer side of a P2P charge, called from the hosted charge page without an API key: read the ' +
+      'charge, start paying it, follow the order with its payer token and report the transfer.',
+  },
+  {
     name: 'offramp',
     title: 'Off-ramp',
     description: 'Fiat out: quotes, payout authorization, and payout tracking.',
@@ -244,6 +282,10 @@ const KEPT_SCHEMES = new Set(['sep-token']);
 const HTTP_METHODS = new Set(['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace']);
 /** The KYC operations the docs show on their own page (the `kyc-accounts` tag above). */
 const KYC_ACCOUNTS = /\/(?:wallets|bank-accounts)(?:\/|$)|^\/v1\/kyc\/(?:rails|bank-details)$/;
+/** The P2P market operations the docs show on pages of their own (the `p2p-accounts` and
+    `p2p-collections` tags above). */
+const P2P_ACCOUNTS = /^\/v1\/p2p\/(?:accounts|payment-methods|offers)(?:\/|$)/;
+const P2P_COLLECTIONS = /^\/v1\/p2p\/(?:charges|payouts)(?:\/|$)/;
 
 /** Every tag the operations use, in document order. */
 export function tagsUsed(spec) {
@@ -274,6 +316,15 @@ export function transformSpec(source, options = {}) {
     );
   }
   spec.tags = TAGS.map((t) => ({ name: t.name, description: t.description }));
+  for (const [route, methods] of Object.entries(spec.paths || {})) {
+    const p2pTag = P2P_ACCOUNTS.test(route) ? 'p2p-accounts' : P2P_COLLECTIONS.test(route) ? 'p2p-collections' : null;
+    if (!p2pTag) continue;
+    for (const [m, op] of Object.entries(methods)) {
+      if (HTTP_METHODS.has(m) && Array.isArray(op?.tags) && op.tags.includes('p2p-market')) {
+        op.tags = op.tags.map((t) => (t === 'p2p-market' ? p2pTag : t));
+      }
+    }
+  }
   for (const [route, methods] of Object.entries(spec.paths || {})) {
     if (!KYC_ACCOUNTS.test(route)) continue;
     for (const [m, op] of Object.entries(methods)) {
