@@ -353,6 +353,7 @@ export default {
     listError: "Couldn't load the orders.",
     head: {
       order: "Order",
+      amount: "Amount",
       fiat: "Local money",
       tokens: "Tokens",
       status: "Status",
