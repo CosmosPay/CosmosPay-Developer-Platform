@@ -130,7 +130,8 @@ export function appApi(f: Fetch = (...a) => fetch(...a)) {
   return {
     challenge: (address: string) => request("session/challenge", post({ address }), (v) => { const o = obj(v); return o && typeof o.id === "string" && typeof o.message === "string" ? { id: o.id, message: o.message } : null; }, f),
     signIn: (challengeId: string, signature: string) => request("session", post({ challengeId, signature }), parseSession, f),
-    session: () => request("session", { method: "GET" }, parseSession, f),
+    /* The wallet this browser is signed in with, or null. */
+    session: () => request("session", { method: "GET" }, (v) => ({ value: parseSession(v) }), f).then((x) => x.value),
     signOut: () => request("session", { method: "DELETE" }, any, f),
     market: () => request("market", { method: "GET" }, parseMarket, f),
     quote: (body: Record<string, unknown>) => request("quotes", post(body), parseQuote, f),

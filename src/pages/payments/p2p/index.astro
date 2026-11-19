@@ -1,0 +1,26 @@
+---
+/* /p2p on payments.cosmospay.lat: the public P2P app (src/components/cosmos/p2p/P2pApp.tsx). Buy USDC
+ * with local money or sell it for local money, signed in with an EVM wallet; the page talks only to
+ * its own server route (/p2p/api/*), which holds Cosmos Pay's integrator key. Not indexed (an app,
+ * not a content page): the payments robots.txt keeps it out and the layout says noindex. The
+ * widget is the dashboard's swap widget, so its styles come along as on /swaps. */
+import "@/styles/views.css";
+import "@/styles/dashboard.css";
+import "@/styles/public-swaps.css";
+import "@/styles/p2p.css";
+import PaymentsLayout from "@/layouts/PaymentsLayout.astro";
+import SiteFooter from "@/components/cosmos/layout/SiteFooter";
+import P2pApp from "@/components/cosmos/p2p/P2pApp";
+import { messages } from "@/lib/i18n/messages/index";
+
+const lang = Astro.locals.lang ?? "en";
+const t = (messages as Record<string, typeof messages.en>)[lang] ?? messages.en;
+const a = (t.p2pPublic as any).app;
+---
+
+<PaymentsLayout title={a.metaTitle} description={a.metaDescription}>
+  <main id="main" class="pswap-page p2pa-page">
+    <P2pApp client:load lang={lang} />
+  </main>
+  <SiteFooter slot="footer" lang={lang} area="payments" />
+</PaymentsLayout>

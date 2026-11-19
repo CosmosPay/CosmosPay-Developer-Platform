@@ -161,7 +161,8 @@ export const ALL: APIRoute = async ({ request, url, clientAddress }) => {
       });
     }
     case "session":
-      return session ? reply(200, { address: session.address, expiresAt: new Date(session.exp).toISOString() }) : refuse(401, "Not signed in.");
+      // Signed out is an answer, not an error: the page asks on every load.
+      return reply(200, session ? { address: session.address, expiresAt: new Date(session.exp).toISOString() } : null);
     case "signOut":
       return reply(200, null, "OK", { "Set-Cookie": clearSessionCookie(SECURE) });
     case "market":

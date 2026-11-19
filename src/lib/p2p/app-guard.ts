@@ -2,7 +2,8 @@
    Cosmos Pay's integrator key, for a visitor bound to one wallet (app-session.ts). A whitelist:
    anything not named here answers 404 without leaving this server.
 
-     GET  market                               the networks, tokens, currencies and rails
+     GET  market                               the networks, tokens, currencies and rails (public:
+                                               no session needed, limited per network address)
      POST quotes                               a price for an amount (only the quote's own fields)
      POST orders                               BUY: the recipient IS the session's wallet;
                                                SELL: the seller IS the session's wallet
@@ -62,8 +63,10 @@ export function routeOf(method: string, segments: string[]): AppRoute | null {
   return null;
 }
 
-/** Whether an operation needs the wallet's session (everything but signing in). */
-export const needsSession = (op: AppOp) => op !== "challenge" && op !== "signIn" && op !== "session" && op !== "signOut";
+/** Whether an operation needs the wallet's session: everything but signing in and the market,
+    which is public (networks, tokens, currencies, rails; the contract addresses a wallet needs
+    anyway) so the page can show it before a wallet is connected. A price already needs one. */
+export const needsSession = (op: AppOp) => op !== "challenge" && op !== "signIn" && op !== "session" && op !== "signOut" && op !== "market";
 
 type Body = Record<string, unknown> | null;
 type Shaped = { ok: true; body: Record<string, unknown> } | { ok: false; message: string };

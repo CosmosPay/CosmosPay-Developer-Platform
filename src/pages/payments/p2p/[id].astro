@@ -1,0 +1,26 @@
+---
+/* /p2p/{chargeId} on payments.cosmospay.lat: the hosted page that pays a merchant's P2P charge
+ * (src/components/cosmos/p2p/P2pChargePay.tsx). The HTML is a shell: the charge and the payer's
+ * order are read by the browser from the gateway's keyless routes (/v1/p2p-checkout/*,
+ * src/lib/p2p/checkout-api.ts), never here, so the community server budgets them per payer. */
+import "@/styles/checkout.css";
+import "@/styles/p2p.css";
+import PaymentsLayout from "@/layouts/PaymentsLayout.astro";
+import { P2pChargePay } from "@/components/cosmos/p2p/P2pChargePay";
+import { messages } from "@/lib/i18n/messages/index";
+import { API_BASE } from "@/lib/payments/urls";
+
+const { id } = Astro.params;
+if (!id || !/^[a-z0-9][a-z0-9-]{7,63}$/.test(id)) {
+  return Astro.rewrite("/404");
+}
+const lang = Astro.locals.lang ?? "en";
+const t = (messages as Record<string, typeof messages.en>)[lang] ?? messages.en;
+const y = (t.p2pPublic as any).pay;
+---
+
+<PaymentsLayout title={y.metaTitle} description={y.metaDescription}>
+  <main id="main" class="ck-page p2pc-page">
+    <P2pChargePay client:load id={id} apiBase={API_BASE} lang={lang} />
+  </main>
+</PaymentsLayout>

@@ -31,7 +31,8 @@ test("only the whitelisted operations exist", () => {
     ["GET", ["market", "x"]], ["GET", []], ["POST", ["orders", ID, "paid", "x"]], ["GET", ["session", "challenge"]],
   ] as const) assert.equal(routeOf(m, [...p]), null, `${m} ${p.join("/")}`);
   assert.ok(!needsSession("challenge") && !needsSession("signIn") && !needsSession("session") && !needsSession("signOut"));
-  for (const op of ["market", "quote", "createOrder", "listOrders", "getOrder", "orderAction", "transaction"] as const) assert.ok(needsSession(op), op);
+  assert.ok(!needsSession("market"), "the market is public");
+  for (const op of ["quote", "createOrder", "listOrders", "getOrder", "orderAction", "transaction"] as const) assert.ok(needsSession(op), op);
   for (const op of Object.keys(LIMITS)) assert.ok(LIMITS[op as keyof typeof LIMITS].perKey.limit > 0, op);
 });
 
