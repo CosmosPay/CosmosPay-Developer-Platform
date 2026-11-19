@@ -84,10 +84,11 @@ _openapi:
           Everything an integration needs on the key’s tier (a `prod` key:
           mainnet; a `dev` key: test networks): each network the market runs on,
           with its contract (checked against this service’s build), its tokens,
-          the protocol fee and whether it is paused; the currencies and the
-          fields of each payment rail; the order windows and the bond rate; and
-          the matcher address a seller authorises with `setMatcher`. `available`
-          is false, and `networks` empty, where the market does not run yet. A
+          the protocol fee, whether it is paused, and its coin, explorer and a
+          public node for a wallet to add it; the currencies and the fields of
+          each payment rail; the order windows and the bond rate; and the
+          matcher address a seller authorises with `setMatcher`. `available` is
+          false, and `networks` empty, where the market does not run yet. A
           network whose node does not answer is left out of this answer.
 
 
@@ -123,9 +124,9 @@ _openapi:
         heading: quote-a-purchase-or-a-sale-the-merchant-the-price-and-the-fees-for-a-minute
       - content: >-
           Purchases, sales, charges’ orders and payouts, newest first, on the
-          key’s tier, optionally by `status` and `kind`; paginated with `take`
-          and `skip`. Payment details are left out of lists: read one order for
-          them.
+          key’s tier, optionally by `status`, `kind` and the `address` of a
+          wallet on either side; paginated with `take` and `skip`. Payment
+          details are left out of lists: read one order for them.
 
 
           Requires the `p2p:read` scope.
