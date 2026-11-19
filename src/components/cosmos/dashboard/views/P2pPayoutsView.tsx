@@ -27,9 +27,9 @@ import { FormSteps, FormStep, FormStepsFooter, useFormSteps } from "@/components
 import { countBy, inRange, matchesQuery, DATE_RANGES } from "@/lib/dashboard-filters";
 import { parsePayoutCsv, payoutItems, payoutTemplate, PAYOUT_MAX_ITEMS, type PayoutFile } from "@/lib/p2p/csv";
 import { fromBaseUnits } from "@/lib/p2p/amounts";
-import type { P2pAccount, P2pMarket, P2pPayoutBatch, P2pPayoutItem } from "@/lib/p2p/types";
+import type { P2pAccount, P2pMarket, P2pOrder, P2pPayoutBatch, P2pPayoutItem } from "@/lib/p2p/types";
 import {
-  p2pApi, useP2pMarket, useP2pList, networkOf, networkName, fiatText, tokenText, NetworkCell, P2pTokenMark, OrderStatus, WalletTxDialog, buildTx,
+  p2pApi, useP2pMarket, useP2pList, networkOf, networkName, symbolOf, fiatText, tokenText, NetworkCell, P2pTokenMark, OrderStatus, WalletTxDialog, buildTx,
   accountName, railName, fieldErrorText, Notice, accountOptions, networkOptions,
 } from "@/components/cosmos/dashboard/p2p/shared";
 
@@ -53,6 +53,8 @@ export function P2pPayoutsView({ canManage = false, orgId, env = "dev" }: { canM
   const market = useP2pMarket(env, orgId);
   const batches = useP2pList<P2pPayoutBatch>("payouts", env, orgId, 10_000);
   const accounts = useP2pList<P2pAccount>("accounts", env, orgId);
+  // A list of batches carries no orders: the figures count the payout orders themselves.
+  const payoutOrders = useP2pList<P2pOrder>("orders?kind=PAYOUT", env, orgId, 10_000);
   const [creating, setCreating] = useState(false);
   const [detail, setDetail] = useState<P2pPayoutBatch | null>(null);
 
@@ -77,7 +79,8 @@ export function P2pPayoutsView({ canManage = false, orgId, env = "dev" }: { canM
   const pg = usePaged(view, JSON.stringify(filters));
   const tref = useRef(null); useGsapRows(tref, pg.page + "|" + view.length);
   const items = rows.flatMap((b) => b.items);
-  const toRelease = items.filter((i) => i.status === "paid").length;
+  const orders = payoutOrders.rows.filter((o) => o.kind === "PAYOUT");
+  const toRelease = orders.filter((o) => o.status === "paid").length;
   const itemCount = rows.reduce((n, b) => n + (b.itemCount ?? b.items.length), 0);
   const loading = batches.loading;
 
@@ -89,7 +92,7 @@ export function P2pPayoutsView({ canManage = false, orgId, env = "dev" }: { canM
         items={[
           { key: "batches", label: p.figures.batches, value: rows.length },
           { key: "items", label: p.figures.items, value: itemCount },
-          { key: "done", label: p.figures.completed, value: items.filter((i) => i.status === "completed").length },
+          { key: "done", label: p.figures.completed, value: orders.filter((o) => o.status === "completed").length },
           { key: "release", label: p.figures.toRelease, value: toRelease, sub: p.figures.toReleaseSub },
         ]}
       />
@@ -125,7 +128,7 @@ export function P2pPayoutsView({ canManage = false, orgId, env = "dev" }: { canM
                 <tr key={b.id} className="row-click" onClick={() => setDetail(b)}>
                   <td className="tid" onClick={(e) => e.stopPropagation()}>
                     <span className="cell-mark">
-                      <P2pTokenMark market={market} network={b.network} symbol={b.token} />
+                      <P2pTokenMark market={market} network={b.network} symbol={symbolOf(market, b.network, b.token)} />
                       <RecordLink onOpen={() => setDetail(b)} copy={b.id} title={b.id}
                         preview={() => <PreviewCard label={p.head.batch} title={b.id} headline={<><b>{totals(b.items, lang)}</b><Pill st={pillOf(b.status)} tone={tone(b.status)} label={p.state[b.status]} /></>} fields={[[p.head.payouts, String(b.items.length)], [t.dash.filters.network, networkName(market, b.network)]]} />}
                       ><code>{shortAddress(b.id)}</code></RecordLink>
@@ -202,7 +205,7 @@ function BatchDetail({ batch: listed, market, account, env, orgId, canManage, on
         <div className="modal-eyebrow">{p.head.batch} · {p.state[b.status]}</div>
         <h3 title={b.id}>{totals(b.items, lang)}</h3>
         <div className="paylink-fields" style={{ marginBottom: 14 }}>
-          {[[p.head.from, accountName(account)], [t.dash.filters.network, <NetworkCell market={market} id={b.network} />], [t.p2p.offers.form.token, b.token], [p.head.created, fmtDateTime(b.createdAt)]].map(([k, v]) => (
+          {[[p.head.from, accountName(account)], [t.dash.filters.network, <NetworkCell market={market} id={b.network} />], [t.p2p.offers.form.token, symbolOf(market, b.network, b.token)], [p.head.created, fmtDateTime(b.createdAt)]].map(([k, v]) => (
             <div className="paylink-field" key={String(k)}><span className="pf-k">{k}</span><span className="pf-v">{v}</span></div>
           ))}
         </div>

@@ -94,7 +94,9 @@ export function useP2pList<T>(path: string, env: string, orgId: string, pollMs =
     const k = `${path}|${env}|${orgId}`;
     key.current = k;
     if (!quiet) setLoading(true);
-    return p2pApi.get(path, env, orgId, { take: 100 })
+    // A path may carry its own filters ("orders?kind=PAYOUT").
+    const [base, qs] = path.split("?");
+    return p2pApi.get(base, env, orgId, { take: 100, ...Object.fromEntries(new URLSearchParams(qs ?? "")) })
       .then((res) => { if (key.current === k) { setRows(rowsOf<T>(res)); setError(false); } })
       .catch(() => { if (key.current === k && !quiet) setError(true); })
       .finally(() => { if (key.current === k) setLoading(false); });
@@ -126,6 +128,11 @@ export function useNow(ms = 1000): number {
 /* --- Words and numbers --- */
 
 export const networkOf = (market: P2pMarket | null | undefined, id: string): P2pNetwork | null => market?.networks.find((n) => n.id === id) ?? null;
+/** A token's symbol on a network, from its symbol or its contract address (a payout batch names
+    its token by address). */
+export const symbolOf = (market: P2pMarket | null | undefined, network: string, token: string) =>
+  networkOf(market, network)?.tokens.find((t) => t.symbol === token || t.address.toLowerCase() === token.toLowerCase())?.symbol ?? token;
+
 export const networkName = (market: P2pMarket | null | undefined, id: string) =>
   networkOf(market, id)?.name ?? (NETWORK_NAMES as Record<string, string>)[id] ?? id;
 
