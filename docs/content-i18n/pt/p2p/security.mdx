@@ -1,0 +1,67 @@
+---
+title: Modelo de segurança P2P
+description: Quem tem cada chave no mercado P2P, o que cada chave pode fazer e os limites que protegem comerciantes, clientes e seus usuários.
+---
+
+O mercado P2P não é custodial. A Cosmos Pay nunca tem uma chave capaz de mover os tokens de um
+comerciante, de um cliente ou de um usuário. Cada ação on-chain é uma transação que a API monta sem
+assinatura e que a própria carteira da pessoa assina.
+
+## Chaves e papéis
+
+| Papel | Titular | Onde fica a chave | O que pode fazer |
+| --- | --- | --- | --- |
+| Comerciante, cliente, usuário | Cada parte | A própria carteira | Depositar, sacar, liberar, aceitar, marcar como paga, cancelar e disputar nas próprias ordens |
+| Bot | O serviço de um comerciante | A própria carteira do bot | Apenas as permissões que o comerciante concedeu |
+| Matcher | Cosmos Pay | Uma chave de servidor | Abrir ordens sobre o saldo de um comerciante até o limite por ordem do comerciante, e agir pelo comprador nas ordens que abriu |
+| Árbitro | Operações da Cosmos Pay | Uma carteira multiassinatura externa, nunca um servidor | Resolver ordens em disputa |
+| Proprietário | Operações da Cosmos Pay | Uma carteira externa, nunca um servidor | Definir tarifas, tokens, o árbitro e a tesouraria, e pausar o contrato |
+
+A chave do matcher paga o gás e tem a autoridade de matcher, nada mais. Ela não pode sacar um saldo,
+liberar uma ordem por conta própria nem enviar tokens para um endereço que escolher.
+
+## Os limites do matcher
+
+- **Limite por ordem.** Cada comerciante define com `setMatcher` o máximo que uma ordem pode bloquear. Um limite de `0` revoga o matcher.
+- **Prazos.** Uma ordem que ninguém paga ou aceita a tempo é cancelada, e os tokens voltam ao vendedor.
+- **Registro prévio.** Cada transação que o matcher envia é assinada e gravada no banco de dados antes de ser transmitida, e só esses mesmos bytes são reenviados.
+- **Conferência do pagador.** Uma compra indica o pagador, e os comerciantes liberam apenas uma transferência dessa pessoa.
+
+## O ponto de confiança, dito com clareza
+
+Uma chave do matcher vazada junto com uma chave do árbitro vazada poderiam esvaziar a liquidez dos
+comerciantes: o matcher abriria ordens e o árbitro resolveria disputas falsas a favor do atacante.
+
+Uma chave do matcher vazada sozinha não consegue. Ela pode bloquear liquidez em ordens até que os
+prazos a devolvam. Para um vendedor que ativou a liquidação automática, ela também poderia deixar
+serem liberadas ordens que o vendedor não disputa a tempo.
+
+Por isso:
+
+- O árbitro é uma carteira multiassinatura mantida pelas operações da Cosmos Pay, nunca uma chave de servidor.
+- A liquidação automática nunca é oferecida a comerciantes de liquidez. A API a recusa para uma carteira com ofertas de venda ativas.
+- Cada transação do matcher é registrada antes da transmissão, então qualquer uso da chave fica visível.
+
+## Dados
+
+- Meios de recebimento, contas de pagamento a terceiros e identidades dos pagadores são armazenados criptografados.
+- Uma ordem mostra a cada parte apenas o que o seu papel precisa: o pagador vê a conta do comerciante para aquela ordem, o comerciante vê o nome e o documento do pagador, e ninguém vê a agenda de contas de outra parte.
+- As carteiras são registradas com uma assinatura EIP-191 sobre um desafio de uso único que expira, e um endereço pertence a uma só organização.
+
+## O app P2P público
+
+O app P2P próprio da Cosmos Pay, no domínio de pagamentos, nunca envia uma chave de API ao navegador.
+O servidor dele guarda a chave, e cada pessoa entra com a própria carteira: uma assinatura EIP-191
+sobre um desafio de uso único que expira, que vincula a sessão a essa carteira. Uma pessoa vê e opera
+apenas as ordens da carteira com que assinou, com limites de requisições por carteira e por endereço IP.
+
+## Sua integração
+
+- Mantenha as chaves de API no seu servidor. Uma chave com `p2p:write` abre ordens para a sua organização.
+- Dê a cada bot apenas as permissões de que ele precisa, e uma chave própria.
+- Leia a ordem pela API antes de liberar dinheiro ou tokens. Um webhook diz que algo mudou; a ordem diz como ela está agora.
+
+<Cards>
+  <Card title="Início rápido para comerciantes" href="/p2p/merchants/" description="Defina seu limite por ordem e mantenha a liquidação automática desativada." />
+  <Card title="Início rápido para bots" href="/p2p/bots/" description="Dê a um bot apenas as permissões de que ele precisa." />
+</Cards>

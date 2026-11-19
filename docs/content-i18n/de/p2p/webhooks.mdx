@@ -1,0 +1,72 @@
+---
+title: P2P-Webhooks
+description: Die Ereignisse, die P2P-Aufträge, Zahlungsanforderungen und Auszahlungen senden, wer jedes erhält und was sein Payload enthält.
+---
+
+P2P-Ereignisse laufen über dieselben Webhook-Endpunkte wie alle Ereignisse von Cosmos Pay und sind
+genauso signiert. Registrieren Sie einen Endpunkt im Dashboard unter **Webhooks** oder über die API,
+und wählen Sie die Ereignisse unten aus.
+
+## Ereignisse
+
+| Ereignis | Gesendet, wenn |
+| --- | --- |
+| `P2P_ORDER_CREATED` | Ein Auftrag wurde On-Chain eröffnet. |
+| `P2P_ORDER_ACCEPTED` | Der Händler hat einen Verkauf oder eine Auszahlung angenommen und seine Sicherheitsleistung gesperrt. |
+| `P2P_ORDER_PAID` | Die Käuferseite hat die Überweisung gemeldet und den Auftrag als bezahlt markiert. |
+| `P2P_ORDER_COMPLETED` | Der Verkäufer hat freigegeben. Der Käufer hat die Token erhalten. |
+| `P2P_ORDER_CANCELLED` | Der Auftrag wurde storniert. Die Token gingen an den Verkäufer zurück. |
+| `P2P_ORDER_EXPIRED` | Eine Frist ist abgelaufen. Die Token gingen an den Verkäufer zurück. |
+| `P2P_ORDER_DISPUTED` | Eine Seite hat einen Streitfall eröffnet. |
+| `P2P_ORDER_RESOLVED` | Die Schiedsstelle hat den Streitfall entschieden. |
+| `P2P_CHARGE_SUCCEEDED` | Der Auftrag einer Zahlungsanforderung wurde abgeschlossen. |
+| `P2P_PAYOUT_BATCH_COMPLETED` | Alle Einträge eines Auszahlungsstapels sind beendet. |
+
+Abgeschlossene, stornierte, abgelaufene und entschiedene Aufträge, erfolgreiche
+Zahlungsanforderungen und beendete Stapel sind endgültig: Danach folgt kein weiteres Ereignis.
+
+## Wer sie erhält
+
+Die Ereignisse eines Auftrags erreichen zwei Parteien: den Kunden, der ihn eröffnet hat, und den
+Händler, dem er zugeordnet wurde, wenn es verschiedene Organisationen sind. `data.role` sagt, welche
+Sie sind, und der Payload enthält nur, was diese Rolle sehen darf.
+
+| `data.role` | Erhält | Erhält nie |
+| --- | --- | --- |
+| `client` | Den Auftrag, Anzeigename und Bilanz des Händlers, bei einem Kauf das Konto für die Überweisung | Die Adresse des Händlers oder seine anderen Konten |
+| `merchant` | Den Auftrag, bei einem Kauf Name und Dokument des Zahlers, bei einem Verkauf oder einer Auszahlung das Konto des Begünstigten | Die anderen Nutzer oder Aufträge des Kunden |
+
+## Payload
+
+```json
+{
+  "id": "evt_01JD6Q…",
+  "type": "P2P_ORDER_PAID",
+  "createdAt": "2026-11-19T14:02:11.000Z",
+  "data": {
+    "role": "merchant",
+    "id": "9f1c2e4a-…",
+    "kind": "BUY",
+    "status": "paid",
+    "network": "base",
+    "token": "USDC",
+    "tokenAmount": "104.712041",
+    "fiatAmount": "150000.00",
+    "currency": "ARS",
+    "rail": "ar_bank_transfer",
+    "payer": { "name": "Ana Gómez", "document": "20329642330" },
+    "paidReference": "TRX-88421",
+    "externalReference": null
+  }
+}
+```
+
+Verarbeiten Sie jedes Ereignis anhand seiner `id` genau einmal. Lesen Sie den Auftrag erneut über die
+API, bevor Sie Geld bewegen: Ein Ereignis sagt Ihnen, dass sich etwas geändert hat; der Auftrag sagt
+Ihnen, wie er jetzt steht.
+
+## Die Signatur prüfen
+
+Jede Zustellung trägt `X-Cosmos-Signature: t=<unix seconds>,v1=<hex>`, ein HMAC-SHA256 von
+`<t>.<raw body>` mit dem Geheimnis Ihres Endpunkts. Prüfen Sie sie am unveränderten Body, bevor Sie
+dem Ereignis vertrauen. Das SDK erledigt das für Sie: siehe [Webhooks](/sdk/server/webhooks/).

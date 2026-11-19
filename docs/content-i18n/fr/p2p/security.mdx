@@ -1,0 +1,69 @@
+---
+title: Modèle de sécurité P2P
+description: Qui détient chaque clé sur le marché P2P, ce que chaque clé peut faire et les limites qui protègent les marchands, les clients et leurs utilisateurs.
+---
+
+Le marché P2P est non dépositaire. Cosmos Pay ne détient jamais de clé capable de déplacer les jetons
+d'un marchand, d'un client ou d'un utilisateur. Chaque action sur la chaîne est une transaction que
+l'API prépare non signée et que le propre portefeuille de la personne signe.
+
+## Clés et rôles
+
+| Rôle | Détenteur | Où se trouve la clé | Ce qu'elle permet |
+| --- | --- | --- | --- |
+| Marchand, client, utilisateur | Chaque partie | Son propre portefeuille | Déposer, retirer, libérer, accepter, marquer comme payé, annuler et contester sur ses propres ordres |
+| Bot | Le service d'un marchand | Le propre portefeuille du bot | Uniquement les permissions accordées par le marchand |
+| Matcher | Cosmos Pay | Une clé de serveur | Ouvrir des ordres sur le solde d'un marchand jusqu'au plafond par ordre du marchand, et agir pour l'acheteur sur les ordres qu'il a ouverts |
+| Arbitre | Les opérations de Cosmos Pay | Un portefeuille multisignature externe, jamais un serveur | Trancher les ordres en litige |
+| Propriétaire | Les opérations de Cosmos Pay | Un portefeuille externe, jamais un serveur | Fixer les frais, les jetons, l'arbitre et la trésorerie, et mettre le contrat en pause |
+
+La clé du matcher paie le gas et porte l'autorité de matcher, rien de plus. Elle ne peut ni retirer
+un solde, ni libérer un ordre de son propre chef, ni envoyer des jetons à une adresse de son choix.
+
+## Les limites du matcher
+
+- **Plafond par ordre.** Chaque marchand fixe avec `setMatcher` le montant maximal qu'un ordre peut bloquer. Un plafond de `0` révoque le matcher.
+- **Échéances.** Un ordre que personne ne paie ou n'accepte à temps est annulé, et ses jetons reviennent au vendeur.
+- **Enregistrement préalable.** Chaque transaction envoyée par le matcher est signée et écrite en base de données avant sa diffusion, et seuls ces mêmes octets sont renvoyés.
+- **Contrôle du payeur.** Un achat désigne son payeur, et les marchands ne libèrent qu'un virement de cette personne.
+
+## Le point de confiance, dit clairement
+
+Une clé du matcher divulguée en même temps qu'une clé de l'arbitre divulguée pourraient vider la
+liquidité des marchands : le matcher ouvrirait des ordres et l'arbitre trancherait de faux litiges en
+faveur de l'attaquant.
+
+Une clé du matcher divulguée seule ne le peut pas. Elle peut bloquer de la liquidité dans des ordres
+jusqu'à ce que leurs échéances la restituent. Pour un vendeur qui a activé le règlement automatique,
+elle pourrait aussi laisser se libérer des ordres que le vendeur ne conteste pas à temps.
+
+C'est pourquoi :
+
+- L'arbitre est un portefeuille multisignature détenu par les opérations de Cosmos Pay, jamais une clé de serveur.
+- Le règlement automatique n'est jamais proposé aux marchands de liquidité. L'API le refuse pour un portefeuille qui a des offres de vente actives.
+- Chaque transaction du matcher est enregistrée avant sa diffusion, si bien que toute utilisation de la clé est visible.
+
+## Données
+
+- Les moyens d'encaissement, les comptes de versement et l'identité des payeurs sont chiffrés au repos.
+- Un ordre ne montre à chaque partie que ce dont son rôle a besoin : le payeur voit le compte du marchand pour cet ordre, le marchand voit le nom et le document du payeur, et personne ne voit le carnet d'adresses d'une autre partie.
+- Les portefeuilles s'enregistrent avec une signature EIP-191 sur un défi à usage unique qui expire, et une adresse appartient à une seule organisation.
+
+## L'application P2P publique
+
+L'application P2P de Cosmos Pay, sur le domaine des paiements, n'envoie jamais de clé API au
+navigateur. Son serveur conserve la clé, et chaque personne se connecte avec son portefeuille : une
+signature EIP-191 sur un défi à usage unique qui expire, qui lie la session à ce portefeuille. Une
+personne ne voit et n'agit que sur les ordres du portefeuille avec lequel elle a signé, avec des
+limites de requêtes par portefeuille et par adresse IP.
+
+## Votre intégration
+
+- Gardez les clés API sur votre serveur. Une clé avec `p2p:write` ouvre des ordres pour votre organisation.
+- Donnez à chaque bot uniquement les permissions dont il a besoin, et sa propre clé.
+- Lisez l'ordre via l'API avant de libérer de l'argent ou des jetons. Un webhook vous dit que quelque chose a changé ; l'ordre vous dit où il en est.
+
+<Cards>
+  <Card title="Démarrage rapide pour les marchands" href="/p2p/merchants/" description="Fixez votre plafond par ordre et laissez le règlement automatique désactivé." />
+  <Card title="Démarrage rapide pour les bots" href="/p2p/bots/" description="Ne donnez à un bot que les permissions dont il a besoin." />
+</Cards>

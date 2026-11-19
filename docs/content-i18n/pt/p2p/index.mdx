@@ -1,0 +1,116 @@
+---
+title: Mercado P2P
+description: Deixe seus usuários comprarem e venderem stablecoins com moeda local. A Cosmos Pay escolhe o comerciante, o contrato do mercado bloqueia os tokens e cada parte assina com a própria carteira.
+---
+
+O **mercado P2P** permite que as pessoas comprem e vendam stablecoins com moeda local: USDC, e USDT
+onde a rede tem, contra uma transferência bancária, um PIX ou um SPEI. A pessoa digita um valor e a
+Cosmos Pay escolhe o comerciante. Não há livro de ofertas para percorrer nem contraparte para
+escolher.
+
+Os tokens de cada ordem ficam bloqueados no contrato inteligente do mercado até que o vendedor os
+libere ou um prazo os devolva. Ninguém pode movê-los para outro lugar, nem mesmo a Cosmos Pay.
+
+## Quem participa
+
+| Papel | Quem | O que faz |
+| --- | --- | --- |
+| Cliente | Sua integração | Abre ordens para seus usuários: compras, vendas, cobranças e pagamentos a terceiros. |
+| Comerciante | Um provedor de liquidez | Mantém tokens no contrato, publica ofertas, recebe ou envia a moeda local e libera ou aceita ordens. |
+| Matcher | Cosmos Pay | Escolhe o comerciante de cada ordem e abre compras e pagamentos a terceiros sobre o saldo do comerciante, até o limite que o comerciante definiu. |
+| Árbitro | Operações da Cosmos Pay | Resolve disputas a partir de uma carteira multiassinatura externa. |
+
+Uma organização pode ser cliente, comerciante ou as duas coisas. Cada uma registra as carteiras com
+que opera, e cada carteira assina as próprias transações.
+
+## Redes e tokens
+
+O mercado funciona nas redes EVM onde seu contrato está implantado. `GET /v1/p2p/market` lista essas
+redes com o endereço do contrato e os tokens de cada uma, as moedas e os meios de pagamento, as
+tarifas, as janelas de tempo e o endereço do matcher. Leia esse recurso quando sua integração
+iniciar, em vez de fixar as redes no código.
+
+```bash
+curl https://api.cosmospay.lat/cosmos-api/v1/p2p/market \
+  -H "Authorization: Bearer $COSMOS_PAY_API_KEY"
+```
+
+Sua chave de API escolhe o ambiente: chaves `dv_` operam em redes de teste e chaves `prod_` em mainnet.
+
+## Como uma ordem avança
+
+Uma **compra** dá tokens ao seu usuário em troca de moeda local:
+
+1. Você pede uma cotação com o valor em moeda local: `POST /v1/p2p/quotes`. A cotação informa o preço, o valor em tokens, as tarifas e o histórico público do comerciante. Ela vale por 60 segundos.
+2. Você abre a ordem a partir da cotação: `POST /v1/p2p/orders`. O matcher bloqueia os tokens do comerciante no contrato, e a ordem responde a conta do comerciante e o valor exato a transferir.
+3. Seu usuário transfere o dinheiro de uma conta em nome próprio antes do prazo de pagamento. Você informa com `POST /v1/p2p/orders/{id}/paid`.
+4. O comerciante vê o dinheiro chegar e libera a ordem. Os tokens chegam à carteira do seu usuário.
+
+Uma **venda** dá moeda local ao seu usuário em troca de tokens:
+
+1. Você pede uma cotação com o valor em tokens.
+2. Você abre a ordem. A resposta traz duas transações não assinadas para a carteira do seu usuário, `approve` e `openWithDeposit`. O usuário assina e envia as duas, e os tokens dele ficam bloqueados no contrato.
+3. O comerciante aceita antes do prazo de aceitação e bloqueia uma garantia de 10% da ordem.
+4. O comerciante transfere a moeda local para a conta do seu usuário e marca a ordem como paga.
+5. Seu usuário libera os tokens. Se ninguém disputar a ordem, a janela de liquidação a libera sozinha.
+
+Cobranças e pagamentos a terceiros são os mesmos dois fluxos, abertos pela sua organização para
+outra pessoa. Veja [Cobranças](/p2p/collections/) e [Pagamentos a terceiros](/p2p/payouts/).
+
+## Status
+
+Cada ordem responde um destes status. Eles só mudam quando os eventos do contrato são indexados,
+então o que você lê sempre corresponde à blockchain.
+
+| Status | Significado |
+| --- | --- |
+| `pending` | A ordem está sendo aberta on-chain, ou uma venda aguarda a assinatura do vendedor. |
+| `awaiting_acceptance` | Uma venda ou um pagamento a terceiros aguarda o comerciante aceitar e bloquear a garantia. |
+| `awaiting_payment` | Os tokens estão bloqueados. O lado comprador transfere a moeda local. |
+| `paid` | A transferência foi informada. O vendedor confere e libera. |
+| `disputed` | Uma das partes abriu uma disputa. O árbitro decide. |
+| `completed` | O vendedor liberou. O comprador recebeu os tokens. |
+| `cancelled` | A ordem foi cancelada antes de ser concluída. Os tokens voltaram ao vendedor. |
+| `expired` | Um prazo venceu. Os tokens voltaram ao vendedor. |
+| `resolved` | O árbitro resolveu uma disputa. |
+| `failed` | A ordem nunca foi aberta: a transação foi revertida ou o vendedor nunca assinou. |
+
+## Janelas de tempo
+
+| Janela | Padrão | O que limita |
+| --- | --- | --- |
+| Pagamento | 30 minutos | O lado comprador transfere o dinheiro e marca a ordem como paga. |
+| Aceitação | 5 minutos | O comerciante aceita uma venda ou um pagamento a terceiros, que levam garantia. |
+| Liquidação | 6 horas | Uma venda paga é liberada sozinha, a menos que alguém a dispute. |
+
+O mercado responde as janelas em vigor. Quando um prazo vence, a ordem é cancelada e os tokens
+voltam ao vendedor.
+
+## Tarifas
+
+Duas tarifas podem ser aplicadas. As duas saem do que o comprador recebe e ficam fixas quando a
+ordem é aberta.
+
+- A tarifa do protocolo, definida pela Cosmos Pay e informada pelo mercado como `protocolFeeBps`. O contrato a limita a 3%.
+- Uma tarifa de integrador de até 5%, que um cliente pode somar às ordens dos próprios usuários. Ela é paga a uma das carteiras registradas do cliente.
+
+Cada cotação mostra as duas tarifas e o valor líquido antes que alguém assine.
+
+## Acesso
+
+As chaves de API precisam do escopo `p2p:read` para ler o mercado e de `p2p:write` para registrar
+carteiras, publicar ofertas e abrir ordens, cobranças e pagamentos a terceiros. Crie as chaves no
+painel: [Obtenha sua chave de API](/api-keys/). O painel cobre todo o mercado em **P2P**, na barra lateral.
+
+O app P2P próprio da Cosmos Pay, no domínio de pagamentos, funciona sobre esta mesma API e com as mesmas regras.
+
+## Próximos passos
+
+<Cards>
+  <Card title="Início rápido para comerciantes" href="/p2p/merchants/" description="Registre uma carteira, adicione liquidez, publique ofertas e gerencie ordens." />
+  <Card title="Início rápido para bots" href="/p2p/bots/" description="Libere ordens automaticamente quando a transferência chegar." />
+  <Card title="Cobranças" href="/p2p/collections/" description="Cobre em moeda local e receba stablecoins, ou integre a rampa ao seu app." />
+  <Card title="Pagamentos a terceiros" href="/p2p/payouts/" description="Pague até 100 contas bancárias a partir do seu saldo em stablecoins." />
+  <Card title="Webhooks" href="/p2p/webhooks/" description="Os eventos que cada ordem, cobrança e pagamento a terceiros envia." />
+  <Card title="Modelo de segurança" href="/p2p/security/" description="Quem tem cada chave e o que cada uma pode fazer." />
+</Cards>

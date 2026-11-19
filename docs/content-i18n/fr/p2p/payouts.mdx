@@ -1,0 +1,91 @@
+---
+title: Versements
+description: Payez jusqu'à 100 comptes bancaires en monnaie locale depuis votre solde en stablecoins. Chaque versement est apparié à un marchand qui paie le bénéficiaire avant que vos jetons ne soient libérés.
+---
+
+Un lot de versements envoie de la monnaie locale vers des comptes bancaires et le paie avec des
+stablecoins que vous détenez dans le contrat du marché. Chaque élément devient un ordre : un marchand
+achète vos jetons, paie le bénéficiaire et marque l'ordre comme payé, puis vous libérez. Vos jetons
+ne quittent votre solde que vers un marchand qui a déjà payé.
+
+## Avant le premier lot
+
+1. **Enregistrez le portefeuille** qui paie. Voir [Démarrage rapide pour les marchands](/p2p/merchants/).
+2. **Déposez** dans le contrat les jetons dont le lot a besoin.
+3. **Autorisez le matcher de Cosmos Pay** sur ce réseau avec `setMatcher`, avec un plafond par ordre au moins égal à votre plus gros versement. Laissez `autoSettle` désactivé pour libérer chaque versement vous-même, ou activez-le pour que les versements payés se libèrent après la fenêtre de règlement.
+
+## Envoyez un lot
+
+```bash
+curl -X POST https://api.cosmospay.lat/cosmos-api/v1/p2p/payouts \
+  -H "Authorization: Bearer $COSMOS_PAY_API_KEY" -H "Content-Type: application/json" \
+  -d '{
+    "network": "base",
+    "token": "USDC",
+    "accountId": "ACCOUNT_ID",
+    "items": [
+      {
+        "currency": "ARS",
+        "fiatAmount": "150000",
+        "rail": "ar_bank_transfer",
+        "beneficiary": { "holderName": "Ana Gómez", "document": "20329642330", "details": { "cbu": "0170099222000001234561" } },
+        "externalReference": "inv-1001"
+      }
+    ]
+  }'
+```
+
+Un lot contient de 1 à 100 éléments. Les `details` du bénéficiaire suivent le moyen de paiement,
+comme pour les moyens d'encaissement : voir le tableau des moyens dans
+[Démarrage rapide pour les marchands](/p2p/merchants/).
+
+## Ce qui arrive à chaque élément
+
+1. Cosmos Pay apparie l'élément à un marchand qui achète des jetons sur ce moyen et ouvre l'ordre sur votre solde. Le marchand bloque une caution de 10 %.
+2. Le marchand accepte, vire l'argent au bénéficiaire et marque l'ordre comme payé avec la référence du virement.
+3. Vous vérifiez le paiement et libérez : une transaction `release` du générateur, signée par votre portefeuille ou par votre bot avec `PERM_RELEASE`.
+
+Un élément qu'aucun marchand ne peut prendre passe à `rejected` avec le motif ; vos jetons n'ont
+jamais bougé pour lui. Si un marchand n'accepte pas ou ne paie pas à temps, l'échéance vous rend vos jetons.
+
+## Statut du lot
+
+`GET /v1/p2p/payouts/{id}` renvoie le lot avec le statut et l'ordre de chaque élément.
+
+| Statut | Signification |
+| --- | --- |
+| `processing` | Au moins un élément est encore en cours. |
+| `completed` | Tous les éléments ont abouti. |
+| `partial` | Tous les éléments sont terminés et certains n'ont pas abouti. |
+| `failed` | Aucun élément n'a abouti. |
+
+`P2P_PAYOUT_BATCH_COMPLETED` est envoyé quand un lot se termine, et l'ordre de chaque élément envoie
+ses propres événements.
+
+## Importez un CSV depuis le tableau de bord
+
+**P2P → Versements** accepte un fichier CSV avec un bénéficiaire par ligne et vérifie chaque ligne
+avant tout envoi : le format et les chiffres de contrôle du compte, le document, le montant et les
+références en double. Les lignes en erreur affichent le problème à côté. Colonnes, par nom d'en-tête
+et dans n'importe quel ordre :
+
+| Colonne | Contenu |
+| --- | --- |
+| `currency` | Code ISO 4217, par exemple `ARS` |
+| `amount` | Montant en monnaie locale |
+| `rail` | `ar_bank_transfer`, `br_pix`, `mx_spei`, `co_bank_transfer`, `pe_bank_transfer` ou `cl_bank_transfer` |
+| `holderName` | Le nom du bénéficiaire |
+| `document` | La pièce d'identité du bénéficiaire |
+| `cbu`, `alias` | Argentine |
+| `pixKeyType`, `pixKey` | Brésil |
+| `clabe` | Mexique |
+| `bank`, `accountType`, `accountNumber` | Colombie et Chili |
+| `cci` | Pérou |
+| `reference` | Votre propre référence, unique dans le fichier |
+
+Les virgules comme les points-virgules fonctionnent. La page propose un modèle avec une ligne par moyen.
+
+<Cards>
+  <Card title="Webhooks" href="/p2p/webhooks/" description="Suivez chaque versement depuis votre serveur." />
+  <Card title="Modèle de sécurité" href="/p2p/security/" description="Ce que le matcher peut faire de votre solde, et ce qu'il ne peut pas faire." />
+</Cards>

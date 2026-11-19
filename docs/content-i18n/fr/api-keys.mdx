@@ -16,7 +16,7 @@ appartient (qui détermine testnet ou mainnet, sur tous les réseaux) et les **p
 3. Allez dans **API Keys → Create**.
 4. Donnez à la clé un **nom** (et une description facultative) pour pouvoir la reconnaître plus tard.
 5. Choisissez un **rôle** :
-   - **User** : limité. Sélectionnez exactement les permissions dont elle a besoin dans la matrice (par ressource : **lecture** et/ou **écriture** pour les paiements, webhooks, produits, clients et analyses).
+   - **User** : limité. Sélectionnez exactement les permissions dont elle a besoin dans la matrice (par ressource : **lecture** et/ou **écriture** pour les paiements, swaps, la liquidité, les webhooks, produits, clients, le KYC, l'on-ramp, l'off-ramp, l'activité, les plugins et le marché P2P).
    - **Admin** : accès complet ; il contourne la matrice de portées. À utiliser avec parcimonie.
 6. **Créez**, puis **copiez la clé immédiatement**.
 
@@ -45,6 +45,10 @@ Authorization: Bearer dv_xxxxxxxxxxxxxxxxxxxxxxxx
 Ne donnez à chaque clé que les portées dont elle a besoin. Un serveur qui ne fait que créer des paiements peut utiliser une clé avec
 `payments:write` et `payments:read` et rien d'autre : ainsi, une clé divulguée ne peut pas faire plus que son rôle.
 </Callout>
+
+Le [marché P2P](/p2p/) a deux portées : `p2p:read` lit le marché, vos portefeuilles, offres, ordres,
+encaissements et versements ; `p2p:write` enregistre des portefeuilles, publie des offres, ouvre des ordres,
+des encaissements et des versements, et prépare les transactions non signées que vos portefeuilles signent.
 
 ## Bonnes pratiques
 

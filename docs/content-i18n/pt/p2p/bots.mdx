@@ -1,0 +1,109 @@
+---
+title: Início rápido para bots
+description: Rode um bot para o seu comerciante P2P. Conceda permissões uma vez, encaminhe suas notificações bancárias ao assistente de correspondência de transferências e libere ordens pagas em segundos.
+---
+
+Um bot opera por um comerciante sem ter a chave do comerciante. Ele tem a própria carteira e a
+própria chave de API. O comerciante concede permissões a essa carteira no contrato do mercado uma
+única vez, e a partir daí o bot assina: atualiza preços, libera as ordens cujo dinheiro chegou e
+aceita vendas.
+
+## 1. Conceda as permissões ao bot
+
+As permissões são uma máscara de bits que o contrato verifica em cada chamada que o bot faz por você:
+
+| Permissão | Bit | Permite ao bot |
+| --- | --- | --- |
+| `PERM_OPEN` | `1` | Abrir ordens sobre o seu saldo. |
+| `PERM_RELEASE` | `2` | Liberar suas ordens, o que paga o comprador delas. |
+| `PERM_TRADE` | `4` | Aceitar, marcar como paga, cancelar e disputar por você. |
+| `PERM_WITHDRAW` | `8` | Sacar seu saldo livre para a sua própria carteira, nunca para outra. |
+
+Some os bits que quiser: um bot que libera compras e gerencia vendas precisa de `2 + 4 = 6`. A
+carteira do comerciante assina a concessão, uma vez por rede:
+
+```bash
+curl -X POST https://api.cosmospay.lat/cosmos-api/v1/p2p/transactions \
+  -H "Authorization: Bearer $COSMOS_PAY_API_KEY" -H "Content-Type: application/json" \
+  -d '{ "network": "base", "from": "ACCOUNT_ID", "action": "setOperator", "args": { "operator": "0xBotWallet", "perms": 6 } }'
+```
+
+Uma concessão de `0` revoga o bot. O painel faz o mesmo em **P2P → Liquidez**, com uma caixa de
+seleção por permissão.
+
+## 2. Dê uma chave de API ao bot
+
+Crie uma chave com `p2p:read` e `p2p:write` e guarde-a no servidor do bot, junto com a chave da
+carteira dele. Nenhuma das duas chega a um navegador.
+
+## 3. Libere ordens quando o dinheiro chegar
+
+Encaminhe cada transferência bancária recebida ao assistente de correspondência. Ele responde as
+compras abertas das suas carteiras de comerciante que essa transferência provavelmente paga, da
+melhor para a pior, cada uma com sua transação `release` pronta para assinar.
+
+```ts
+const API = 'https://api.cosmospay.lat/cosmos-api/v1/p2p';
+const headers = {
+  Authorization: `Bearer ${process.env.COSMOS_PAY_API_KEY}`,
+  'Content-Type': 'application/json',
+};
+
+interface BankTransfer {
+  currency: string;      // ISO 4217, e.g. "ARS"
+  amount: string;        // as received, e.g. "150000.00"
+  payerName?: string;    // the sender's name, as the bank reports it
+  payerDocument?: string; // the sender's tax id, when the bank reports it
+  reference?: string;    // the bank's transfer id
+  receivedAt?: string;   // ISO 8601
+}
+
+// Called by your bank integration for every incoming transfer.
+export async function onBankTransfer(transfer: BankTransfer, wallet: { sendTransaction(tx: object): Promise<string> }) {
+  const res = await fetch(`${API}/merchant/transfer-matches`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(transfer),
+  });
+  if (!res.ok) throw new Error(`transfer-matches failed with ${res.status}`);
+  const { matches } = await res.json();
+
+  const best = matches[0];
+  // Release on its own only a transfer that matches the payer exactly; leave the rest to a person.
+  if (!best || best.score < 1) return;
+
+  // The bot's wallet signs and sends; PERM_RELEASE lets it release the merchant's order.
+  const hash = await wallet.sendTransaction(best.transaction);
+  console.log(`released order ${best.order.id} in ${hash}`);
+}
+```
+
+Uma correspondência exige o valor e a moeda exatos. O nome e o documento do pagador aumentam a
+pontuação. Libere automaticamente só quando eles corresponderem ao pagador indicado na ordem: é essa
+verificação que impede que a transferência de um terceiro libere seus tokens.
+
+## 4. Mantenha os preços atualizados
+
+Uma oferta cujo preço é mais antigo que o seu `priceTtlSeconds` não é combinada. Atualize o preço a
+partir da sua fonte de cotações em intervalos regulares:
+
+```ts
+await fetch(`${API}/offers/${offerId}`, {
+  method: 'PATCH',
+  headers,
+  body: JSON.stringify({ price: '1432.50' }),
+});
+```
+
+## 5. Ouça os eventos
+
+Inscreva o endpoint do bot nos eventos sobre os quais ele age: `P2P_ORDER_CREATED` para ordens
+novas, `P2P_ORDER_PAID` quando um pagador informa uma transferência, `P2P_ORDER_ACCEPTED` para as
+vendas que ele precisa pagar e `P2P_ORDER_DISPUTED` para uma pessoa revisar. As entregas ao
+comerciante levam `role: "merchant"`. Veja [Webhooks](/p2p/webhooks/).
+
+<Callout type="warn" title="Dê a um bot só o que ele precisa">
+A chave de um bot é uma chave para a sua liquidez dentro das permissões dele. Deixe `PERM_WITHDRAW`
+de fora, a menos que o bot faça rebalanceamento, e mantenha o limite por ordem da autorização do
+matcher no tamanho com que você opera.
+</Callout>

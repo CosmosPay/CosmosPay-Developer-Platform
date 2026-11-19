@@ -16,7 +16,7 @@ pertenece (que elige testnet o mainnet, en todas las redes) y los **alcances** q
 3. Ve a **API Keys → Create**.
 4. Dale a la clave un **nombre** (y una descripción opcional) para que puedas reconocerla más tarde.
 5. Elige un **rol**:
-   - **User**: con alcances. Elige exactamente los permisos que necesita en la matriz (por recurso: **read** o **write**, o ambos, para pagos, webhooks, productos, clientes y analíticas).
+   - **User**: con alcances. Elige exactamente los permisos que necesita en la matriz (por recurso: **read** o **write**, o ambos, para pagos, swaps, liquidez, webhooks, productos, clientes, KYC, on-ramp, off-ramp, actividad, plugins y el mercado P2P).
    - **Admin**: acceso completo; omite la matriz de alcances. Úsalo con moderación.
 6. **Crea** la clave y luego **cópiala de inmediato**.
 
@@ -45,6 +45,10 @@ Authorization: Bearer dv_xxxxxxxxxxxxxxxxxxxxxxxx
 Dale a cada clave solo los alcances que necesita. Un servidor que solo crea pagos puede usar una clave con
 `payments:write` y `payments:read` y nada más. Así, una clave filtrada no puede hacer más que su trabajo.
 </Callout>
+
+El [mercado P2P](/p2p/) tiene dos alcances: `p2p:read` lee el mercado, tus billeteras, ofertas,
+órdenes, cobros y pagos a terceros; `p2p:write` registra billeteras, publica ofertas, abre órdenes,
+cobros y pagos a terceros, y arma las transacciones sin firmar que firman tus billeteras.
 
 ## Buenas prácticas
 

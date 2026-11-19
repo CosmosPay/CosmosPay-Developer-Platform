@@ -1,0 +1,71 @@
+---
+title: P2P webhooks
+description: The events P2P orders, charges and payouts send, who receives each one and what its payload holds.
+---
+
+P2P events go through the same webhook endpoints as every Cosmos Pay event, signed the same way.
+Register an endpoint in the dashboard under **Webhooks**, or with the API, and pick the events
+below.
+
+## Events
+
+| Event | Sent when |
+| --- | --- |
+| `P2P_ORDER_CREATED` | An order opened on-chain. |
+| `P2P_ORDER_ACCEPTED` | The merchant accepted a sale or a payout and locked its bond. |
+| `P2P_ORDER_PAID` | The buyer side reported the transfer and marked the order paid. |
+| `P2P_ORDER_COMPLETED` | The seller released. The buyer received the tokens. |
+| `P2P_ORDER_CANCELLED` | The order was cancelled. The tokens went back to the seller. |
+| `P2P_ORDER_EXPIRED` | A deadline passed. The tokens went back to the seller. |
+| `P2P_ORDER_DISPUTED` | One side opened a dispute. |
+| `P2P_ORDER_RESOLVED` | The arbiter decided the dispute. |
+| `P2P_CHARGE_SUCCEEDED` | A charge's order completed. |
+| `P2P_PAYOUT_BATCH_COMPLETED` | Every item of a payout batch finished. |
+
+Completed, cancelled, expired and resolved orders, succeeded charges and finished batches are
+final: no further event follows them.
+
+## Who receives them
+
+An order's events reach two parties: the client that opened it and the merchant it was matched to,
+when they are different organizations. `data.role` says which one you are, and the payload holds
+only what that role is entitled to see.
+
+| `data.role` | Receives | Never receives |
+| --- | --- | --- |
+| `client` | The order, the merchant's display name and record, the account to transfer to on a purchase | The merchant's address or its other accounts |
+| `merchant` | The order, the payer's name and document on a purchase, the beneficiary's account on a sale or payout | The client's other users or orders |
+
+## Payload
+
+```json
+{
+  "id": "evt_01JD6Q…",
+  "type": "P2P_ORDER_PAID",
+  "createdAt": "2026-11-19T14:02:11.000Z",
+  "data": {
+    "role": "merchant",
+    "id": "9f1c2e4a-…",
+    "kind": "BUY",
+    "status": "paid",
+    "network": "base",
+    "token": "USDC",
+    "tokenAmount": "104.712041",
+    "fiatAmount": "150000.00",
+    "currency": "ARS",
+    "rail": "ar_bank_transfer",
+    "payer": { "name": "Ana Gómez", "document": "20329642330" },
+    "paidReference": "TRX-88421",
+    "externalReference": null
+  }
+}
+```
+
+Use `id` to process each event once. Read the order again with the API before you act on money:
+an event tells you something changed, the order tells you what it is now.
+
+## Verify the signature
+
+Every delivery carries `X-Cosmos-Signature: t=<unix seconds>,v1=<hex>`, an HMAC-SHA256 of
+`<t>.<raw body>` with your endpoint's secret. Verify it on the raw body before you trust the event.
+The SDK does it for you: see [Webhooks](/sdk/server/webhooks/).

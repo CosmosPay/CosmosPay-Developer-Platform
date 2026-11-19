@@ -1,0 +1,69 @@
+---
+title: Modelo de seguridad P2P
+description: Quién tiene cada clave en el mercado P2P, qué puede hacer cada una y los límites que protegen a comerciantes, clientes y sus usuarios.
+---
+
+El mercado P2P no es custodio. Cosmos Pay nunca tiene una clave capaz de mover los tokens de un
+comerciante, de un cliente o de un usuario. Cada acción en cadena es una transacción que la API arma
+sin firmar y que firma la propia billetera de la persona.
+
+## Claves y roles
+
+| Rol | Titular | Dónde está la clave | Qué puede hacer |
+| --- | --- | --- | --- |
+| Comerciante, cliente, usuario | Cada parte | Su propia billetera | Depositar, retirar, liberar, aceptar, marcar como pagado, cancelar y disputar en sus propias órdenes |
+| Bot | El servicio de un comerciante | La propia billetera del bot | Solo los permisos que le dio el comerciante |
+| Matcher | Cosmos Pay | Una clave de servidor | Abrir órdenes sobre el saldo de un comerciante hasta el tope por orden del comerciante, y actuar por el comprador en las órdenes que abrió |
+| Árbitro | Operaciones de Cosmos Pay | Una billetera multifirma externa, nunca un servidor | Resolver órdenes en disputa |
+| Propietario | Operaciones de Cosmos Pay | Una billetera externa, nunca un servidor | Fijar comisiones, tokens, el árbitro y la tesorería, y pausar el contrato |
+
+La clave del matcher paga el gas y tiene la autoridad de matcher, nada más. No puede retirar un
+saldo, liberar una orden por su cuenta ni enviar tokens a una dirección que elija.
+
+## Los límites del matcher
+
+- **Tope por orden.** Cada comerciante fija con `setMatcher` cuánto puede bloquear una orden como máximo. Un tope de `0` revoca al matcher.
+- **Plazos.** Una orden que nadie paga o acepta a tiempo se cancela, y sus tokens vuelven al vendedor.
+- **Registro previo.** Cada transacción que envía el matcher se firma y se guarda en la base de datos antes de transmitirse, y solo esos mismos bytes se vuelven a enviar.
+- **Verificación del pagador.** Una compra indica su pagador, y los comerciantes liberan solo una transferencia de esa persona.
+
+## El punto de confianza, dicho con claridad
+
+Una clave del matcher filtrada junto con una clave del árbitro filtrada podrían vaciar la liquidez
+de los comerciantes: el matcher abriría órdenes y el árbitro resolvería disputas falsas a favor del
+atacante.
+
+Una clave del matcher filtrada por sí sola no puede. Puede bloquear liquidez en órdenes hasta que
+sus plazos la devuelvan. Para un vendedor que activó la liquidación automática, también podría
+dejar que se liberen órdenes que el vendedor no disputa a tiempo.
+
+Por eso:
+
+- El árbitro es una billetera multifirma en manos de las operaciones de Cosmos Pay, nunca una clave de servidor.
+- La liquidación automática nunca se ofrece a los comerciantes de liquidez. La API la rechaza para una billetera con ofertas de venta activas.
+- Cada transacción del matcher se registra antes de transmitirse, así que cualquier uso de la clave queda a la vista.
+
+## Datos
+
+- Los medios de cobro, las cuentas de pago a terceros y las identidades de los pagadores se guardan cifrados.
+- Una orden muestra a cada parte solo lo que su rol necesita: el pagador ve la cuenta del comerciante para esa orden, el comerciante ve el nombre y el documento del pagador, y nadie ve la libreta de direcciones de otra parte.
+- Las billeteras se registran con una firma EIP-191 sobre un desafío de un solo uso que vence, y una dirección pertenece a una sola organización.
+
+## La app P2P pública
+
+La app P2P propia de Cosmos Pay, en el dominio de pagos, nunca envía una clave de API al navegador.
+Su servidor guarda la clave, y cada persona inicia sesión con su billetera: una firma EIP-191 sobre
+un desafío de un solo uso que vence, que vincula la sesión a esa billetera. Una persona ve y opera
+solo las órdenes de la billetera con la que firmó, con límites de solicitudes por billetera y por
+dirección IP.
+
+## Tu integración
+
+- Mantén las claves de API en tu servidor. Una clave con `p2p:write` abre órdenes para tu organización.
+- Dale a cada bot solo los permisos que necesita, y su propia clave.
+- Lee la orden desde la API antes de liberar dinero o tokens. Un webhook te dice que algo cambió; la orden te dice cómo está ahora.
+
+<Cards>
+  <Card title="Inicio rápido para comerciantes" href="/p2p/merchants/" description="Fija tu tope por orden y mantén la liquidación automática desactivada." />
+  <Card title="Inicio rápido para bots" href="/p2p/bots/" description="Dale a un bot solo los permisos que necesita." />
+</Cards>

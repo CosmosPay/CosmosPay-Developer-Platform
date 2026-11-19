@@ -1,0 +1,90 @@
+---
+title: Pagamentos a terceiros
+description: Pague até 100 contas bancárias em moeda local a partir do seu saldo em stablecoins. Cada pagamento é combinado com um comerciante que paga o beneficiário antes de seus tokens serem liberados.
+---
+
+Um lote de pagamentos a terceiros envia moeda local para contas bancárias e é pago com stablecoins
+que você mantém no contrato do mercado. Cada item vira uma ordem: um comerciante compra seus
+tokens, paga o beneficiário e marca a ordem como paga, e você libera. Seus tokens saem do seu saldo
+apenas para um comerciante que já pagou.
+
+## Antes do primeiro lote
+
+1. **Registre a carteira** que paga. Veja [Início rápido para comerciantes](/p2p/merchants/).
+2. **Deposite** no contrato os tokens de que o lote precisa.
+3. **Autorize o matcher da Cosmos Pay** nessa rede com `setMatcher`, com um limite por ordem pelo menos igual ao seu maior pagamento. Deixe `autoSettle` desativado para liberar cada pagamento você mesmo, ou ative-o para que os pagamentos já pagos sejam liberados depois da janela de liquidação.
+
+## Envie um lote
+
+```bash
+curl -X POST https://api.cosmospay.lat/cosmos-api/v1/p2p/payouts \
+  -H "Authorization: Bearer $COSMOS_PAY_API_KEY" -H "Content-Type: application/json" \
+  -d '{
+    "network": "base",
+    "token": "USDC",
+    "accountId": "ACCOUNT_ID",
+    "items": [
+      {
+        "currency": "ARS",
+        "fiatAmount": "150000",
+        "rail": "ar_bank_transfer",
+        "beneficiary": { "holderName": "Ana Gómez", "document": "20329642330", "details": { "cbu": "0170099222000001234561" } },
+        "externalReference": "inv-1001"
+      }
+    ]
+  }'
+```
+
+Um lote tem de 1 a 100 itens. Os `details` do beneficiário seguem o meio de pagamento, como nos
+meios de recebimento: veja a tabela de meios em [Início rápido para comerciantes](/p2p/merchants/).
+
+## O que acontece com cada item
+
+1. A Cosmos Pay combina o item com um comerciante que compra tokens nesse meio e abre a ordem sobre o seu saldo. O comerciante bloqueia uma garantia de 10%.
+2. O comerciante aceita, transfere o dinheiro ao beneficiário e marca a ordem como paga com a referência da transferência.
+3. Você confere o pagamento e libera: uma transação `release` do gerador, assinada pela sua carteira ou pelo seu bot com `PERM_RELEASE`.
+
+Um item que nenhum comerciante consegue assumir fica `rejected` com o motivo; seus tokens nunca se
+moveram por ele. Se um comerciante não aceitar ou não pagar a tempo, o prazo devolve seus tokens.
+
+## Status do lote
+
+`GET /v1/p2p/payouts/{id}` responde o lote com o status e a ordem de cada item.
+
+| Status | Significado |
+| --- | --- |
+| `processing` | Pelo menos um item ainda está em andamento. |
+| `completed` | Todos os itens foram concluídos. |
+| `partial` | Todos os itens terminaram e alguns não foram concluídos. |
+| `failed` | Nenhum item foi concluído. |
+
+`P2P_PAYOUT_BATCH_COMPLETED` é enviado quando um lote termina, e a ordem de cada item envia os
+próprios eventos.
+
+## Envie um CSV pelo painel
+
+**P2P → Pagamentos a terceiros** aceita um arquivo CSV com um beneficiário por linha e confere cada
+linha antes de enviar qualquer coisa: o formato e os dígitos verificadores da conta, o documento, o
+valor e as referências repetidas. As linhas com problema mostram o problema ao lado. Colunas, pelo
+nome do cabeçalho e em qualquer ordem:
+
+| Coluna | Conteúdo |
+| --- | --- |
+| `currency` | Código ISO 4217, por exemplo `ARS` |
+| `amount` | Valor em moeda local |
+| `rail` | `ar_bank_transfer`, `br_pix`, `mx_spei`, `co_bank_transfer`, `pe_bank_transfer` ou `cl_bank_transfer` |
+| `holderName` | O nome do beneficiário |
+| `document` | O documento de identidade do beneficiário |
+| `cbu`, `alias` | Argentina |
+| `pixKeyType`, `pixKey` | Brasil |
+| `clabe` | México |
+| `bank`, `accountType`, `accountNumber` | Colômbia e Chile |
+| `cci` | Peru |
+| `reference` | Sua própria referência, única no arquivo |
+
+Vírgulas e ponto e vírgula funcionam. A página oferece um modelo com uma linha por meio.
+
+<Cards>
+  <Card title="Webhooks" href="/p2p/webhooks/" description="Acompanhe cada pagamento a terceiros no seu servidor." />
+  <Card title="Modelo de segurança" href="/p2p/security/" description="O que o matcher pode fazer com o seu saldo, e o que não pode." />
+</Cards>

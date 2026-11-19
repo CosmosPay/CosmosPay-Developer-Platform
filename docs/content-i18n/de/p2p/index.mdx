@@ -1,0 +1,117 @@
+---
+title: P2P-Markt
+description: Lassen Sie Ihre Nutzer Stablecoins gegen Landeswährung kaufen und verkaufen. Cosmos Pay wählt den Händler, der Marktvertrag sperrt die Token und jede Partei signiert mit ihrer eigenen Wallet.
+---
+
+Der **P2P-Markt** lässt Menschen Stablecoins gegen Landeswährung kaufen und verkaufen: USDC, und USDT
+dort, wo das Netzwerk es hat, gegen eine Banküberweisung, einen PIX oder einen SPEI. Die Person gibt
+einen Betrag ein, und Cosmos Pay wählt den Händler. Es gibt kein Orderbuch zum Durchsuchen und keine
+Gegenpartei zum Auswählen.
+
+Die Token jedes Auftrags sind im Smart Contract des Marktes gesperrt, bis der Verkäufer sie freigibt
+oder eine Frist sie zurückgibt. Niemand kann sie anderswohin bewegen, auch Cosmos Pay nicht.
+
+## Wer beteiligt ist
+
+| Rolle | Wer | Was sie tut |
+| --- | --- | --- |
+| Kunde | Ihre Integration | Eröffnet Aufträge für ihre Nutzer: Käufe, Verkäufe, Zahlungsanforderungen und Auszahlungen. |
+| Händler | Ein Liquiditätsanbieter | Hält Token im Vertrag, veröffentlicht Angebote, empfängt oder sendet die Landeswährung und gibt Aufträge frei oder nimmt sie an. |
+| Matcher | Cosmos Pay | Wählt für jeden Auftrag den Händler und eröffnet Käufe und Auszahlungen auf dem Guthaben des Händlers, bis zu dem Limit, das der Händler festgelegt hat. |
+| Schiedsstelle | Der Betrieb von Cosmos Pay | Entscheidet Streitfälle über eine externe Multisig-Wallet. |
+
+Eine Organisation kann Kunde, Händler oder beides sein. Jede registriert die Wallets, mit denen sie
+handelt, und jede Wallet signiert ihre eigenen Transaktionen.
+
+## Netzwerke und Token
+
+Der Markt läuft auf den EVM-Netzwerken, auf denen sein Vertrag bereitgestellt ist. `GET /v1/p2p/market`
+listet sie mit Vertragsadresse und Token, die Währungen und Zahlungswege, die Gebühren, die Fristen
+und die Adresse des Matchers. Lesen Sie die Liste beim Start Ihrer Integration, statt Netzwerke fest
+im Code zu hinterlegen.
+
+```bash
+curl https://api.cosmospay.lat/cosmos-api/v1/p2p/market \
+  -H "Authorization: Bearer $COSMOS_PAY_API_KEY"
+```
+
+Ihr API-Schlüssel wählt die Umgebung: `dv_`-Schlüssel handeln auf Testnetzwerken, `prod_`-Schlüssel im Mainnet.
+
+## Wie ein Auftrag abläuft
+
+Ein **Kauf** gibt Ihrem Nutzer Token gegen Landeswährung:
+
+1. Sie fordern ein Angebot mit dem Betrag in Landeswährung an: `POST /v1/p2p/quotes`. Das Angebot nennt den Preis, die Tokenmenge, die Gebühren und die öffentliche Bilanz des Händlers. Es gilt 60 Sekunden.
+2. Sie eröffnen den Auftrag aus dem Angebot: `POST /v1/p2p/orders`. Der Matcher sperrt die Token des Händlers im Vertrag, und der Auftrag liefert das Konto des Händlers und den genauen Überweisungsbetrag.
+3. Ihr Nutzer überweist das Geld vor Ablauf der Zahlungsfrist von einem Konto auf seinen eigenen Namen. Sie melden das mit `POST /v1/p2p/orders/{id}/paid`.
+4. Der Händler sieht das Geld eingehen und gibt den Auftrag frei. Die Token erreichen die Wallet Ihres Nutzers.
+
+Ein **Verkauf** gibt Ihrem Nutzer Landeswährung gegen Token:
+
+1. Sie fordern ein Angebot mit der Tokenmenge an.
+2. Sie eröffnen den Auftrag. Die Antwort enthält zwei unsignierte Transaktionen für die Wallet Ihres Nutzers, `approve` und `openWithDeposit`. Der Nutzer signiert und sendet beide, und seine Token sind im Vertrag gesperrt.
+3. Der Händler nimmt vor Ablauf der Annahmefrist an und sperrt eine Sicherheitsleistung von 10 % des Auftrags.
+4. Der Händler überweist die Landeswährung auf das Konto Ihres Nutzers und markiert den Auftrag als bezahlt.
+5. Ihr Nutzer gibt die Token frei. Wenn niemand den Auftrag anficht, gibt das Abwicklungsfenster ihn von selbst frei.
+
+Zahlungsanforderungen und Auszahlungen sind dieselben zwei Abläufe, eröffnet von Ihrer Organisation
+für jemand anderen. Siehe [Zahlungsanforderungen](/p2p/collections/) und [Auszahlungen](/p2p/payouts/).
+
+## Status
+
+Jeder Auftrag liefert einen dieser Status. Sie ändern sich nur, wenn die Ereignisse des Vertrags
+indexiert werden, sodass das Gelesene immer der Chain entspricht.
+
+| Status | Bedeutung |
+| --- | --- |
+| `pending` | Der Auftrag wird On-Chain eröffnet, oder ein Verkauf wartet auf die Signatur des Verkäufers. |
+| `awaiting_acceptance` | Ein Verkauf oder eine Auszahlung wartet darauf, dass der Händler annimmt und seine Sicherheitsleistung sperrt. |
+| `awaiting_payment` | Die Token sind gesperrt. Die Käuferseite überweist die Landeswährung. |
+| `paid` | Die Überweisung wurde gemeldet. Der Verkäufer prüft sie und gibt frei. |
+| `disputed` | Eine Seite hat einen Streitfall eröffnet. Die Schiedsstelle entscheidet. |
+| `completed` | Der Verkäufer hat freigegeben. Der Käufer hat die Token erhalten. |
+| `cancelled` | Der Auftrag wurde vor dem Abschluss storniert. Die Token gingen an den Verkäufer zurück. |
+| `expired` | Eine Frist ist abgelaufen. Die Token gingen an den Verkäufer zurück. |
+| `resolved` | Die Schiedsstelle hat einen Streitfall entschieden. |
+| `failed` | Der Auftrag wurde nie eröffnet: Die Transaktion schlug fehl oder der Verkäufer hat nie signiert. |
+
+## Fristen
+
+| Frist | Standard | Was sie begrenzt |
+| --- | --- | --- |
+| Zahlung | 30 Minuten | Die Käuferseite überweist das Geld und markiert den Auftrag als bezahlt. |
+| Annahme | 5 Minuten | Der Händler nimmt einen Verkauf oder eine Auszahlung an, die eine Sicherheitsleistung tragen. |
+| Abwicklung | 6 Stunden | Ein bezahlter Verkauf wird von selbst freigegeben, sofern ihn niemand anficht. |
+
+Der Markt liefert die geltenden Fristen. Läuft eine Frist ab, wird der Auftrag storniert und seine
+Token gehen an den Verkäufer zurück.
+
+## Gebühren
+
+Zwei Gebühren können anfallen. Beide werden von dem abgezogen, was der Käufer erhält, und bei der
+Eröffnung des Auftrags festgeschrieben.
+
+- Die Protokollgebühr, von Cosmos Pay festgelegt und vom Markt als `protocolFeeBps` ausgewiesen. Der Vertrag begrenzt sie auf 3 %.
+- Eine Integratorgebühr von bis zu 5 %, die ein Kunde auf die Aufträge seiner eigenen Nutzer aufschlagen kann. Sie geht an eine der registrierten Wallets des Kunden.
+
+Jedes Angebot zeigt beide Gebühren und den Nettobetrag, bevor jemand signiert.
+
+## Zugriff
+
+API-Schlüssel brauchen die Berechtigung `p2p:read`, um den Markt zu lesen, und `p2p:write`, um
+Wallets zu registrieren, Angebote zu veröffentlichen und Aufträge, Zahlungsanforderungen und
+Auszahlungen zu eröffnen. Erstellen Sie sie im Dashboard: [API-Schlüssel holen](/api-keys/). Das
+Dashboard deckt den gesamten Markt unter **P2P** in der Seitenleiste ab.
+
+Die eigene P2P-App von Cosmos Pay auf der Zahlungsdomain läuft auf genau dieser API, mit denselben Regeln.
+
+## Nächste Schritte
+
+<Cards>
+  <Card title="Schnellstart für Händler" href="/p2p/merchants/" description="Wallet registrieren, Liquidität einzahlen, Angebote veröffentlichen und Aufträge bearbeiten." />
+  <Card title="Schnellstart für Bots" href="/p2p/bots/" description="Aufträge automatisch freigeben, sobald die Überweisung eingeht." />
+  <Card title="Zahlungsanforderungen" href="/p2p/collections/" description="In Landeswährung kassieren und Stablecoins erhalten, oder die Rampe in Ihre App einbetten." />
+  <Card title="Auszahlungen" href="/p2p/payouts/" description="Bis zu 100 Bankkonten aus Ihrem Stablecoin-Guthaben bezahlen." />
+  <Card title="Webhooks" href="/p2p/webhooks/" description="Die Ereignisse, die jeder Auftrag, jede Zahlungsanforderung und jede Auszahlung sendet." />
+  <Card title="Sicherheitsmodell" href="/p2p/security/" description="Wer welchen Schlüssel hält und was jeder davon kann." />
+</Cards>

@@ -1,0 +1,71 @@
+---
+title: Webhooks P2P
+description: Les événements envoyés par les ordres, encaissements et versements P2P, qui reçoit chacun et ce que contient leur payload.
+---
+
+Les événements P2P passent par les mêmes endpoints de webhook que tous les événements de Cosmos Pay,
+signés de la même manière. Enregistrez un endpoint dans le tableau de bord, sous **Webhooks**, ou
+avec l'API, et choisissez les événements ci-dessous.
+
+## Événements
+
+| Événement | Envoyé quand |
+| --- | --- |
+| `P2P_ORDER_CREATED` | Un ordre s'est ouvert sur la chaîne. |
+| `P2P_ORDER_ACCEPTED` | Le marchand a accepté une vente ou un versement et bloqué sa caution. |
+| `P2P_ORDER_PAID` | Le côté acheteur a signalé le virement et marqué l'ordre comme payé. |
+| `P2P_ORDER_COMPLETED` | Le vendeur a libéré. L'acheteur a reçu les jetons. |
+| `P2P_ORDER_CANCELLED` | L'ordre a été annulé. Les jetons sont revenus au vendeur. |
+| `P2P_ORDER_EXPIRED` | Une échéance est passée. Les jetons sont revenus au vendeur. |
+| `P2P_ORDER_DISPUTED` | Une partie a ouvert un litige. |
+| `P2P_ORDER_RESOLVED` | L'arbitre a tranché le litige. |
+| `P2P_CHARGE_SUCCEEDED` | L'ordre d'un encaissement a abouti. |
+| `P2P_PAYOUT_BATCH_COMPLETED` | Tous les éléments d'un lot de versements sont terminés. |
+
+Les ordres aboutis, annulés, expirés et tranchés, les encaissements réussis et les lots terminés sont
+définitifs : aucun autre événement ne les suit.
+
+## Qui les reçoit
+
+Les événements d'un ordre parviennent à deux parties : le client qui l'a ouvert et le marchand auquel
+il a été apparié, lorsqu'il s'agit d'organisations différentes. `data.role` indique laquelle vous
+êtes, et le payload ne contient que ce que ce rôle peut voir.
+
+| `data.role` | Reçoit | Ne reçoit jamais |
+| --- | --- | --- |
+| `client` | L'ordre, le nom affiché et l'historique du marchand, le compte vers lequel virer pour un achat | L'adresse du marchand ou ses autres comptes |
+| `merchant` | L'ordre, le nom et le document du payeur pour un achat, le compte du bénéficiaire pour une vente ou un versement | Les autres utilisateurs ou ordres du client |
+
+## Payload
+
+```json
+{
+  "id": "evt_01JD6Q…",
+  "type": "P2P_ORDER_PAID",
+  "createdAt": "2026-11-19T14:02:11.000Z",
+  "data": {
+    "role": "merchant",
+    "id": "9f1c2e4a-…",
+    "kind": "BUY",
+    "status": "paid",
+    "network": "base",
+    "token": "USDC",
+    "tokenAmount": "104.712041",
+    "fiatAmount": "150000.00",
+    "currency": "ARS",
+    "rail": "ar_bank_transfer",
+    "payer": { "name": "Ana Gómez", "document": "20329642330" },
+    "paidReference": "TRX-88421",
+    "externalReference": null
+  }
+}
+```
+
+Utilisez `id` pour traiter chaque événement une seule fois. Relisez l'ordre avec l'API avant de faire
+bouger de l'argent : un événement vous dit que quelque chose a changé ; l'ordre vous dit où il en est.
+
+## Vérifiez la signature
+
+Chaque envoi porte `X-Cosmos-Signature: t=<unix seconds>,v1=<hex>`, un HMAC-SHA256 de
+`<t>.<raw body>` avec le secret de votre endpoint. Vérifiez-le sur le corps brut avant de vous fier à
+l'événement. Le SDK le fait pour vous : voir [Webhooks](/sdk/server/webhooks/).

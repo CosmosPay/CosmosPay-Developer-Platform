@@ -1,0 +1,111 @@
+---
+title: Zahlungsanforderungen
+description: Kassieren Sie in Landeswährung und erhalten Sie Stablecoins über eine gehostete Zahlungsseite, oder betten Sie die P2P-Ein- und -Auszahlungsrampe in Ihre eigene App ein.
+---
+
+Es gibt zwei Wege, über den P2P-Markt zu kassieren. Eine **Zahlungsanforderung** ist ein Link, den
+Sie teilen: Der Zahler überweist Landeswährung, und Sie erhalten Stablecoins in Ihrer Wallet. Die
+**eingebettete Rampe** bringt denselben Ablauf in Ihre eigene App, damit Ihre Nutzer kaufen und
+verkaufen.
+
+## Zahlungsanforderungen
+
+Erstellen Sie eine Zahlungsanforderung mit dem Betrag in Landeswährung und der registrierten Wallet,
+die die Token erhält:
+
+```bash
+curl -X POST https://api.cosmospay.lat/cosmos-api/v1/p2p/charges \
+  -H "Authorization: Bearer $COSMOS_PAY_API_KEY" -H "Content-Type: application/json" \
+  -d '{
+    "currency": "ARS",
+    "fiatAmount": "85000",
+    "network": "base",
+    "token": "USDC",
+    "recipient": "ACCOUNT_ID",
+    "description": "Order #1042",
+    "expiresAt": "2026-12-01T00:00:00Z",
+    "multiUse": false
+  }'
+# → { "id": "…", "url": "https://payments.cosmospay.lat/p2p/…", "status": "open", … }
+```
+
+Teilen Sie die `url`. Auf dieser Seite:
+
+1. Sieht der Zahler den Betrag in Landeswährung.
+2. Gibt er Name, Ausweisdokument und E-Mail an. Der Händler prüft, dass die Überweisung von dieser Person kommt.
+3. Erhält er das Konto des Händlers und den genauen Betrag, mit einem Countdown für die Zahlungsfrist.
+4. Überweist er von seiner Bank und tippt auf **Ich habe überwiesen**.
+5. Verfolgt er den Status live, bis der Händler freigibt, und sieht dann den Beleg.
+
+Die Token gehen an Ihre `recipient`-Wallet. Wenn der Auftrag abgeschlossen ist, sendet die
+Zahlungsanforderung `P2P_CHARGE_SUCCEEDED`. Eine Zahlungsanforderung hat jeweils nur einen laufenden
+Auftrag; setzen Sie `multiUse`, um mit demselben Link von vielen Zahlern zu kassieren.
+`GET /v1/p2p/charges/{id}` liest sie, und `DELETE` entfernt eine Zahlungsanforderung, die gerade
+niemand bezahlt.
+
+Das Dashboard erstellt Zahlungsanforderungen unter **P2P → Zahlungsanforderungen**, mit dem Link und
+seinem QR-Code zum Teilen.
+
+## Eingebettete Rampe
+
+Lassen Sie Ihre Nutzer Stablecoins kaufen und verkaufen, ohne Ihre App zu verlassen. Ihr Server hält
+den API-Schlüssel; die Wallet Ihres Nutzers signiert nur, was sie sendet.
+
+```bash
+export API=https://api.cosmospay.lat/cosmos-api/v1/p2p
+export AUTH="Authorization: Bearer $COSMOS_PAY_API_KEY"
+```
+
+### Kaufen
+
+```bash
+curl -X POST $API/quotes -H "$AUTH" -H "Content-Type: application/json" \
+  -d '{ "side": "BUY", "network": "base", "token": "USDC", "currency": "ARS", "rail": "ar_bank_transfer", "fiatAmount": "50000" }'
+
+curl -X POST $API/orders -H "$AUTH" -H "Content-Type: application/json" \
+  -d '{
+    "quoteId": "QUOTE_ID",
+    "recipient": "0xUserWallet",
+    "payer": { "name": "Ana Gómez", "document": "20329642330", "email": "ana@example.com" }
+  }'
+```
+
+Der Auftrag liefert `paymentDetails`, das Konto des Händlers für diesen Auftrag, und die Frist. Zeigen
+Sie beides Ihrem Nutzer. Sobald er überwiesen hat, melden Sie es:
+
+```bash
+curl -X POST $API/orders/ORDER_ID/paid -H "$AUTH" -H "Content-Type: application/json" \
+  -d '{ "reference": "TRX-88421" }'
+```
+
+Name und Dokument des Zahlers sind Pflicht: Der Händler gibt nur eine Überweisung dieser Person frei.
+`POST /v1/p2p/orders/{id}/cancel` storniert vor der Überweisung, und `/dispute` bittet die
+Schiedsstelle, über einen bezahlten Auftrag zu entscheiden, den der Händler nicht freigibt.
+
+### Verkaufen
+
+```bash
+curl -X POST $API/quotes -H "$AUTH" -H "Content-Type: application/json" \
+  -d '{ "side": "SELL", "network": "base", "token": "USDC", "currency": "ARS", "rail": "ar_bank_transfer", "tokenAmount": "25" }'
+
+curl -X POST $API/orders -H "$AUTH" -H "Content-Type: application/json" \
+  -d '{
+    "quoteId": "QUOTE_ID",
+    "seller": "0xUserWallet",
+    "payout": { "holderName": "Ana Gómez", "document": "20329642330", "details": { "alias": "ana.gomez.mp" } }
+  }'
+```
+
+Der Auftrag liefert `transactions`: ein `approve` und ein `openWithDeposit`, unsigniert. Die Wallet
+Ihres Nutzers sendet beide, in dieser Reihenfolge. Der Händler nimmt an, überweist das Geld auf das
+Konto aus `payout` und markiert den Auftrag als bezahlt. Danach gibt Ihr Nutzer mit einer
+`release`-Transaktion des Builders frei, mit seiner Adresse als `from`. Ficht niemand an, gibt das
+Abwicklungsfenster den Auftrag von selbst frei.
+
+Jeder Auftrag, den Sie eröffnen, trägt `externalReference`, wenn Sie eine angeben, und seine Webhooks
+erreichen Ihre Endpunkte mit `role: "client"`.
+
+<Cards>
+  <Card title="Webhooks" href="/p2p/webhooks/" description="Jede Zahlungsanforderung und jeden Auftrag auf Ihrem Server verfolgen." />
+  <Card title="Auszahlungen" href="/p2p/payouts/" description="Die andere Richtung: Bankkonten aus Ihrem Guthaben bezahlen." />
+</Cards>

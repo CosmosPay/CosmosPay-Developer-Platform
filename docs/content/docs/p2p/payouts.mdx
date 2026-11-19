@@ -1,0 +1,90 @@
+---
+title: Payouts
+description: Pay up to 100 bank accounts in local money from your stablecoin balance. Each payout is matched to a merchant who pays the beneficiary before your tokens are released.
+---
+
+A payout batch sends local money to bank accounts and pays for it with stablecoins you hold in the
+market contract. Each item becomes an order: a merchant buys your tokens, pays the beneficiary
+and marks the order paid, and you release. Your tokens leave your balance only for a merchant
+that has paid.
+
+## Before the first batch
+
+1. **Register the wallet** that pays. See [Merchant quick start](/p2p/merchants/).
+2. **Deposit** the tokens the batch needs into the contract.
+3. **Authorise Cosmos Pay's matcher** on that network with `setMatcher`, with a per-order cap at least as large as your biggest payout. Keep `autoSettle` off to release each payout yourself, or turn it on to let paid payouts release after the settle window.
+
+## Send a batch
+
+```bash
+curl -X POST https://api.cosmospay.lat/cosmos-api/v1/p2p/payouts \
+  -H "Authorization: Bearer $COSMOS_PAY_API_KEY" -H "Content-Type: application/json" \
+  -d '{
+    "network": "base",
+    "token": "USDC",
+    "accountId": "ACCOUNT_ID",
+    "items": [
+      {
+        "currency": "ARS",
+        "fiatAmount": "150000",
+        "rail": "ar_bank_transfer",
+        "beneficiary": { "holderName": "Ana Gómez", "document": "20329642330", "details": { "cbu": "0170099222000001234561" } },
+        "externalReference": "inv-1001"
+      }
+    ]
+  }'
+```
+
+A batch holds 1 to 100 items. The beneficiary's `details` follow the rail, as for payment methods:
+see the rails table in [Merchant quick start](/p2p/merchants/).
+
+## What happens to each item
+
+1. Cosmos Pay matches the item to a merchant that buys tokens on that rail and opens the order on your balance. The merchant locks a bond of 10%.
+2. The merchant accepts, transfers the money to the beneficiary and marks the order paid with the transfer reference.
+3. You check the payment and release: a `release` transaction from the builder, signed by your wallet or by your bot with `PERM_RELEASE`.
+
+An item no merchant can take is `rejected` with the reason; your tokens never moved for it. A
+merchant that does not accept or pay in time lets the deadline return your tokens.
+
+## Batch status
+
+`GET /v1/p2p/payouts/{id}` answers the batch with each item's status and order.
+
+| Status | Meaning |
+| --- | --- |
+| `processing` | At least one item is still moving. |
+| `completed` | Every item completed. |
+| `partial` | Every item finished and some did not complete. |
+| `failed` | No item completed. |
+
+`P2P_PAYOUT_BATCH_COMPLETED` fires when a batch finishes, and each item's order sends its own
+events.
+
+## Upload a CSV from the dashboard
+
+**P2P → Payouts** takes a CSV file with one beneficiary per row and checks every row before
+anything is sent: the rail's account format and check digits, the document, the amount and
+repeated references. Rows with a problem show it next to them. Columns, by header name in any
+order:
+
+| Column | Content |
+| --- | --- |
+| `currency` | ISO 4217 code, for example `ARS` |
+| `amount` | Amount in local money |
+| `rail` | `ar_bank_transfer`, `br_pix`, `mx_spei`, `co_bank_transfer`, `pe_bank_transfer` or `cl_bank_transfer` |
+| `holderName` | The beneficiary's name |
+| `document` | The beneficiary's ID document |
+| `cbu`, `alias` | Argentina |
+| `pixKeyType`, `pixKey` | Brazil |
+| `clabe` | Mexico |
+| `bank`, `accountType`, `accountNumber` | Colombia and Chile |
+| `cci` | Peru |
+| `reference` | Your own reference, unique in the file |
+
+Commas or semicolons both work. The page offers a template with one row per rail.
+
+<Cards>
+  <Card title="Webhooks" href="/p2p/webhooks/" description="Follow each payout on your server." />
+  <Card title="Security model" href="/p2p/security/" description="What the matcher can do with your balance, and what it cannot." />
+</Cards>

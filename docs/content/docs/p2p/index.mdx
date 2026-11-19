@@ -1,0 +1,114 @@
+---
+title: P2P market
+description: Let your users buy and sell stablecoins with local money. Cosmos Pay picks the merchant, the market contract locks the tokens and every party signs with its own wallet.
+---
+
+The **P2P market** lets people buy and sell stablecoins for local money: USDC, and USDT where the
+network has it, against a bank transfer, a PIX or a SPEI. The person types an amount and Cosmos Pay
+picks the merchant. There is no order book to browse and no counterparty to choose.
+
+The tokens of every order are locked in the market's smart contract until the seller releases
+them or a deadline returns them. Nobody can move them anywhere else, Cosmos Pay included.
+
+## Who takes part
+
+| Role | Who | What it does |
+| --- | --- | --- |
+| Client | Your integration | Opens orders for its users: purchases, sales, charges and payouts. |
+| Merchant | A liquidity provider | Holds tokens in the contract, publishes offers, receives or sends the local money and releases or accepts orders. |
+| Matcher | Cosmos Pay | Picks the merchant for each order and opens purchases and payouts on the merchant's balance, up to the cap the merchant set. |
+| Arbiter | Cosmos Pay operations | Resolves disputes from an external multisig wallet. |
+
+One organization can be a client, a merchant or both. Each registers the wallets it trades with,
+and each wallet signs its own transactions.
+
+## Networks and tokens
+
+The market runs on the EVM networks where its contract is deployed. `GET /v1/p2p/market` lists
+them with each contract address and token, the currencies and payment methods, the fees, the time
+windows and the matcher's address. Read it when your integration starts instead of hard-coding
+networks.
+
+```bash
+curl https://api.cosmospay.lat/cosmos-api/v1/p2p/market \
+  -H "Authorization: Bearer $COSMOS_PAY_API_KEY"
+```
+
+Your API key picks the tier: `dv_` keys trade on test networks, `prod_` keys on mainnets.
+
+## How an order moves
+
+A **purchase** gives your user tokens for local money:
+
+1. You ask for a quote with the amount in local money: `POST /v1/p2p/quotes`. The quote names the price, the token amount, the fees and the merchant's public record. It lasts 60 seconds.
+2. You open the order from the quote: `POST /v1/p2p/orders`. The matcher locks the merchant's tokens in the contract, and the order answers the merchant's account and the exact amount to transfer.
+3. Your user transfers the money from an account in their own name before the payment deadline. You report it with `POST /v1/p2p/orders/{id}/paid`.
+4. The merchant sees the money arrive and releases the order. The tokens reach your user's wallet.
+
+A **sale** gives your user local money for tokens:
+
+1. You ask for a quote with the token amount.
+2. You open the order. The response holds two unsigned transactions for your user's wallet, `approve` and `openWithDeposit`. The user signs and sends both, and their tokens are locked in the contract.
+3. The merchant accepts before the acceptance deadline and locks a bond of 10% of the order.
+4. The merchant transfers the local money to your user's account and marks the order paid.
+5. Your user releases the tokens. If nobody disputes the order, the settle window releases it on its own.
+
+Charges and payouts are the same two flows, opened by your organization for someone else. See
+[Collections](/p2p/collections/) and [Payouts](/p2p/payouts/).
+
+## Statuses
+
+Every order answers one of these statuses. They change only when the contract's events are
+indexed, so what you read always matches the chain.
+
+| Status | Meaning |
+| --- | --- |
+| `pending` | The order is being opened on-chain, or a sale waits for the seller's signature. |
+| `awaiting_acceptance` | A sale or payout waits for the merchant to accept and lock its bond. |
+| `awaiting_payment` | The tokens are locked. The buyer side transfers the local money. |
+| `paid` | The transfer was reported. The seller checks it and releases. |
+| `disputed` | One side opened a dispute. The arbiter decides. |
+| `completed` | The seller released. The buyer received the tokens. |
+| `cancelled` | The order was cancelled before it completed. The tokens went back to the seller. |
+| `expired` | A deadline passed. The tokens went back to the seller. |
+| `resolved` | The arbiter decided a dispute. |
+| `failed` | The order never opened: the transaction reverted or the seller never signed. |
+
+## Time windows
+
+| Window | Default | What it limits |
+| --- | --- | --- |
+| Payment | 30 minutes | The buyer side transfers the money and marks the order paid. |
+| Acceptance | 5 minutes | The merchant accepts a sale or a payout, which carry a bond. |
+| Settle | 6 hours | A sale releases on its own once paid, unless someone disputes it. |
+
+The market answers the windows in force. When a deadline passes, the order is cancelled and its
+tokens return to the seller.
+
+## Fees
+
+Two fees can apply. Both are taken from what the buyer receives and fixed when the order opens.
+
+- The protocol fee, set by Cosmos Pay and listed by the market as `protocolFeeBps`. The contract caps it at 3%.
+- An integrator fee of up to 5%, which a client may add to its own users' orders. It is paid to one of the client's registered wallets.
+
+Every quote shows both fees and the net amount before anyone signs.
+
+## Access
+
+API keys need the `p2p:read` scope to read the market and `p2p:write` to register wallets, publish
+offers and open orders, charges and payouts. Create them in the dashboard: [Get your API key](/api-keys/).
+The dashboard covers the whole market under **P2P** in the sidebar.
+
+Cosmos Pay's own P2P app on the payments domain runs on this same API, with the same rules.
+
+## Next steps
+
+<Cards>
+  <Card title="Merchant quick start" href="/p2p/merchants/" description="Register a wallet, add liquidity, publish offers and handle orders." />
+  <Card title="Bot quick start" href="/p2p/bots/" description="Release orders automatically when the bank transfer arrives." />
+  <Card title="Collections" href="/p2p/collections/" description="Charge in local money and receive stablecoins, or embed the ramp in your app." />
+  <Card title="Payouts" href="/p2p/payouts/" description="Pay up to 100 bank accounts from your stablecoin balance." />
+  <Card title="Webhooks" href="/p2p/webhooks/" description="The events every order, charge and payout sends." />
+  <Card title="Security model" href="/p2p/security/" description="Who holds which key, and what each one can do." />
+</Cards>

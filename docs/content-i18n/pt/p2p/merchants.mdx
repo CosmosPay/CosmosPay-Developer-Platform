@@ -1,0 +1,161 @@
+---
+title: Início rápido para comerciantes
+description: Forneça liquidez ao mercado P2P. Registre uma carteira, deposite tokens, autorize a Cosmos Pay a combinar ordens, adicione meios de recebimento, publique ofertas e gerencie ordens.
+---
+
+Um comerciante mantém tokens no contrato do mercado e negocia com as pessoas que a Cosmos Pay
+combina com suas ofertas. Os tokens continuam sob o controle da sua carteira: a Cosmos Pay monta
+cada transação e sua carteira a assina. O painel faz cada passo desta página em **P2P**, na barra
+lateral; aqui você também vê as chamadas à API.
+
+Cada requisição leva sua chave de API com o escopo `p2p:write`:
+
+```bash
+export API=https://api.cosmospay.lat/cosmos-api/v1/p2p
+export AUTH="Authorization: Bearer $COSMOS_PAY_API_KEY"
+```
+
+## 1. Registre uma carteira
+
+Uma carteira é comprovada com uma assinatura EIP-191 sobre um desafio de uso único. Peça o desafio,
+assine o `message` com `personal_sign` na carteira e depois registre.
+
+```bash
+curl -X POST $API/accounts/challenge -H "$AUTH" -H "Content-Type: application/json" \
+  -d '{ "address": "0xYourWallet" }'
+# → { "id": "…", "message": "Cosmos Pay wants you to register this wallet…", "expiresAt": "…" }
+
+curl -X POST $API/accounts -H "$AUTH" -H "Content-Type: application/json" \
+  -d '{ "challengeId": "…", "address": "0xYourWallet", "signature": "0x…", "label": "Treasury" }'
+```
+
+O desafio expira em minutos e serve uma única vez. Um endereço pertence a uma só organização.
+
+## 2. Dê a ela um nome de comerciante
+
+O nome de exibição é o que compradores e vendedores veem na cotação. Seu endereço nunca aparece.
+
+```bash
+curl -X PATCH $API/accounts/ACCOUNT_ID -H "$AUTH" -H "Content-Type: application/json" \
+  -d '{ "merchant": { "displayName": "Lumio Exchange", "status": "ACTIVE" } }'
+```
+
+Defina `status` como `PAUSED` para parar de receber ordens novas. As ordens já abertas seguem normalmente.
+
+## 3. Deposite liquidez
+
+Os depósitos vão para o seu saldo livre no contrato. São duas transações: um `approve` do valor exato
+e depois o `deposit`. O gerador de transações responde cada uma sem assinatura:
+
+```bash
+curl -X POST $API/transactions -H "$AUTH" -H "Content-Type: application/json" \
+  -d '{ "network": "base", "from": "ACCOUNT_ID", "action": "approve", "args": { "token": "USDC", "amount": "5000" } }'
+# → { "chainId": 8453, "to": "0x…", "data": "0x…", "value": "0", "description": "…" }
+```
+
+Envie a transação da sua carteira, espere a confirmação e repita com `"action": "deposit"`. A
+`network` é um dos identificadores que `GET /v1/p2p/market` lista. `withdraw` recebe os mesmos
+argumentos e devolve tokens livres para a sua carteira a qualquer momento.
+
+## 4. Autorize a Cosmos Pay com um limite por ordem
+
+O matcher da Cosmos Pay abre compras sobre o seu saldo. Você decide o máximo que uma ordem pode bloquear:
+
+```bash
+curl -X POST $API/transactions -H "$AUTH" -H "Content-Type: application/json" \
+  -d '{ "network": "base", "from": "ACCOUNT_ID", "action": "setMatcher", "args": { "maxPerOrder": "1000", "autoSettle": false } }'
+```
+
+Um limite de `0` revoga a autorização. O matcher só pode bloquear seus tokens em ordens até esse
+limite. Ele não pode sacá-los nem enviá-los para lugar nenhum.
+
+<Callout type="warn" title="Mantenha a liquidação automática desativada">
+A liquidação automática faz uma ordem que você vendeu ser liberada sozinha depois da janela de
+liquidação. Um comerciante de liquidez nunca precisa dela, e a API a recusa para uma carteira com
+ofertas de venda ativas. Libere cada ordem você mesmo ou com o seu bot.
+</Callout>
+
+## 5. Adicione meios de recebimento
+
+Um meio de recebimento é a conta para a qual os compradores transferem. Ele é armazenado
+criptografado e exibido apenas ao comprador de cada ordem. Adicione um para cada meio que você oferece:
+
+```bash
+curl -X POST $API/payment-methods -H "$AUTH" -H "Content-Type: application/json" \
+  -d '{
+    "accountId": "ACCOUNT_ID",
+    "rail": "ar_bank_transfer",
+    "label": "Main account",
+    "holderName": "Lumio Exchange SRL",
+    "document": "30714209879",
+    "details": { "cbu": "0170099222000001234561", "alias": "lumio.pagos.ars" }
+  }'
+```
+
+| Meio | Moeda | `details` | `document` do titular |
+| --- | --- | --- | --- |
+| `ar_bank_transfer` | ARS | `cbu` com seus dígitos verificadores, ou `alias` | CUIT ou CUIL |
+| `br_pix` | BRL | `pixKeyType` (`cpf`, `cnpj`, `email`, `phone`, `evp`) e `pixKey` | CPF ou CNPJ |
+| `mx_spei` | MXN | `clabe` com seu dígito verificador | RFC, opcional |
+| `co_bank_transfer` | COP | `bank`, `accountType` (`savings`, `checking`), `accountNumber` | NIT ou cédula |
+| `pe_bank_transfer` | PEN | `cci` | DNI ou RUC |
+| `cl_bank_transfer` | CLP | `bank`, `accountType` (`checking`, `vista`, `savings`), `accountNumber` | RUT |
+
+O mercado lista os meios em vigor e seus campos.
+
+## 6. Publique ofertas
+
+Uma oferta diz o que você negocia, a que preço e entre quais limites.
+
+```bash
+curl -X POST $API/offers -H "$AUTH" -H "Content-Type: application/json" \
+  -d '{
+    "accountId": "ACCOUNT_ID",
+    "side": "SELL_TOKEN",
+    "network": "base",
+    "token": "USDC",
+    "currency": "ARS",
+    "rails": ["ar_bank_transfer"],
+    "price": "1432.50",
+    "priceTtlSeconds": 900,
+    "minFiat": "10000",
+    "maxFiat": "2500000"
+  }'
+```
+
+- `SELL_TOKEN` vende tokens para quem compra. Cada um dos seus `rails` precisa de um meio de recebimento ativo.
+- `BUY_TOKEN` compra tokens de quem vende e dos pagamentos a terceiros dos clientes.
+- `price` é moeda local por token. Um preço mais antigo que `priceTtlSeconds` não é combinado: atualize com `PATCH /v1/p2p/offers/{id}` ou deixe seu bot fazer isso.
+
+Uma oferta é combinada quando seu status de comerciante é `ACTIVE`, o preço está atualizado e o
+valor cabe nos limites. Uma compra também precisa de um saldo livre e de um limite por ordem de pelo
+menos o valor em tokens; uma venda precisa de um saldo livre que cubra a garantia. Entre os
+comerciantes que se qualificam, vence o melhor preço para a pessoa e depois o histórico: taxa de
+ordens concluídas, tempo de liberação e disputas perdidas.
+
+## 7. Gerencie ordens
+
+`GET /v1/p2p/merchant/orders` lista as ordens combinadas com as suas carteiras. Cada uma mostra o que
+você precisa para o seu lado e nada mais.
+
+| Ordem | Seu papel | O que você faz |
+| --- | --- | --- |
+| Compra ou cobrança | Você vende tokens | Confira se a transferência veio do pagador indicado na ordem, pelo valor exato, e então `release`. |
+| Venda ou pagamento a terceiros | Você compra tokens | `accept` antes do prazo de aceitação, transfira o dinheiro para a conta que a ordem mostra e então `markPaid`. |
+
+Cada ação é uma transação do mesmo gerador, assinada na sua carteira:
+
+```bash
+curl -X POST $API/transactions -H "$AUTH" -H "Content-Type: application/json" \
+  -d '{ "network": "base", "from": "ACCOUNT_ID", "action": "release", "args": { "orderId": "ORDER_ID" } }'
+```
+
+`cancel` recusa uma venda antes de você pagar, e `dispute` pede ao árbitro que decida sobre uma
+ordem paga. Nunca libere uma compra antes de o dinheiro estar na sua conta, e nunca aceite uma
+transferência de alguém diferente do pagador indicado.
+
+<Cards>
+  <Card title="Início rápido para bots" href="/p2p/bots/" description="Deixe um bot atualizar preços e liberar ordens pagas." />
+  <Card title="Modelo de segurança" href="/p2p/security/" description="O que o matcher e o árbitro podem fazer, e o que não podem." />
+  <Card title="Referência da API" href="/api/" description="Cada endpoint do mercado P2P com seus esquemas." />
+</Cards>

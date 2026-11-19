@@ -1,0 +1,161 @@
+---
+title: Démarrage rapide pour les marchands
+description: Apportez de la liquidité au marché P2P. Enregistrez un portefeuille, déposez des jetons, autorisez Cosmos Pay à apparier les ordres, ajoutez des moyens d'encaissement, publiez des offres et gérez les ordres.
+---
+
+Un marchand détient des jetons dans le contrat du marché et échange avec les personnes que Cosmos Pay
+apparie à ses offres. Les jetons restent sous le contrôle de votre portefeuille : Cosmos Pay prépare
+chaque transaction et votre portefeuille la signe. Le tableau de bord fait chaque étape de cette page
+sous **P2P**, dans la barre latérale ; vous voyez ici aussi les appels à l'API.
+
+Chaque requête porte votre clé API avec la portée `p2p:write` :
+
+```bash
+export API=https://api.cosmospay.lat/cosmos-api/v1/p2p
+export AUTH="Authorization: Bearer $COSMOS_PAY_API_KEY"
+```
+
+## 1. Enregistrez un portefeuille
+
+Un portefeuille se prouve par une signature EIP-191 sur un défi à usage unique. Demandez le défi,
+signez son `message` avec `personal_sign` dans le portefeuille, puis enregistrez-le.
+
+```bash
+curl -X POST $API/accounts/challenge -H "$AUTH" -H "Content-Type: application/json" \
+  -d '{ "address": "0xYourWallet" }'
+# → { "id": "…", "message": "Cosmos Pay wants you to register this wallet…", "expiresAt": "…" }
+
+curl -X POST $API/accounts -H "$AUTH" -H "Content-Type: application/json" \
+  -d '{ "challengeId": "…", "address": "0xYourWallet", "signature": "0x…", "label": "Treasury" }'
+```
+
+Le défi expire en quelques minutes et ne sert qu'une fois. Une adresse appartient à une seule organisation.
+
+## 2. Nommez-le comme marchand
+
+Le nom affiché est ce que les acheteurs et les vendeurs voient sur leur cotation. Votre adresse n'apparaît jamais.
+
+```bash
+curl -X PATCH $API/accounts/ACCOUNT_ID -H "$AUTH" -H "Content-Type: application/json" \
+  -d '{ "merchant": { "displayName": "Lumio Exchange", "status": "ACTIVE" } }'
+```
+
+Passez `status` à `PAUSED` pour ne plus recevoir de nouveaux ordres. Les ordres déjà ouverts suivent leur cours.
+
+## 3. Déposez de la liquidité
+
+Les dépôts alimentent votre solde libre dans le contrat. Deux transactions : un `approve` du montant
+exact, puis le `deposit`. Le générateur de transactions renvoie chacune non signée :
+
+```bash
+curl -X POST $API/transactions -H "$AUTH" -H "Content-Type: application/json" \
+  -d '{ "network": "base", "from": "ACCOUNT_ID", "action": "approve", "args": { "token": "USDC", "amount": "5000" } }'
+# → { "chainId": 8453, "to": "0x…", "data": "0x…", "value": "0", "description": "…" }
+```
+
+Envoyez-la depuis votre portefeuille, attendez sa confirmation, puis recommencez avec
+`"action": "deposit"`. Le `network` est l'un des identifiants que liste `GET /v1/p2p/market`.
+`withdraw` prend les mêmes arguments et renvoie à tout moment des jetons libres vers votre portefeuille.
+
+## 4. Autorisez Cosmos Pay avec un plafond par ordre
+
+Le matcher de Cosmos Pay ouvre des achats sur votre solde. Vous décidez du montant maximal qu'un ordre peut bloquer :
+
+```bash
+curl -X POST $API/transactions -H "$AUTH" -H "Content-Type: application/json" \
+  -d '{ "network": "base", "from": "ACCOUNT_ID", "action": "setMatcher", "args": { "maxPerOrder": "1000", "autoSettle": false } }'
+```
+
+Un plafond de `0` révoque l'autorisation. Le matcher ne peut bloquer vos jetons que dans des ordres
+jusqu'à ce plafond. Il ne peut ni les retirer ni les envoyer ailleurs.
+
+<Callout type="warn" title="Laissez le règlement automatique désactivé">
+Le règlement automatique libère de lui-même un ordre que vous avez vendu après la fenêtre de
+règlement. Un marchand de liquidité n'en a jamais besoin, et l'API le refuse pour un portefeuille qui
+a des offres de vente actives. Libérez chaque ordre vous-même ou avec votre bot.
+</Callout>
+
+## 5. Ajoutez des moyens d'encaissement
+
+Un moyen d'encaissement est le compte sur lequel les acheteurs virent. Il est stocké chiffré et
+n'est montré qu'à l'acheteur de chaque ordre. Ajoutez-en un par moyen que vous proposez :
+
+```bash
+curl -X POST $API/payment-methods -H "$AUTH" -H "Content-Type: application/json" \
+  -d '{
+    "accountId": "ACCOUNT_ID",
+    "rail": "ar_bank_transfer",
+    "label": "Main account",
+    "holderName": "Lumio Exchange SRL",
+    "document": "30714209879",
+    "details": { "cbu": "0170099222000001234561", "alias": "lumio.pagos.ars" }
+  }'
+```
+
+| Moyen | Devise | `details` | `document` du titulaire |
+| --- | --- | --- | --- |
+| `ar_bank_transfer` | ARS | `cbu` avec ses chiffres de contrôle, ou `alias` | CUIT ou CUIL |
+| `br_pix` | BRL | `pixKeyType` (`cpf`, `cnpj`, `email`, `phone`, `evp`) et `pixKey` | CPF ou CNPJ |
+| `mx_spei` | MXN | `clabe` avec son chiffre de contrôle | RFC, facultatif |
+| `co_bank_transfer` | COP | `bank`, `accountType` (`savings`, `checking`), `accountNumber` | NIT ou carte d'identité |
+| `pe_bank_transfer` | PEN | `cci` | DNI ou RUC |
+| `cl_bank_transfer` | CLP | `bank`, `accountType` (`checking`, `vista`, `savings`), `accountNumber` | RUT |
+
+Le marché liste les moyens en vigueur et leurs champs.
+
+## 6. Publiez des offres
+
+Une offre indique ce que vous échangez, à quel prix et entre quelles limites.
+
+```bash
+curl -X POST $API/offers -H "$AUTH" -H "Content-Type: application/json" \
+  -d '{
+    "accountId": "ACCOUNT_ID",
+    "side": "SELL_TOKEN",
+    "network": "base",
+    "token": "USDC",
+    "currency": "ARS",
+    "rails": ["ar_bank_transfer"],
+    "price": "1432.50",
+    "priceTtlSeconds": 900,
+    "minFiat": "10000",
+    "maxFiat": "2500000"
+  }'
+```
+
+- `SELL_TOKEN` vend des jetons à ceux qui achètent. Chacun de ses `rails` a besoin d'un moyen d'encaissement actif.
+- `BUY_TOKEN` achète des jetons à ceux qui vendent, et aux versements des clients.
+- `price` est en monnaie locale par jeton. Un prix plus ancien que `priceTtlSeconds` n'est pas apparié : mettez-le à jour avec `PATCH /v1/p2p/offers/{id}` ou laissez votre bot le faire.
+
+Une offre est appariée lorsque votre statut de marchand est `ACTIVE`, que son prix est à jour et que
+le montant entre dans ses limites. Un achat exige aussi un solde libre et un plafond par ordre au
+moins égaux au montant en jetons ; une vente exige un solde libre qui couvre la caution. Parmi les
+marchands éligibles, le meilleur prix pour la personne l'emporte, puis l'historique : taux d'ordres
+aboutis, délai de libération et litiges perdus.
+
+## 7. Gérez les ordres
+
+`GET /v1/p2p/merchant/orders` liste les ordres appariés à vos portefeuilles. Chacun montre ce dont
+vous avez besoin pour votre côté, et rien de plus.
+
+| Ordre | Votre rôle | Ce que vous faites |
+| --- | --- | --- |
+| Achat ou encaissement | Vous vendez des jetons | Vérifiez que le virement vient du payeur indiqué par l'ordre, pour le montant exact, puis `release`. |
+| Vente ou versement | Vous achetez des jetons | `accept` avant l'échéance d'acceptation, virez l'argent sur le compte affiché par l'ordre, puis `markPaid`. |
+
+Chaque action est une transaction du même générateur, signée dans votre portefeuille :
+
+```bash
+curl -X POST $API/transactions -H "$AUTH" -H "Content-Type: application/json" \
+  -d '{ "network": "base", "from": "ACCOUNT_ID", "action": "release", "args": { "orderId": "ORDER_ID" } }'
+```
+
+`cancel` refuse une vente avant que vous ne payiez, et `dispute` demande à l'arbitre de trancher un
+ordre payé. Ne libérez jamais un achat avant que l'argent soit sur votre compte, et n'acceptez jamais
+un virement d'une autre personne que le payeur indiqué.
+
+<Cards>
+  <Card title="Démarrage rapide pour les bots" href="/p2p/bots/" description="Laissez un bot mettre à jour les prix et libérer les ordres payés." />
+  <Card title="Modèle de sécurité" href="/p2p/security/" description="Ce que le matcher et l'arbitre peuvent faire, et ce qu'ils ne peuvent pas faire." />
+  <Card title="Référence de l'API" href="/api/" description="Chaque endpoint du marché P2P avec ses schémas." />
+</Cards>

@@ -1,0 +1,106 @@
+---
+title: Cobros
+description: Cobra en moneda local y recibe stablecoins con una página de pago alojada, o integra la rampa de entrada y salida P2P en tu propia app.
+---
+
+Hay dos formas de cobrar con el mercado P2P. Un **cobro** es un enlace que compartes: el pagador
+transfiere moneda local y tú recibes stablecoins en tu billetera. La **rampa integrada** lleva el
+mismo flujo a tu propia app, para que tus usuarios compren y vendan.
+
+## Cobros
+
+Crea un cobro con el monto en moneda local y la billetera registrada que recibe los tokens:
+
+```bash
+curl -X POST https://api.cosmospay.lat/cosmos-api/v1/p2p/charges \
+  -H "Authorization: Bearer $COSMOS_PAY_API_KEY" -H "Content-Type: application/json" \
+  -d '{
+    "currency": "ARS",
+    "fiatAmount": "85000",
+    "network": "base",
+    "token": "USDC",
+    "recipient": "ACCOUNT_ID",
+    "description": "Order #1042",
+    "expiresAt": "2026-12-01T00:00:00Z",
+    "multiUse": false
+  }'
+# → { "id": "…", "url": "https://payments.cosmospay.lat/p2p/…", "status": "open", … }
+```
+
+Comparte la `url`. En esa página, el pagador:
+
+1. Ve el monto en moneda local.
+2. Ingresa su nombre, su documento de identidad y su email. El comerciante verifica que la transferencia venga de esa persona.
+3. Recibe la cuenta del comerciante y el monto exacto, con una cuenta regresiva para la ventana de pago.
+4. Transfiere desde su banco y presiona **Ya transferí**.
+5. Sigue el estado en vivo hasta que el comerciante libera, y luego ve el comprobante.
+
+Los tokens llegan a tu billetera `recipient`. Cuando la orden se completa, el cobro envía
+`P2P_CHARGE_SUCCEEDED`. Un cobro tiene una sola orden en curso a la vez; activa `multiUse` para
+cobrar a muchos pagadores con el mismo enlace. `GET /v1/p2p/charges/{id}` lo lee y `DELETE` elimina
+un cobro que nadie está pagando.
+
+El panel crea cobros en **P2P → Cobros**, con el enlace y su código QR para compartir.
+
+## Rampa integrada
+
+Permite que tus usuarios compren y vendan stablecoins sin salir de tu app. Tu servidor guarda la
+clave de API; la billetera de tu usuario firma solo lo que envía.
+
+```bash
+export API=https://api.cosmospay.lat/cosmos-api/v1/p2p
+export AUTH="Authorization: Bearer $COSMOS_PAY_API_KEY"
+```
+
+### Comprar
+
+```bash
+curl -X POST $API/quotes -H "$AUTH" -H "Content-Type: application/json" \
+  -d '{ "side": "BUY", "network": "base", "token": "USDC", "currency": "ARS", "rail": "ar_bank_transfer", "fiatAmount": "50000" }'
+
+curl -X POST $API/orders -H "$AUTH" -H "Content-Type: application/json" \
+  -d '{
+    "quoteId": "QUOTE_ID",
+    "recipient": "0xUserWallet",
+    "payer": { "name": "Ana Gómez", "document": "20329642330", "email": "ana@example.com" }
+  }'
+```
+
+La orden responde `paymentDetails`, la cuenta del comerciante para esta orden, y el plazo.
+Muéstraselos a tu usuario. Cuando transfiera, infórmalo:
+
+```bash
+curl -X POST $API/orders/ORDER_ID/paid -H "$AUTH" -H "Content-Type: application/json" \
+  -d '{ "reference": "TRX-88421" }'
+```
+
+El nombre y el documento del pagador son obligatorios: el comerciante libera solo una
+transferencia de esa persona. `POST /v1/p2p/orders/{id}/cancel` cancela antes de la transferencia, y
+`/dispute` le pide al árbitro que decida sobre una orden pagada que el comerciante no libera.
+
+### Vender
+
+```bash
+curl -X POST $API/quotes -H "$AUTH" -H "Content-Type: application/json" \
+  -d '{ "side": "SELL", "network": "base", "token": "USDC", "currency": "ARS", "rail": "ar_bank_transfer", "tokenAmount": "25" }'
+
+curl -X POST $API/orders -H "$AUTH" -H "Content-Type: application/json" \
+  -d '{
+    "quoteId": "QUOTE_ID",
+    "seller": "0xUserWallet",
+    "payout": { "holderName": "Ana Gómez", "document": "20329642330", "details": { "alias": "ana.gomez.mp" } }
+  }'
+```
+
+La orden responde `transactions`: un `approve` y un `openWithDeposit`, sin firmar. La billetera de
+tu usuario envía ambas, en ese orden. El comerciante acepta, transfiere el dinero a la cuenta de
+`payout` y marca la orden como pagada. Luego tu usuario libera con una transacción `release` del
+generador, con su dirección como `from`. Si nadie la disputa, la ventana de liquidación la libera sola.
+
+Cada orden que abres lleva `externalReference` si lo envías, y sus webhooks llegan a tus endpoints
+con `role: "client"`.
+
+<Cards>
+  <Card title="Webhooks" href="/p2p/webhooks/" description="Sigue cada cobro y cada orden desde tu servidor." />
+  <Card title="Pagos a terceros" href="/p2p/payouts/" description="La otra dirección: paga cuentas bancarias desde tu saldo." />
+</Cards>

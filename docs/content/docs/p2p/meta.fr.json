@@ -1,0 +1,13 @@
+{
+  "title": "Marché P2P",
+  "description": "Des stablecoins contre de la monnaie locale entre particuliers, Cosmos Pay choisit le marchand.",
+  "pages": [
+    "index",
+    "merchants",
+    "bots",
+    "collections",
+    "payouts",
+    "webhooks",
+    "security"
+  ]
+}

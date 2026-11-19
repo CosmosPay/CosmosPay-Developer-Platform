@@ -1,0 +1,109 @@
+---
+title: Démarrage rapide pour les bots
+description: Faites tourner un bot pour votre marchand P2P. Accordez-lui ses permissions une fois, transmettez vos notifications bancaires à l'assistant de rapprochement des virements et libérez les ordres payés en quelques secondes.
+---
+
+Un bot opère pour un marchand sans détenir la clé du marchand. Il a son propre portefeuille et sa
+propre clé API. Le marchand accorde une fois des permissions à ce portefeuille dans le contrat du
+marché, puis le bot signe : il met à jour les prix, libère les ordres dont l'argent est arrivé et
+accepte les ventes.
+
+## 1. Accordez ses permissions au bot
+
+Les permissions sont un masque de bits que le contrat vérifie à chaque appel que le bot fait pour vous :
+
+| Permission | Bit | Permet au bot de |
+| --- | --- | --- |
+| `PERM_OPEN` | `1` | Ouvrir des ordres sur votre solde. |
+| `PERM_RELEASE` | `2` | Libérer vos ordres, ce qui paie leur acheteur. |
+| `PERM_TRADE` | `4` | Accepter, marquer comme payé, annuler et contester pour vous. |
+| `PERM_WITHDRAW` | `8` | Retirer votre solde libre vers votre propre portefeuille, jamais ailleurs. |
+
+Additionnez les bits voulus : un bot qui libère les achats et gère les ventes a besoin de `2 + 4 = 6`.
+Le portefeuille du marchand signe l'autorisation, une fois par réseau :
+
+```bash
+curl -X POST https://api.cosmospay.lat/cosmos-api/v1/p2p/transactions \
+  -H "Authorization: Bearer $COSMOS_PAY_API_KEY" -H "Content-Type: application/json" \
+  -d '{ "network": "base", "from": "ACCOUNT_ID", "action": "setOperator", "args": { "operator": "0xBotWallet", "perms": 6 } }'
+```
+
+Une autorisation à `0` révoque le bot. Le tableau de bord fait de même sous **P2P → Liquidité**, avec
+une case par permission.
+
+## 2. Donnez une clé API au bot
+
+Créez une clé avec `p2p:read` et `p2p:write` et gardez-la sur le serveur du bot, à côté de la clé de
+son portefeuille. Ni l'une ni l'autre n'atteint jamais un navigateur.
+
+## 3. Libérez les ordres quand l'argent arrive
+
+Transmettez chaque virement bancaire entrant à l'assistant de rapprochement. Il renvoie les achats
+ouverts de vos portefeuilles de marchand que ce virement règle le plus probablement, du meilleur au
+moins bon, chacun avec sa transaction `release` prête à signer.
+
+```ts
+const API = 'https://api.cosmospay.lat/cosmos-api/v1/p2p';
+const headers = {
+  Authorization: `Bearer ${process.env.COSMOS_PAY_API_KEY}`,
+  'Content-Type': 'application/json',
+};
+
+interface BankTransfer {
+  currency: string;      // ISO 4217, e.g. "ARS"
+  amount: string;        // as received, e.g. "150000.00"
+  payerName?: string;    // the sender's name, as the bank reports it
+  payerDocument?: string; // the sender's tax id, when the bank reports it
+  reference?: string;    // the bank's transfer id
+  receivedAt?: string;   // ISO 8601
+}
+
+// Called by your bank integration for every incoming transfer.
+export async function onBankTransfer(transfer: BankTransfer, wallet: { sendTransaction(tx: object): Promise<string> }) {
+  const res = await fetch(`${API}/merchant/transfer-matches`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(transfer),
+  });
+  if (!res.ok) throw new Error(`transfer-matches failed with ${res.status}`);
+  const { matches } = await res.json();
+
+  const best = matches[0];
+  // Release on its own only a transfer that matches the payer exactly; leave the rest to a person.
+  if (!best || best.score < 1) return;
+
+  // The bot's wallet signs and sends; PERM_RELEASE lets it release the merchant's order.
+  const hash = await wallet.sendTransaction(best.transaction);
+  console.log(`released order ${best.order.id} in ${hash}`);
+}
+```
+
+Un rapprochement exige le montant et la devise exacts. Le nom et le document du payeur augmentent son
+score. Ne libérez automatiquement que lorsqu'ils correspondent au payeur indiqué par l'ordre : c'est
+cette vérification qui empêche le virement d'un tiers de libérer vos jetons.
+
+## 4. Gardez des prix à jour
+
+Une offre dont le prix est plus ancien que son `priceTtlSeconds` n'est pas appariée. Mettez-le à jour
+à intervalles réguliers depuis votre source de prix :
+
+```ts
+await fetch(`${API}/offers/${offerId}`, {
+  method: 'PATCH',
+  headers,
+  body: JSON.stringify({ price: '1432.50' }),
+});
+```
+
+## 5. Écoutez les événements
+
+Abonnez l'endpoint du bot aux événements sur lesquels il agit : `P2P_ORDER_CREATED` pour les
+nouveaux ordres, `P2P_ORDER_PAID` quand un payeur signale un virement, `P2P_ORDER_ACCEPTED` pour les
+ventes qu'il doit payer et `P2P_ORDER_DISPUTED` pour qu'une personne examine le cas. Les envois au
+marchand portent `role: "merchant"`. Voir [Webhooks](/p2p/webhooks/).
+
+<Callout type="warn" title="Ne donnez à un bot que ce dont il a besoin">
+La clé d'un bot ouvre l'accès à votre liquidité dans la limite de ses permissions. Laissez de côté
+`PERM_WITHDRAW` sauf si le bot rééquilibre, et gardez le plafond par ordre de l'autorisation du
+matcher à la taille de vos opérations.
+</Callout>

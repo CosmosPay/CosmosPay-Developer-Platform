@@ -16,7 +16,7 @@ ela pertence (que define testnet ou mainnet, em todas as redes) e os **escopos**
 3. Vá em **API Keys → Create**.
 4. Dê um **nome** à chave (e uma descrição opcional) para que você possa reconhecê-la depois.
 5. Escolha um **papel**:
-   - **User**: com escopo. Selecione exatamente as permissões necessárias na matriz (por recurso: **read** e/ou **write** para pagamentos, webhooks, produtos, clientes e análises).
+   - **User**: com escopo. Selecione exatamente as permissões necessárias na matriz (por recurso: **read** e/ou **write** para pagamentos, swaps, liquidez, webhooks, produtos, clientes, KYC, on-ramp, off-ramp, atividade, plugins e o mercado P2P).
    - **Admin**: acesso total; ignora a matriz de escopos. Use com moderação.
 6. **Crie** e, em seguida, **copie a chave imediatamente**.
 
@@ -45,6 +45,10 @@ Authorization: Bearer dv_xxxxxxxxxxxxxxxxxxxxxxxx
 Dê a cada chave apenas os escopos de que ela precisa. Um servidor que apenas cria pagamentos pode usar uma chave com
 `payments:write` e `payments:read` e nada mais. Assim, uma chave vazada não pode fazer mais do que a sua função.
 </Callout>
+
+O [mercado P2P](/p2p/) tem dois escopos: `p2p:read` lê o mercado, suas carteiras, ofertas, ordens,
+cobranças e pagamentos a terceiros; `p2p:write` registra carteiras, publica ofertas, abre ordens,
+cobranças e pagamentos a terceiros, e monta as transações não assinadas que suas carteiras assinam.
 
 ## Boas práticas
 

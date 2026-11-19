@@ -1,0 +1,117 @@
+---
+title: Marché P2P
+description: Permettez à vos utilisateurs d'acheter et de vendre des stablecoins contre de la monnaie locale. Cosmos Pay choisit le marchand, le contrat du marché bloque les jetons et chaque partie signe avec son propre portefeuille.
+---
+
+Le **marché P2P** permet d'acheter et de vendre des stablecoins contre de la monnaie locale : de
+l'USDC, et de l'USDT là où le réseau en a, contre un virement bancaire, un PIX ou un SPEI. La
+personne saisit un montant et Cosmos Pay choisit le marchand. Il n'y a pas de carnet d'ordres à
+parcourir ni de contrepartie à choisir.
+
+Les jetons de chaque ordre sont bloqués dans le contrat intelligent du marché jusqu'à ce que le
+vendeur les libère ou qu'un délai les restitue. Personne ne peut les déplacer ailleurs, pas même Cosmos Pay.
+
+## Qui participe
+
+| Rôle | Qui | Ce qu'il fait |
+| --- | --- | --- |
+| Client | Votre intégration | Ouvre des ordres pour ses utilisateurs : achats, ventes, encaissements et versements. |
+| Marchand | Un fournisseur de liquidité | Détient des jetons dans le contrat, publie des offres, reçoit ou envoie la monnaie locale et libère ou accepte des ordres. |
+| Matcher | Cosmos Pay | Choisit le marchand de chaque ordre et ouvre les achats et les versements sur le solde du marchand, jusqu'au plafond fixé par le marchand. |
+| Arbitre | Les opérations de Cosmos Pay | Tranche les litiges depuis un portefeuille multisignature externe. |
+
+Une organisation peut être client, marchand ou les deux. Chacune enregistre les portefeuilles avec
+lesquels elle opère, et chaque portefeuille signe ses propres transactions.
+
+## Réseaux et jetons
+
+Le marché fonctionne sur les réseaux EVM où son contrat est déployé. `GET /v1/p2p/market` les liste
+avec l'adresse du contrat et les jetons de chacun, les devises et les moyens de paiement, les frais,
+les délais et l'adresse du matcher. Lisez-le au démarrage de votre intégration plutôt que de figer
+les réseaux dans le code.
+
+```bash
+curl https://api.cosmospay.lat/cosmos-api/v1/p2p/market \
+  -H "Authorization: Bearer $COSMOS_PAY_API_KEY"
+```
+
+Votre clé API choisit l'environnement : les clés `dv_` opèrent sur les réseaux de test, les clés `prod_` sur le mainnet.
+
+## Comment un ordre avance
+
+Un **achat** donne des jetons à votre utilisateur contre de la monnaie locale :
+
+1. Vous demandez une cotation avec le montant en monnaie locale : `POST /v1/p2p/quotes`. La cotation indique le prix, le montant en jetons, les frais et l'historique public du marchand. Elle est valable 60 secondes.
+2. Vous ouvrez l'ordre à partir de la cotation : `POST /v1/p2p/orders`. Le matcher bloque les jetons du marchand dans le contrat, et l'ordre renvoie le compte du marchand et le montant exact à virer.
+3. Votre utilisateur vire l'argent depuis un compte à son nom avant l'échéance de paiement. Vous le signalez avec `POST /v1/p2p/orders/{id}/paid`.
+4. Le marchand voit l'argent arriver et libère l'ordre. Les jetons arrivent dans le portefeuille de votre utilisateur.
+
+Une **vente** donne de la monnaie locale à votre utilisateur contre des jetons :
+
+1. Vous demandez une cotation avec le montant en jetons.
+2. Vous ouvrez l'ordre. La réponse contient deux transactions non signées pour le portefeuille de votre utilisateur, `approve` et `openWithDeposit`. L'utilisateur signe et envoie les deux, et ses jetons sont bloqués dans le contrat.
+3. Le marchand accepte avant l'échéance d'acceptation et bloque une caution de 10 % de l'ordre.
+4. Le marchand vire la monnaie locale sur le compte de votre utilisateur et marque l'ordre comme payé.
+5. Votre utilisateur libère les jetons. Si personne ne conteste l'ordre, la fenêtre de règlement le libère d'elle-même.
+
+Les encaissements et les versements sont ces deux mêmes parcours, ouverts par votre organisation
+pour quelqu'un d'autre. Voir [Encaissements](/p2p/collections/) et [Versements](/p2p/payouts/).
+
+## Statuts
+
+Chaque ordre renvoie l'un de ces statuts. Ils ne changent que lorsque les événements du contrat sont
+indexés, si bien que ce que vous lisez correspond toujours à la chaîne.
+
+| Statut | Signification |
+| --- | --- |
+| `pending` | L'ordre est en cours d'ouverture sur la chaîne, ou une vente attend la signature du vendeur. |
+| `awaiting_acceptance` | Une vente ou un versement attend que le marchand accepte et bloque sa caution. |
+| `awaiting_payment` | Les jetons sont bloqués. Le côté acheteur vire la monnaie locale. |
+| `paid` | Le virement a été signalé. Le vendeur le vérifie et libère. |
+| `disputed` | Une partie a ouvert un litige. L'arbitre tranche. |
+| `completed` | Le vendeur a libéré. L'acheteur a reçu les jetons. |
+| `cancelled` | L'ordre a été annulé avant d'aboutir. Les jetons sont revenus au vendeur. |
+| `expired` | Une échéance est passée. Les jetons sont revenus au vendeur. |
+| `resolved` | L'arbitre a tranché un litige. |
+| `failed` | L'ordre ne s'est jamais ouvert : la transaction a échoué ou le vendeur n'a jamais signé. |
+
+## Délais
+
+| Délai | Par défaut | Ce qu'il limite |
+| --- | --- | --- |
+| Paiement | 30 minutes | Le côté acheteur vire l'argent et marque l'ordre comme payé. |
+| Acceptation | 5 minutes | Le marchand accepte une vente ou un versement, qui comportent une caution. |
+| Règlement | 6 heures | Une vente payée se libère d'elle-même, sauf si quelqu'un la conteste. |
+
+Le marché renvoie les délais en vigueur. Lorsqu'une échéance passe, l'ordre est annulé et ses jetons
+reviennent au vendeur.
+
+## Frais
+
+Deux frais peuvent s'appliquer. Tous deux sont prélevés sur ce que reçoit l'acheteur et fixés à
+l'ouverture de l'ordre.
+
+- Les frais de protocole, fixés par Cosmos Pay et indiqués par le marché dans `protocolFeeBps`. Le contrat les plafonne à 3 %.
+- Des frais d'intégrateur jusqu'à 5 %, qu'un client peut ajouter aux ordres de ses propres utilisateurs. Ils sont versés à l'un des portefeuilles enregistrés du client.
+
+Chaque cotation affiche les deux frais et le montant net avant que quiconque ne signe.
+
+## Accès
+
+Les clés API ont besoin de la portée `p2p:read` pour lire le marché et de `p2p:write` pour
+enregistrer des portefeuilles, publier des offres et ouvrir des ordres, des encaissements et des
+versements. Créez-les dans le tableau de bord : [Obtenez votre clé API](/api-keys/). Le tableau de bord
+couvre tout le marché sous **P2P**, dans la barre latérale.
+
+L'application P2P de Cosmos Pay, sur le domaine des paiements, fonctionne avec cette même API et les mêmes règles.
+
+## Étapes suivantes
+
+<Cards>
+  <Card title="Démarrage rapide pour les marchands" href="/p2p/merchants/" description="Enregistrez un portefeuille, ajoutez de la liquidité, publiez des offres et gérez les ordres." />
+  <Card title="Démarrage rapide pour les bots" href="/p2p/bots/" description="Libérez les ordres automatiquement à l'arrivée du virement." />
+  <Card title="Encaissements" href="/p2p/collections/" description="Encaissez en monnaie locale et recevez des stablecoins, ou intégrez la rampe à votre application." />
+  <Card title="Versements" href="/p2p/payouts/" description="Payez jusqu'à 100 comptes bancaires depuis votre solde en stablecoins." />
+  <Card title="Webhooks" href="/p2p/webhooks/" description="Les événements envoyés par chaque ordre, encaissement et versement." />
+  <Card title="Modèle de sécurité" href="/p2p/security/" description="Qui détient chaque clé, et ce que chacune peut faire." />
+</Cards>

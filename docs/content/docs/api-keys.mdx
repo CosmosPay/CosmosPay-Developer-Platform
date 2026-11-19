@@ -16,7 +16,7 @@ belongs to (which picks testnet or mainnet, on every chain) and the **scopes** i
 3. Go to **API Keys → Create**.
 4. Give the key a **name** (and an optional description) so you can recognise it later.
 5. Choose a **role**:
-   - **User**: scoped. Pick exactly the permissions it needs from the matrix (per resource: **read** and/or **write** for payments, webhooks, products, customers and analytics).
+   - **User**: scoped. Pick exactly the permissions it needs from the matrix (per resource: **read** and/or **write** for payments, swaps, liquidity, webhooks, products, customers, KYC, on-ramp, off-ramp, activity, plugins and the P2P market).
    - **Admin**: full access, which bypasses the scope matrix. Use sparingly.
 6. **Create**, then **copy the key immediately**.
 
@@ -45,6 +45,10 @@ Authorization: Bearer dv_xxxxxxxxxxxxxxxxxxxxxxxx
 Give each key only the scopes it needs. A server that just creates payments can use a key with
 `payments:write` and `payments:read` and nothing else, so a leaked key can't do more than its job.
 </Callout>
+
+The [P2P market](/p2p/) has two scopes: `p2p:read` reads the market, your wallets, offers, orders,
+charges and payouts; `p2p:write` registers wallets, publishes offers, opens orders, charges and
+payouts, and builds the unsigned transactions your wallets sign.
 
 ## Good practice
 

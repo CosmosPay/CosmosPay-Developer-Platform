@@ -1,0 +1,107 @@
+---
+title: Bot quick start
+description: Run a bot for your P2P merchant. Grant it permissions once, forward your bank notifications to the transfer-matches helper and release paid orders in seconds.
+---
+
+A bot trades for a merchant without holding the merchant's key. It has its own wallet and its own
+API key. The merchant grants that wallet permissions on the market contract once, and the bot
+signs from then on: it refreshes prices, releases orders whose money arrived and accepts sales.
+
+## 1. Grant the bot its permissions
+
+Permissions are a bitmask the contract checks on every call the bot makes for you:
+
+| Permission | Bit | Lets the bot |
+| --- | --- | --- |
+| `PERM_OPEN` | `1` | Open orders on your balance. |
+| `PERM_RELEASE` | `2` | Release your orders, which pays their buyer. |
+| `PERM_TRADE` | `4` | Accept, mark paid, cancel and dispute for you. |
+| `PERM_WITHDRAW` | `8` | Withdraw your free balance to your own wallet, never elsewhere. |
+
+Add the bits you want: a bot that releases purchases and handles sales needs `2 + 4 = 6`. The
+merchant's wallet signs the grant, once per network:
+
+```bash
+curl -X POST https://api.cosmospay.lat/cosmos-api/v1/p2p/transactions \
+  -H "Authorization: Bearer $COSMOS_PAY_API_KEY" -H "Content-Type: application/json" \
+  -d '{ "network": "base", "from": "ACCOUNT_ID", "action": "setOperator", "args": { "operator": "0xBotWallet", "perms": 6 } }'
+```
+
+A grant of `0` revokes the bot. The dashboard does the same under **P2P → Liquidity**, with a
+checkbox per permission.
+
+## 2. Give the bot an API key
+
+Create a key with `p2p:read` and `p2p:write` and keep it on the bot's server, next to its wallet
+key. Neither ever reaches a browser.
+
+## 3. Release orders when the money arrives
+
+Forward each incoming bank transfer to the transfer-matches helper. It answers the open
+purchases of your merchant wallets that this transfer most likely pays, best first, each with its
+`release` transaction ready to sign.
+
+```ts
+const API = 'https://api.cosmospay.lat/cosmos-api/v1/p2p';
+const headers = {
+  Authorization: `Bearer ${process.env.COSMOS_PAY_API_KEY}`,
+  'Content-Type': 'application/json',
+};
+
+interface BankTransfer {
+  currency: string;      // ISO 4217, e.g. "ARS"
+  amount: string;        // as received, e.g. "150000.00"
+  payerName?: string;    // the sender's name, as the bank reports it
+  payerDocument?: string; // the sender's tax id, when the bank reports it
+  reference?: string;    // the bank's transfer id
+  receivedAt?: string;   // ISO 8601
+}
+
+// Called by your bank integration for every incoming transfer.
+export async function onBankTransfer(transfer: BankTransfer, wallet: { sendTransaction(tx: object): Promise<string> }) {
+  const res = await fetch(`${API}/merchant/transfer-matches`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(transfer),
+  });
+  if (!res.ok) throw new Error(`transfer-matches failed with ${res.status}`);
+  const { matches } = await res.json();
+
+  const best = matches[0];
+  // Release on its own only a transfer that matches the payer exactly; leave the rest to a person.
+  if (!best || best.score < 1) return;
+
+  // The bot's wallet signs and sends; PERM_RELEASE lets it release the merchant's order.
+  const hash = await wallet.sendTransaction(best.transaction);
+  console.log(`released order ${best.order.id} in ${hash}`);
+}
+```
+
+A match needs the exact amount and currency. The payer's name and document raise its score.
+Release automatically only when they match the payer the order names: that is the check that
+keeps a third party's transfer from releasing your tokens.
+
+## 4. Keep prices fresh
+
+An offer whose price is older than its `priceTtlSeconds` is not matched. Refresh it from your
+pricing source on a timer:
+
+```ts
+await fetch(`${API}/offers/${offerId}`, {
+  method: 'PATCH',
+  headers,
+  body: JSON.stringify({ price: '1432.50' }),
+});
+```
+
+## 5. Listen to the events
+
+Subscribe the bot's endpoint to the events it acts on: `P2P_ORDER_CREATED` for new orders,
+`P2P_ORDER_PAID` when a payer reports a transfer, `P2P_ORDER_ACCEPTED` for sales it must pay, and
+`P2P_ORDER_DISPUTED` for a person to review. Merchant deliveries carry `role: "merchant"`. See
+[Webhooks](/p2p/webhooks/).
+
+<Callout type="warn" title="Give a bot only what it needs">
+A bot's key is a key to your liquidity within its permissions. Leave out `PERM_WITHDRAW` unless the
+bot rebalances, and keep the per-order cap of your matcher authorisation at the size you trade.
+</Callout>

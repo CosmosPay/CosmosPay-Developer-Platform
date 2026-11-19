@@ -1,0 +1,108 @@
+---
+title: Encaissements
+description: Encaissez en monnaie locale et recevez des stablecoins grâce à une page de paiement hébergée, ou intégrez la rampe d'entrée et de sortie P2P à votre propre application.
+---
+
+Il existe deux façons d'encaisser avec le marché P2P. Un **encaissement** est un lien que vous
+partagez : le payeur vire de la monnaie locale et vous recevez des stablecoins dans votre
+portefeuille. La **rampe intégrée** place ce même parcours dans votre application, pour que vos
+utilisateurs achètent et vendent.
+
+## Encaissements
+
+Créez un encaissement avec le montant en monnaie locale et le portefeuille enregistré qui reçoit les jetons :
+
+```bash
+curl -X POST https://api.cosmospay.lat/cosmos-api/v1/p2p/charges \
+  -H "Authorization: Bearer $COSMOS_PAY_API_KEY" -H "Content-Type: application/json" \
+  -d '{
+    "currency": "ARS",
+    "fiatAmount": "85000",
+    "network": "base",
+    "token": "USDC",
+    "recipient": "ACCOUNT_ID",
+    "description": "Order #1042",
+    "expiresAt": "2026-12-01T00:00:00Z",
+    "multiUse": false
+  }'
+# → { "id": "…", "url": "https://payments.cosmospay.lat/p2p/…", "status": "open", … }
+```
+
+Partagez l'`url`. Sur cette page, le payeur :
+
+1. Voit le montant en monnaie locale.
+2. Saisit son nom, sa pièce d'identité et son email. Le marchand vérifie que le virement vient de cette personne.
+3. Obtient le compte du marchand et le montant exact, avec un compte à rebours pour le délai de paiement.
+4. Vire depuis sa banque et appuie sur **J'ai viré**.
+5. Suit le statut en direct jusqu'à ce que le marchand libère, puis voit le reçu.
+
+Les jetons arrivent dans votre portefeuille `recipient`. Quand l'ordre aboutit, l'encaissement envoie
+`P2P_CHARGE_SUCCEEDED`. Un encaissement n'a qu'un ordre en cours à la fois ; activez `multiUse` pour
+encaisser plusieurs payeurs avec le même lien. `GET /v1/p2p/charges/{id}` le lit et `DELETE` supprime
+un encaissement que personne n'est en train de payer.
+
+Le tableau de bord crée des encaissements sous **P2P → Encaissements**, avec le lien et son code QR à partager.
+
+## Rampe intégrée
+
+Laissez vos utilisateurs acheter et vendre des stablecoins sans quitter votre application. Votre
+serveur conserve la clé API ; le portefeuille de votre utilisateur ne signe que ce qu'il envoie.
+
+```bash
+export API=https://api.cosmospay.lat/cosmos-api/v1/p2p
+export AUTH="Authorization: Bearer $COSMOS_PAY_API_KEY"
+```
+
+### Acheter
+
+```bash
+curl -X POST $API/quotes -H "$AUTH" -H "Content-Type: application/json" \
+  -d '{ "side": "BUY", "network": "base", "token": "USDC", "currency": "ARS", "rail": "ar_bank_transfer", "fiatAmount": "50000" }'
+
+curl -X POST $API/orders -H "$AUTH" -H "Content-Type: application/json" \
+  -d '{
+    "quoteId": "QUOTE_ID",
+    "recipient": "0xUserWallet",
+    "payer": { "name": "Ana Gómez", "document": "20329642330", "email": "ana@example.com" }
+  }'
+```
+
+L'ordre renvoie `paymentDetails`, le compte du marchand pour cet ordre, et l'échéance. Montrez-les à
+votre utilisateur. Une fois le virement fait, signalez-le :
+
+```bash
+curl -X POST $API/orders/ORDER_ID/paid -H "$AUTH" -H "Content-Type: application/json" \
+  -d '{ "reference": "TRX-88421" }'
+```
+
+Le nom et le document du payeur sont obligatoires : le marchand ne libère qu'un virement de cette
+personne. `POST /v1/p2p/orders/{id}/cancel` annule avant le virement, et `/dispute` demande à
+l'arbitre de trancher un ordre payé que le marchand ne libère pas.
+
+### Vendre
+
+```bash
+curl -X POST $API/quotes -H "$AUTH" -H "Content-Type: application/json" \
+  -d '{ "side": "SELL", "network": "base", "token": "USDC", "currency": "ARS", "rail": "ar_bank_transfer", "tokenAmount": "25" }'
+
+curl -X POST $API/orders -H "$AUTH" -H "Content-Type: application/json" \
+  -d '{
+    "quoteId": "QUOTE_ID",
+    "seller": "0xUserWallet",
+    "payout": { "holderName": "Ana Gómez", "document": "20329642330", "details": { "alias": "ana.gomez.mp" } }
+  }'
+```
+
+L'ordre renvoie `transactions` : un `approve` et un `openWithDeposit`, non signés. Le portefeuille de
+votre utilisateur envoie les deux, dans cet ordre. Le marchand accepte, vire l'argent sur le compte
+de `payout` et marque l'ordre comme payé. Votre utilisateur libère ensuite avec une transaction
+`release` du générateur, avec son adresse en `from`. Si personne ne conteste, la fenêtre de règlement
+libère l'ordre d'elle-même.
+
+Chaque ordre que vous ouvrez porte `externalReference` si vous en fournissez un, et ses webhooks
+atteignent vos endpoints avec `role: "client"`.
+
+<Cards>
+  <Card title="Webhooks" href="/p2p/webhooks/" description="Suivez chaque encaissement et chaque ordre depuis votre serveur." />
+  <Card title="Versements" href="/p2p/payouts/" description="L'autre sens : payez des comptes bancaires depuis votre solde." />
+</Cards>

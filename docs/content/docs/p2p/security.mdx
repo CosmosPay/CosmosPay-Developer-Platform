@@ -1,0 +1,67 @@
+---
+title: P2P security model
+description: Who holds which key on the P2P market, what each key can do, and the limits that protect merchants, clients and their users.
+---
+
+The P2P market is non-custodial. Cosmos Pay never holds a key that can move a merchant's, a
+client's or a user's tokens. Every on-chain action is a transaction the API builds unsigned and the
+person's own wallet signs.
+
+## Keys and roles
+
+| Role | Holder | Where the key lives | What it can do |
+| --- | --- | --- | --- |
+| Merchant, client, user | Each party | Their own wallet | Deposit, withdraw, release, accept, mark paid, cancel, dispute on their own orders |
+| Bot | A merchant's service | The bot's own wallet | Only the permissions the merchant granted it |
+| Matcher | Cosmos Pay | One server key | Open orders on a merchant's balance up to the merchant's per-order cap, and act for the buyer on the orders it opened |
+| Arbiter | Cosmos Pay operations | An external multisig wallet, never a server | Resolve disputed orders |
+| Owner | Cosmos Pay operations | An external wallet, never a server | Set fees, tokens, the arbiter and the treasury, and pause the contract |
+
+The matcher's key pays gas and holds matcher authority, nothing else. It cannot withdraw a
+balance, release an order on its own or send tokens to an address of its choosing.
+
+## The limits on the matcher
+
+- **Per-order cap.** Each merchant sets the most one order may lock with `setMatcher`. A cap of `0` revokes the matcher.
+- **Deadlines.** An order nobody pays or accepts in time is cancelled, and its tokens return to the seller.
+- **Recorded first.** Every transaction the matcher sends is signed and written to the database before it is broadcast, and only those exact bytes are ever sent again.
+- **Payer checks.** A purchase names its payer, and merchants release only a transfer from that person.
+
+## The trust edge, stated plainly
+
+A leaked matcher key together with a leaked arbiter key could drain merchant liquidity: the
+matcher would open orders and the arbiter would resolve fake disputes in the attacker's favour.
+
+A leaked matcher key alone cannot. It can lock liquidity into orders until their deadlines return
+it. For a seller that turned on automatic settlement, it could also let orders release that the
+seller does not dispute in time.
+
+That is why:
+
+- The arbiter is a multisig wallet held by Cosmos Pay operations, never a server key.
+- Automatic settlement is never offered to liquidity merchants. The API refuses it for a wallet with active sell offers.
+- Every matcher transaction is recorded before broadcast, so any use of the key is visible.
+
+## Data
+
+- Payment methods, payout accounts and payer identities are encrypted at rest.
+- An order shows each party only what its role needs: the payer sees the merchant's account for that order, the merchant sees the payer's name and document, and nobody sees another party's address book.
+- Wallets are registered with an EIP-191 signature over a single-use challenge that expires, and an address belongs to one organization.
+
+## The public P2P app
+
+Cosmos Pay's own P2P app on the payments domain never ships an API key to the browser. Its server
+holds the key, and each person signs in with their wallet: an EIP-191 signature over a single-use
+challenge that expires, which binds the session to that wallet. A person sees and acts only on the
+orders of the wallet they signed with, with request limits per wallet and per IP address.
+
+## Your integration
+
+- Keep API keys on your server. A key with `p2p:write` opens orders for your organization.
+- Give each bot only the permissions it needs, and its own key.
+- Read an order from the API before you release money or tokens. A webhook tells you something changed; the order tells you what it is now.
+
+<Cards>
+  <Card title="Merchant quick start" href="/p2p/merchants/" description="Set your per-order cap and keep automatic settlement off." />
+  <Card title="Bot quick start" href="/p2p/bots/" description="Grant a bot only the permissions it needs." />
+</Cards>

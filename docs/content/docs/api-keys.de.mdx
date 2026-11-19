@@ -17,7 +17,7 @@ gehört (die auf jeder Chain Testnet oder Mainnet bestimmt), und die **Berechtig
 3. Gehen Sie zu **API Keys → Create**.
 4. Geben Sie dem Schlüssel einen **Namen** (und optional eine Beschreibung), damit Sie ihn später wiedererkennen.
 5. Wählen Sie eine **Rolle**:
-   - **User**: eingeschränkt. Wählen Sie aus der Matrix genau die Berechtigungen, die er braucht (pro Ressource: **read** und/oder **write** für Zahlungen, Webhooks, Produkte, Kunden und Analysen).
+   - **User**: eingeschränkt. Wählen Sie aus der Matrix genau die Berechtigungen, die er braucht (pro Ressource: **read** und/oder **write** für Zahlungen, Swaps, Liquidität, Webhooks, Produkte, Kunden, KYC, On-Ramp, Off-Ramp, Aktivität, Plugins und den P2P-Markt).
    - **Admin**: voller Zugriff; umgeht die Berechtigungsmatrix. Sparsam einsetzen.
 6. **Erstellen** Sie ihn und **kopieren Sie den Schlüssel sofort**.
 
@@ -46,6 +46,11 @@ Authorization: Bearer dv_xxxxxxxxxxxxxxxxxxxxxxxx
 Geben Sie jedem Schlüssel nur die Berechtigungen, die er braucht. Ein Server, der lediglich Zahlungen erstellt, kann einen Schlüssel mit
 `payments:write` und `payments:read` und sonst nichts verwenden. So kann ein durchgesickerter Schlüssel nicht mehr tun als seine Aufgabe.
 </Callout>
+
+Der [P2P-Markt](/p2p/) hat zwei Berechtigungen: `p2p:read` liest den Markt, Ihre Wallets, Angebote,
+Aufträge, Zahlungsanforderungen und Auszahlungen; `p2p:write` registriert Wallets, veröffentlicht
+Angebote, eröffnet Aufträge, Zahlungsanforderungen und Auszahlungen und erstellt die unsignierten
+Transaktionen, die Ihre Wallets signieren.
 
 ## Bewährte Vorgehensweise
 

@@ -1,0 +1,13 @@
+{
+  "title": "Mercado P2P",
+  "description": "Stablecoins por moneda local entre personas, con Cosmos Pay eligiendo al comerciante.",
+  "pages": [
+    "index",
+    "merchants",
+    "bots",
+    "collections",
+    "payouts",
+    "webhooks",
+    "security"
+  ]
+}

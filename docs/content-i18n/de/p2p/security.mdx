@@ -1,0 +1,71 @@
+---
+title: P2P-Sicherheitsmodell
+description: Wer auf dem P2P-Markt welchen Schlüssel hält, was jeder Schlüssel kann und welche Grenzen Händler, Kunden und ihre Nutzer schützen.
+---
+
+Der P2P-Markt ist nicht verwahrend. Cosmos Pay hält nie einen Schlüssel, der die Token eines Händlers,
+eines Kunden oder eines Nutzers bewegen kann. Jede On-Chain-Aktion ist eine Transaktion, die die API
+unsigniert erstellt und die die eigene Wallet der Person signiert.
+
+## Schlüssel und Rollen
+
+| Rolle | Inhaber | Wo der Schlüssel liegt | Was er kann |
+| --- | --- | --- | --- |
+| Händler, Kunde, Nutzer | Jede Partei | Ihre eigene Wallet | Einzahlen, abheben, freigeben, annehmen, als bezahlt markieren, stornieren und anfechten bei den eigenen Aufträgen |
+| Bot | Der Dienst eines Händlers | Die eigene Wallet des Bots | Nur die Rechte, die der Händler erteilt hat |
+| Matcher | Cosmos Pay | Ein Serverschlüssel | Aufträge auf dem Guthaben eines Händlers bis zu dessen Limit pro Auftrag eröffnen und bei den eröffneten Aufträgen für den Käufer handeln |
+| Schiedsstelle | Der Betrieb von Cosmos Pay | Eine externe Multisig-Wallet, nie ein Server | Angefochtene Aufträge entscheiden |
+| Eigentümer | Der Betrieb von Cosmos Pay | Eine externe Wallet, nie ein Server | Gebühren, Token, Schiedsstelle und Treasury festlegen und den Vertrag pausieren |
+
+Der Schlüssel des Matchers bezahlt Gas und trägt die Befugnis des Matchers, sonst nichts. Er kann kein
+Guthaben abheben, keinen Auftrag eigenständig freigeben und keine Token an eine selbst gewählte
+Adresse senden.
+
+## Die Grenzen des Matchers
+
+- **Limit pro Auftrag.** Jeder Händler legt mit `setMatcher` fest, wie viel ein Auftrag höchstens sperren darf. Ein Limit von `0` widerruft den Matcher.
+- **Fristen.** Ein Auftrag, den niemand rechtzeitig bezahlt oder annimmt, wird storniert, und seine Token gehen an den Verkäufer zurück.
+- **Vorab protokolliert.** Jede Transaktion des Matchers wird signiert und in der Datenbank gespeichert, bevor sie gesendet wird, und nur genau diese Bytes werden je erneut gesendet.
+- **Prüfung des Zahlers.** Ein Kauf nennt seinen Zahler, und Händler geben nur eine Überweisung dieser Person frei.
+
+## Die Vertrauensgrenze, klar benannt
+
+Ein offengelegter Schlüssel des Matchers zusammen mit einem offengelegten Schlüssel der Schiedsstelle
+könnte die Liquidität der Händler abziehen: Der Matcher würde Aufträge eröffnen, und die
+Schiedsstelle würde vorgetäuschte Streitfälle zugunsten des Angreifers entscheiden.
+
+Ein offengelegter Schlüssel des Matchers allein kann das nicht. Er kann Liquidität in Aufträgen
+sperren, bis deren Fristen sie zurückgeben. Bei einem Verkäufer, der die automatische Abwicklung
+eingeschaltet hat, könnte er außerdem Aufträge freigeben lassen, die der Verkäufer nicht rechtzeitig
+anficht.
+
+Deshalb gilt:
+
+- Die Schiedsstelle ist eine Multisig-Wallet im Besitz des Betriebs von Cosmos Pay, nie ein Serverschlüssel.
+- Die automatische Abwicklung wird Liquiditätshändlern nie angeboten. Die API lehnt sie für eine Wallet mit aktiven Verkaufsangeboten ab.
+- Jede Transaktion des Matchers wird vor dem Senden protokolliert, sodass jede Nutzung des Schlüssels sichtbar ist.
+
+## Daten
+
+- Zahlungswege, Auszahlungskonten und die Identität der Zahler werden verschlüsselt gespeichert.
+- Ein Auftrag zeigt jeder Partei nur, was ihre Rolle braucht: Der Zahler sieht das Konto des Händlers für diesen Auftrag, der Händler sieht Name und Dokument des Zahlers, und niemand sieht das Adressbuch einer anderen Partei.
+- Wallets werden mit einer EIP-191-Signatur über eine einmalig gültige, ablaufende Challenge registriert, und eine Adresse gehört genau einer Organisation.
+
+## Die öffentliche P2P-App
+
+Die eigene P2P-App von Cosmos Pay auf der Zahlungsdomain sendet nie einen API-Schlüssel an den
+Browser. Ihr Server hält den Schlüssel, und jede Person meldet sich mit ihrer Wallet an: eine
+EIP-191-Signatur über eine einmalig gültige, ablaufende Challenge, die die Sitzung an diese Wallet
+bindet. Eine Person sieht und bearbeitet nur die Aufträge der Wallet, mit der sie signiert hat, mit
+Anfragelimits pro Wallet und pro IP-Adresse.
+
+## Ihre Integration
+
+- Bewahren Sie API-Schlüssel auf Ihrem Server auf. Ein Schlüssel mit `p2p:write` eröffnet Aufträge für Ihre Organisation.
+- Geben Sie jedem Bot nur die Rechte, die er braucht, und einen eigenen Schlüssel.
+- Lesen Sie den Auftrag über die API, bevor Sie Geld oder Token freigeben. Ein Webhook sagt Ihnen, dass sich etwas geändert hat; der Auftrag sagt Ihnen, wie er jetzt steht.
+
+<Cards>
+  <Card title="Schnellstart für Händler" href="/p2p/merchants/" description="Legen Sie Ihr Limit pro Auftrag fest und lassen Sie die automatische Abwicklung aus." />
+  <Card title="Schnellstart für Bots" href="/p2p/bots/" description="Geben Sie einem Bot nur die Rechte, die er braucht." />
+</Cards>

@@ -1,0 +1,13 @@
+{
+  "title": "P2P-Markt",
+  "description": "Stablecoins gegen Landeswährung zwischen Personen, Cosmos Pay wählt den Händler.",
+  "pages": [
+    "index",
+    "merchants",
+    "bots",
+    "collections",
+    "payouts",
+    "webhooks",
+    "security"
+  ]
+}

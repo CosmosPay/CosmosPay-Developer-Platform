@@ -1,0 +1,13 @@
+{
+  "title": "P2P market",
+  "description": "Stablecoins for local money between people, with Cosmos Pay picking the merchant.",
+  "pages": [
+    "index",
+    "merchants",
+    "bots",
+    "collections",
+    "payouts",
+    "webhooks",
+    "security"
+  ]
+}

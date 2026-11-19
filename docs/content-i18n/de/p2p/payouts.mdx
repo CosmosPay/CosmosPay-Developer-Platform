@@ -1,0 +1,91 @@
+---
+title: Auszahlungen
+description: Bezahlen Sie bis zu 100 Bankkonten in Landeswährung aus Ihrem Stablecoin-Guthaben. Jede Auszahlung wird einem Händler zugeordnet, der den Begünstigten bezahlt, bevor Ihre Token freigegeben werden.
+---
+
+Ein Auszahlungsstapel sendet Landeswährung an Bankkonten und bezahlt sie mit Stablecoins, die Sie im
+Vertrag des Marktes halten. Jeder Eintrag wird zu einem Auftrag: Ein Händler kauft Ihre Token,
+bezahlt den Begünstigten und markiert den Auftrag als bezahlt, dann geben Sie frei. Ihre Token
+verlassen Ihr Guthaben nur zugunsten eines Händlers, der bereits gezahlt hat.
+
+## Vor dem ersten Stapel
+
+1. **Registrieren Sie die Wallet**, die zahlt. Siehe [Schnellstart für Händler](/p2p/merchants/).
+2. **Zahlen Sie die Token ein**, die der Stapel braucht.
+3. **Autorisieren Sie den Matcher von Cosmos Pay** in diesem Netzwerk mit `setMatcher`, mit einem Limit pro Auftrag, das mindestens Ihrer größten Auszahlung entspricht. Lassen Sie `autoSettle` aus, um jede Auszahlung selbst freizugeben, oder schalten Sie es ein, damit bezahlte Auszahlungen nach dem Abwicklungsfenster freigegeben werden.
+
+## Einen Stapel senden
+
+```bash
+curl -X POST https://api.cosmospay.lat/cosmos-api/v1/p2p/payouts \
+  -H "Authorization: Bearer $COSMOS_PAY_API_KEY" -H "Content-Type: application/json" \
+  -d '{
+    "network": "base",
+    "token": "USDC",
+    "accountId": "ACCOUNT_ID",
+    "items": [
+      {
+        "currency": "ARS",
+        "fiatAmount": "150000",
+        "rail": "ar_bank_transfer",
+        "beneficiary": { "holderName": "Ana Gómez", "document": "20329642330", "details": { "cbu": "0170099222000001234561" } },
+        "externalReference": "inv-1001"
+      }
+    ]
+  }'
+```
+
+Ein Stapel enthält 1 bis 100 Einträge. Die `details` des Begünstigten folgen dem Zahlungsweg, wie bei
+den Zahlungswegen eines Händlers: siehe die Tabelle in [Schnellstart für Händler](/p2p/merchants/).
+
+## Was mit jedem Eintrag geschieht
+
+1. Cosmos Pay ordnet den Eintrag einem Händler zu, der auf diesem Weg Token kauft, und eröffnet den Auftrag auf Ihrem Guthaben. Der Händler sperrt eine Sicherheitsleistung von 10 %.
+2. Der Händler nimmt an, überweist das Geld an den Begünstigten und markiert den Auftrag mit der Überweisungsreferenz als bezahlt.
+3. Sie prüfen die Zahlung und geben frei: eine `release`-Transaktion des Builders, signiert von Ihrer Wallet oder von Ihrem Bot mit `PERM_RELEASE`.
+
+Ein Eintrag, den kein Händler übernehmen kann, wird mit Begründung `rejected`; Ihre Token haben sich
+dafür nie bewegt. Nimmt ein Händler nicht rechtzeitig an oder zahlt nicht rechtzeitig, gibt die Frist
+Ihre Token zurück.
+
+## Status des Stapels
+
+`GET /v1/p2p/payouts/{id}` liefert den Stapel mit Status und Auftrag jedes Eintrags.
+
+| Status | Bedeutung |
+| --- | --- |
+| `processing` | Mindestens ein Eintrag läuft noch. |
+| `completed` | Alle Einträge wurden abgeschlossen. |
+| `partial` | Alle Einträge sind beendet, einige wurden nicht abgeschlossen. |
+| `failed` | Kein Eintrag wurde abgeschlossen. |
+
+`P2P_PAYOUT_BATCH_COMPLETED` wird gesendet, wenn ein Stapel endet, und der Auftrag jedes Eintrags
+sendet seine eigenen Ereignisse.
+
+## Eine CSV-Datei im Dashboard hochladen
+
+**P2P → Auszahlungen** nimmt eine CSV-Datei mit einem Begünstigten pro Zeile an und prüft jede Zeile,
+bevor etwas gesendet wird: Format und Prüfziffern des Kontos, das Dokument, den Betrag und doppelte
+Referenzen. Zeilen mit einem Problem zeigen es direkt daneben. Spalten, nach Kopfzeilenname und in
+beliebiger Reihenfolge:
+
+| Spalte | Inhalt |
+| --- | --- |
+| `currency` | ISO-4217-Code, zum Beispiel `ARS` |
+| `amount` | Betrag in Landeswährung |
+| `rail` | `ar_bank_transfer`, `br_pix`, `mx_spei`, `co_bank_transfer`, `pe_bank_transfer` oder `cl_bank_transfer` |
+| `holderName` | Der Name des Begünstigten |
+| `document` | Das Ausweisdokument des Begünstigten |
+| `cbu`, `alias` | Argentinien |
+| `pixKeyType`, `pixKey` | Brasilien |
+| `clabe` | Mexiko |
+| `bank`, `accountType`, `accountNumber` | Kolumbien und Chile |
+| `cci` | Peru |
+| `reference` | Ihre eigene Referenz, eindeutig in der Datei |
+
+Kommas und Semikolons funktionieren beide. Die Seite bietet eine Vorlage mit einer Zeile pro Zahlungsweg.
+
+<Cards>
+  <Card title="Webhooks" href="/p2p/webhooks/" description="Jede Auszahlung auf Ihrem Server verfolgen." />
+  <Card title="Sicherheitsmodell" href="/p2p/security/" description="Was der Matcher mit Ihrem Guthaben tun kann und was nicht." />
+</Cards>
