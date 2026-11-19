@@ -1411,8 +1411,8 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .p2p-scopes { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
 .p2p-scopes li { display: grid; grid-template-columns: 110px 1fr; gap: 12px; align-items: baseline; font-size: 14px; color: var(--ink-2); }
 .p2p-scopes code { font-weight: 600; color: var(--ink); }
-.p2p-match-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0 12px; align-items: end; }
-.p2p-match-go { display: flex; align-items: flex-end; padding-bottom: 14px; }
+.p2p-match-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0 12px; align-items: start; }
+.p2p-match-go { grid-column: 1 / -1; display: flex; justify-content: flex-end; }
 .p2p-match-none { margin: 0; font-size: 14px; color: var(--ink-2); }
 @media (max-width: 640px) {
   .p2p-scopes li { grid-template-columns: 1fr; gap: 2px; }

@@ -152,7 +152,7 @@ export function P2pBotsView({ canManage = false, orgId, env = "dev", keys = [], 
             <Field label={p.matches.amount} value={amount} onChange={(e) => setAmount(e.target.value.trim().replace(",", "."))} inputMode="decimal" placeholder="150000" aria-invalid={amount && fiat === null ? true : undefined} />
             <div className="fld">
               <span className="field-l" id="p2p-tm-c">{t.p2p.offers.currency}</span>
-              <Select value={currency} onChange={setCurrency} labelledBy="p2p-tm-c" options={(currencies.length ? currencies : ["ARS"]).map((c) => ({ value: c, label: `${currencyName(c, lang)} (${c})`, icon: <CurrencyMark id={c} size={18} /> }))} />
+              <Select value={currency} onChange={setCurrency} labelledBy="p2p-tm-c" options={(currencies.length ? currencies : ["ARS"]).map((c) => ({ value: c, label: c, hint: currencyName(c, lang), icon: <CurrencyMark id={c} size={18} /> }))} />
             </div>
             <Field label={p.matches.payerName} hint={t.dash.common.optional} value={payerName} onChange={(e) => setPayerName(e.target.value)} placeholder={t.p2p.placeholders.holderName} />
             <Field label={p.matches.payerDocument} hint={t.dash.common.optional} value={payerDocument} onChange={(e) => setPayerDocument(e.target.value)} placeholder={t.p2p.placeholders.cuit} />
