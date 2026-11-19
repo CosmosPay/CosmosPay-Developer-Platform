@@ -17,6 +17,7 @@ import { MOCK_PUBLIC_ORG } from "@/lib/mock/shared";
 import type { MockEnv } from "@/lib/mock/http";
 import type { PaymentIntent } from "@/lib/cosmos";
 import { isChain } from "@/lib/chains";
+import { handleP2pCheckout } from "@/lib/mock/handlers/p2p-public";
 
 export const MOCK_GATEWAY_PREFIX = "/mock-gateway";
 
@@ -26,7 +27,7 @@ const MOCK_SESSION_TOKENS = new Map<string, PaymentPayerEmail>();
 const CORS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-  "Access-Control-Allow-Headers": "Authorization, Content-Type, X-Record-Token",
+  "Access-Control-Allow-Headers": "Authorization, Content-Type, X-Record-Token, X-Payer-Token",
   "Access-Control-Max-Age": "600",
 };
 
@@ -187,6 +188,8 @@ export async function handleMockGateway(request: Request, url: URL): Promise<Res
   const path = url.pathname.slice(MOCK_GATEWAY_PREFIX.length).replace(/^\/v1\//, "").replace(/\/+$/, "");
   const [head, ...rest] = path.split("/").filter(Boolean).map((s) => decodeURIComponent(s));
   if (head === "payment-links") return paymentLinks(request, rest);
+  // The hosted P2P charge page's keyless routes (src/lib/p2p/checkout-api.ts).
+  if (head === "p2p-checkout") return handleP2pCheckout(request, rest);
   if (head === "public-key" && request.method === "GET") {
     const env: MockEnv = url.searchParams.get("env") === "dev" ? "dev" : "prod";
     return json({ apiKey: PUBLIC_KEYS[env], env });

@@ -281,6 +281,17 @@ export default defineConfig({
       WALLET_PROOF_APTOS_RPC_URL: envField.string({ context: 'server', access: 'secret', optional: true, default: 'https://api.mainnet.aptoslabs.com/v1' }),
       WALLET_PROOF_MOVEMENT_RPC_URL: envField.string({ context: 'server', access: 'secret', optional: true, default: 'https://mainnet.movementnetwork.xyz/v1' }),
       WALLET_PROOF_STARKNET_RPC_URL: envField.string({ context: 'server', access: 'secret', optional: true, default: 'https://starknet-rpc.publicnode.com' }),
+      // --- The public P2P app (payments.cosmospay.lat/p2p, src/pages/payments/p2p/api/[...path].ts) ---
+      // Cosmos Pay's own integrator key on the Payments API (p2p:read and p2p:write), held on this
+      // server ONLY: the app's browser never sees it. A `dv_` key works on the test networks, a
+      // `prod_` key on mainnet. P2P_APP_SESSION_SECRET signs the cookie that binds each visitor to
+      // the wallet they signed in with (at least 32 random bytes; never another secret's value).
+      // P2P_APP_API_URL is the gateway the route calls (default: PUBLIC_PAYMENTS_API_URL). Unset key
+      // or secret: the app's route answers 503 and the page says the market is not available.
+      // Runtime reads, no rebuild.
+      P2P_APP_API_KEY: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
+      P2P_APP_SESSION_SECRET: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
+      P2P_APP_API_URL: envField.string({ context: 'server', access: 'secret', optional: true, default: '' }),
     },
   },
 

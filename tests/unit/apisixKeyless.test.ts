@@ -18,6 +18,9 @@ import {
   ZK_CHECKOUT_CORS,
   ZK_CHECKOUT_METHODS,
   zkCheckoutRouteUris,
+  P2P_CHECKOUT_CORS,
+  P2P_CHECKOUT_METHODS,
+  p2pCheckoutRouteUris,
 } from '@/lib/apisix-keyless';
 
 // apisix/plugins/cors.lua: origins_pattern, the schema of allow_origins.
@@ -72,4 +75,23 @@ test('the ZK checkout route is its read, its confirm and the preflight, any orig
   assert.match(ZK_CHECKOUT_CORS.allow_origins, APISIX_ORIGINS_PATTERN);
   assert.equal(ZK_CHECKOUT_CORS.allow_credential, false);
   assert.match(ZK_CHECKOUT_CORS.allow_headers, /(^|,)Content-Type(,|$)/);
+});
+
+test('the P2P charge page has its own prefix, apart from every authenticated P2P route', () => {
+  assert.deepEqual(p2pCheckoutRouteUris('/cosmos-api/*'), ['/cosmos-api/v1/p2p-checkout/*']);
+  // The authenticated routes live under /v1/p2p/: a keyless prefix there would take them.
+  for (const uri of p2pCheckoutRouteUris('/cosmos-api/*')) assert.ok(!uri.includes('/v1/p2p/'), uri);
+  const others = new Set([...callbackRouteUris('/cosmos-api/*'), ...paymentLinksRouteUris('/cosmos-api/*'), ...zkCheckoutRouteUris('/cosmos-api/*')]);
+  for (const uri of p2pCheckoutRouteUris('/cosmos-api/*')) assert.ok(!others.has(uri), uri);
+});
+
+test('the P2P charge route: its reads, the payer order, the transfer report and the preflight, any origin without credentials', () => {
+  assert.deepEqual(P2P_CHECKOUT_METHODS, ['GET', 'POST', 'OPTIONS']);
+  assert.equal(P2P_CHECKOUT_CORS.allow_methods, 'GET,POST,OPTIONS');
+  assert.match(P2P_CHECKOUT_CORS.allow_origins, APISIX_ORIGINS_PATTERN);
+  assert.equal(P2P_CHECKOUT_CORS.allow_credential, false);
+  // The payer token is a request header: without it in the preflight the order is never read.
+  assert.match(P2P_CHECKOUT_CORS.allow_headers, /(^|,)X-Payer-Token(,|$)/);
+  assert.match(P2P_CHECKOUT_CORS.allow_headers, /(^|,)Content-Type(,|$)/);
+  assert.match(P2P_CHECKOUT_CORS.expose_headers, /(^|,)Retry-After(,|$)/);
 });

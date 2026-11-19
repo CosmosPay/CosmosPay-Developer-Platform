@@ -218,6 +218,7 @@ All variables are validated via Astro's typed env (`astro.config.mjs`). See
 | `SMTP_HOST/PORT/USER/PASS/SECURE` / `SMTP_FROM` | SMTP transport + verified sender |
 | `ONBOARDING_ENABLED` / `PLANS_ENABLED` / `ALLOW_USER_PLAN_CHANGES` / `ENABLED_PLANS` | Feature flags |
 | `INDEXNOW_KEY` | Optional: the IndexNow key every domain serves at `/<key>.txt` (public by design, read at runtime). Unset: that file is a 404 and `npm run indexnow` refuses to run |
+| `P2P_APP_API_KEY` / `P2P_APP_SESSION_SECRET` / `P2P_APP_API_URL` | The public P2P app (`payments.cosmospay.lat/p2p`): Cosmos Pay's integrator key (`p2p:read`, `p2p:write`; held on the server only), the secret that signs each visitor's wallet session (32+ random bytes, distinct from every other secret) and the gateway it calls (default `PUBLIC_PAYMENTS_API_URL`). Unset key or secret: `/p2p/api` answers 503 |
 
 > **Note:** `PUBLIC_BETTER_AUTH_URL` is **inlined at build time**: change it before `npm run build`,
 > not just before restarting. See [COMMON_ISSUES.md](./COMMON_ISSUES.md) for the why.

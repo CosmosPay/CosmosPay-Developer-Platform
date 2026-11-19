@@ -24,6 +24,9 @@ test('ownerOf assigns every public path to one domain', () => {
   assert.equal(ownerOf(LINK), 'payments');
   assert.equal(ownerOf('/preview/ticket'), 'payments');
   for (const p of ['/zk/cm1x2y3z4a5b6c7d8e9f0g1h2', '/zk/bb/0.87.0/index.js']) assert.equal(ownerOf(p), 'payments', p);
+  // The P2P market: the public app, its same-origin server route and the hosted charge page.
+  for (const p of ['/p2p', '/p2p/api/orders', '/p2p/0b9c4a1e-7d2f-4c3a-9e1b-2f6d8a7c5e40']) assert.equal(ownerOf(p), 'payments', p);
+  assert.equal(ownerOf('/p2px'), null, 'a prefix match needs a path boundary');
   for (const p of ['/integrations', '/use-cases', '/security', '/fees', '/faq', '/compare', '/stellar', '/solana', '/monad']) assert.equal(ownerOf(p), 'payments', p);
   for (const p of ['/learn', '/learn/accept-usdc-payments', '/learn/whatsapp-payment-links', '/learn/stablecoin-payment-gateway', '/learn/stellar-vs-solana-vs-monad']) {
     assert.equal(ownerOf(p), 'payments', p);
@@ -39,7 +42,7 @@ test('ownerOf assigns every public path to one domain', () => {
 test('only the indexable pages have a version per language (and follow the visitor with a redirect)', () => {
   for (const p of ['/', '/pricing', '/tos', '/about', '/swaps', '/Pricing', '/about/']) assert.ok(isLanguagePage('site', p), `site ${p}`);
   for (const p of ['/', '/faq', '/fees', '/compare', '/swaps', '/stellar', '/learn', '/learn/accept-usdc-payments']) assert.ok(isLanguagePage('payments', p), `payments ${p}`);
-  for (const p of ['/pay', '/contact', LINK, '/preview/classic', '/zk/cm1x2y3z4a5b6c7d8e9f0g1h2', '/nope', '/%zz']) assert.ok(!isLanguagePage('payments', p), `payments ${p}`);
+  for (const p of ['/pay', '/contact', LINK, '/preview/classic', '/zk/cm1x2y3z4a5b6c7d8e9f0g1h2', '/p2p', '/p2p/0b9c4a1e-7d2f-4c3a-9e1b-2f6d8a7c5e40', '/nope', '/%zz']) assert.ok(!isLanguagePage('payments', p), `payments ${p}`);
   for (const p of ['/faq', '/robots.txt', '/sitemap.xml', '/llms.txt']) assert.ok(!isLanguagePage('site', p), `site ${p}`);
   assert.ok(!isLanguagePage('dev', '/'));
   assert.ok(!isLanguagePage('dev', '/docs'));
@@ -109,6 +112,11 @@ test('payments.cosmospay.lat renders its landing and the checkout pages', () => 
   assert.deepEqual(route('dev.cosmospay.lat', '/zk/cm1x2y3z4a5b6c7d8e9f0g1h2'), {
     kind: 'redirect', location: 'https://payments.cosmospay.lat/zk/cm1x2y3z4a5b6c7d8e9f0g1h2', status: 301,
   });
+  assert.deepEqual(route('payments.cosmospay.lat', '/p2p'), { kind: 'rewrite', area: 'payments', path: '/payments/p2p' });
+  assert.deepEqual(route('payments.cosmospay.lat', '/p2p/api/session', '', 'POST'), { kind: 'rewrite', area: 'payments', path: '/payments/p2p/api/session' });
+  assert.deepEqual(route('payments.cosmospay.lat', '/p2p/0b9c4a1e-7d2f-4c3a-9e1b-2f6d8a7c5e40'), { kind: 'rewrite', area: 'payments', path: '/payments/p2p/0b9c4a1e-7d2f-4c3a-9e1b-2f6d8a7c5e40' });
+  assert.deepEqual(route('cosmospay.lat', '/p2p'), { kind: 'redirect', location: 'https://payments.cosmospay.lat/p2p', status: 301 });
+  assert.deepEqual(route('dev.cosmospay.lat', '/p2p/api/orders', '', 'POST'), { kind: 'redirect', location: 'https://payments.cosmospay.lat/p2p/api/orders', status: 308 });
   assert.deepEqual(route('payments.cosmospay.lat', '/login', '?next=%2Fdashboard'), {
     kind: 'redirect', location: 'https://dev.cosmospay.lat/login?next=%2Fdashboard', status: 301,
   });

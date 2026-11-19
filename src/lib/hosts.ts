@@ -8,7 +8,9 @@
  *                                       /fees, /compare, /faq, /stellar, /solana, /monad: every
  *                                       page in src/lib/payments/site-pages.ts), /pay, /contact (the
  *                                       contact form's POST),
- *                                       /{payment link id}, /preview/{design}
+ *                                       /{payment link id}, /preview/{design},
+ *                                       /p2p (the public P2P app, its server route
+ *                                       /p2p/api/* and the hosted charge page /p2p/{id})
  *                                       (pages under src/pages/payments/)
  *
  * Each domain has its own home page. A route renders ONLY on the domain that owns it. Asked on another one it is a redirect to
@@ -66,10 +68,11 @@ const SITE_PATHS = new Set(["/pricing", "/tos", "/about"]);
 /* The gateway's content pages (src/lib/payments/site-pages.ts). Its pricing page is /fees,
    because /pricing is the company site's. */
 const PAYMENTS_PATHS = new Set(PAYMENTS_PAGE_PATHS);
-/* Checkout design previews (src/pages/payments/preview/[design].astro) and the ZK payment pages
-   (src/pages/payments/zk/: the private checkout and the prover's files); the checkout is the only
-   cross-origin isolated page. */
-const PAYMENTS_PREFIXES = ["/preview", "/zk"];
+/* Checkout design previews (src/pages/payments/preview/[design].astro), the ZK payment pages
+   (src/pages/payments/zk/: the private checkout and the prover's files; the checkout is the only
+   cross-origin isolated page) and the P2P market's pages (src/pages/payments/p2p/: the public app,
+   its same-origin server route and the hosted charge page). */
+const PAYMENTS_PREFIXES = ["/preview", "/zk", "/p2p"];
 /* The prover's files (bb.js at the SDK's pinned version, src/pages/payments/zk/bb/) are served by
    the platform too: the dashboard proves there for the merchant's confidential account, and bb.js
    starts its Web Worker from its own URL, which must be the page's origin. Same route, same

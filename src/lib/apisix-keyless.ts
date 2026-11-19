@@ -104,6 +104,35 @@ export const ZK_CHECKOUT_CORS = {
   max_age: 86400,
 } as const;
 
+/* The hosted P2P charge page (payments.cosmospay.lat/p2p/{chargeId}): the payer's browser reads the
+   charge (`GET /v1/p2p-checkout/charges/{id}`), opens its order with the payer's name, document and
+   email (`POST .../charges/{id}/orders`, answering the order and a payer token), reads that order
+   (`GET /v1/p2p-checkout/orders/{id}`) and reports the transfer (`POST .../orders/{id}/paid`), the
+   last two with the token in `X-Payer-Token`. All `@Public()` and budgeted per client address on
+   the community server (per charge too), so they cannot go through one server. Its own prefix,
+   apart from every authenticated `/v1/p2p/*` route, which a keyless prefix would otherwise take.
+   Reporting a transfer moves no money: the merchant releases only once it sees it arrive. */
+export const P2P_CHECKOUT_PATH = '/v1/p2p-checkout/';
+
+/* The gateway URI of the P2P charge page's keyless calls. */
+export function p2pCheckoutRouteUris(entry: string): string[] {
+  return [`${entryPrefix(entry)}${P2P_CHECKOUT_PATH}*`];
+}
+
+export const P2P_CHECKOUT_METHODS = ['GET', 'POST', 'OPTIONS'];
+
+/* Any origin, no credentials, for the same reasons as PAYMENT_LINKS_CORS: keyless, no cookie or
+   key read, and what it answers is the payer's view of one charge or one order. The payer token
+   is a header the page sends, so the preflight must allow it, or the browser never sends the read. */
+export const P2P_CHECKOUT_CORS = {
+  allow_origins: '*',
+  allow_methods: P2P_CHECKOUT_METHODS.join(','),
+  allow_headers: 'Accept,Content-Type,X-Payer-Token',
+  expose_headers: 'Retry-After,RateLimit-Limit,RateLimit-Remaining,RateLimit-Reset',
+  allow_credential: false,
+  max_age: 86400,
+} as const;
+
 export const PAYMENT_LINKS_CORS = {
   allow_origins: '*',
   allow_methods: PAYMENT_LINKS_METHODS.join(','),
