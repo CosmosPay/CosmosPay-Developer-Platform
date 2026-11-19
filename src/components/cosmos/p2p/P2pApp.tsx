@@ -23,12 +23,12 @@ import { CurrencyMark } from "@/components/cosmos/dashboard/components/RampWidge
 import { WalletSign } from "@/components/cosmos/dashboard/components/WalletSign";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { AppApiError, appApi, type AppSessionInfo } from "@/lib/p2p/app-api";
-import { checkAccount, checkEmail, checkHolderName, checkPayerDocument, fiatDecimals, isRailId, normalizeDetails, RAILS, type FieldError } from "@/lib/p2p/rails";
-import { parseDecimal } from "@/lib/p2p/amounts";
+import { checkBeneficiary, checkHolderName, checkPayerDocument, documentOf, fiatDecimals, normalizeDetails, type FieldError } from "@/lib/p2p/rails";
+import { parseDecimal, toBaseUnits } from "@/lib/p2p/amounts";
 import { orderTone } from "@/lib/p2p/orders";
 import type { P2pMarket, P2pNetwork, P2pOrder, P2pQuote, P2pSide, P2pToken } from "@/lib/p2p/types";
 import { P2pOrderPanel } from "@/components/cosmos/p2p/P2pOrderPanel";
-import { AccountFields, NBSP, currencyName, emptyAccount, errorText, money, shortAddress, timeLeft, units, useNow, type AccountDraft } from "@/components/cosmos/p2p/p2p-ui";
+import { AccountFields, NBSP, currencyName, emptyAccount, errorText, money, needsDocument, saveSteps, shortAddress, timeLeft, units, useNow, type AccountDraft } from "@/components/cosmos/p2p/p2p-ui";
 
 type Step = "form" | "details";
 type QuoteState = { status: "idle" | "loading" | "ready" | "error"; key: string; data: P2pQuote | null };
@@ -130,7 +130,7 @@ export default function P2pApp({ lang }: { lang: string }) {
             : (
               <P2pForm
                 market={market} session={session ?? null} unavailable={unavailable} onRetry={loadMarket}
-                onConnect={() => setConnecting(true)} onOpened={(o) => openOrder(o.id)} onSessionEnded={sessionEnded}
+                onConnect={() => setConnecting(true)} onOpened={(o) => { saveSteps(o.id, o.transactions); openOrder(o.id); }} onSessionEnded={sessionEnded}
               />
             )}
           {notice && <p className="swap-hint is-error" role="alert">{notice}</p>}
@@ -226,7 +226,7 @@ function P2pForm({ market, session, unavailable, onRetry, onConnect, onOpened, o
   const [step, setStep] = useState<Step>("form");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [payer, setPayer] = useState({ name: "", document: "", email: "" });
+  const [payer, setPayer] = useState({ name: "", document: "" });
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [account, setAccount] = useState<AccountDraft>(emptyAccount(""));
 
@@ -249,7 +249,8 @@ function P2pForm({ market, session, unavailable, onRetry, onConnect, onOpened, o
   const parsed = amount ? parseDecimal(amount, decimals) : null;
   const amountOk = parsed !== null && Number(parsed) > 0;
   const complete = !!session && !!market && !!cur && !!token && !!network && !!rail && amountOk;
-  const quoteKey = complete ? JSON.stringify({ side, network: network!.id, token: token!.symbol, currency, rail, [side === "BUY" ? "fiatAmount" : "tokenAmount"]: parsed }) : "";
+  // A purchase names the local money it pays; a sale the token amount it sells, in base units.
+  const quoteKey = complete ? JSON.stringify({ side, network: network!.id, token: token!.symbol, currency, rail, ...(side === "BUY" ? { fiatAmount: parsed } : { tokenAmount: toBaseUnits(parsed!, token!.decimals) }) }) : "";
 
   // The price follows the form on its own, a moment after the last keystroke; an answer for a form
   // that has since changed is dropped; a price that runs out is asked for again while on screen.
@@ -276,8 +277,9 @@ function P2pForm({ market, session, unavailable, onRetry, onConnect, onOpened, o
   useEffect(() => { if (expired && step === "form" && quoteKey) ask(quoteKey); }, [expired, step, quoteKey, ask]);
 
   const docError = checkPayerDocument(currency, payer.document);
-  const payerErrors: Record<string, FieldError | null> = { name: checkHolderName(payer.name), document: docError, email: payer.email.trim() ? checkEmail(payer.email) : null };
-  const accountErrors = side === "SELL" ? checkAccount(rail, account) : {};
+  const payerErrors: Record<string, FieldError | null> = { name: checkHolderName(payer.name), document: docError };
+  // A sale's account: the holder's document is a detail of the rail when it keeps one, else its own field.
+  const accountErrors = side === "SELL" ? checkBeneficiary(rail, { holderName: account.holderName, details: account.details, document: needsDocument(rail, account.details) ? account.document : "" }) : {};
   const detailsOk = side === "BUY" ? !Object.values(payerErrors).some(Boolean) : Object.keys(accountErrors).length === 0;
 
   const cta = (() => {
@@ -298,8 +300,12 @@ function P2pForm({ market, session, unavailable, onRetry, onConnect, onOpened, o
     setError("");
     try {
       const body = side === "BUY"
-        ? { side, quoteId: fresh.id, payer: { name: payer.name.trim(), document: payer.document.trim(), ...(payer.email.trim() ? { email: payer.email.trim() } : {}) } }
-        : { side, quoteId: fresh.id, payout: { holderName: account.holderName.trim(), document: account.document.trim(), details: normalizeDetails(rail, account.details) } };
+        ? { side, quoteId: fresh.id, payer: { name: payer.name.trim(), document: payer.document.trim() } }
+        : (() => {
+          const details = normalizeDetails(rail, account.details);
+          const document = (needsDocument(rail, account.details) ? account.document.trim() : "") || documentOf(rail, details);
+          return { side, quoteId: fresh.id, beneficiary: { holderName: account.holderName.trim(), document, details } };
+        })();
       const order = await api.createOrder(body);
       setAmount("");
       setStep("form");
@@ -361,7 +367,6 @@ function P2pForm({ market, session, unavailable, onRetry, onConnect, onOpened, o
           <div className="p2pa-fields">
             <Field label={a.buyer.name} value={payer.name} autoComplete="name" placeholder={p.placeholders.holderName} onChange={(e: any) => setPayer((x) => ({ ...x, name: e.target.value }))} onBlur={leave("name")} aria-invalid={show("name") ? true : undefined} hint={errorText(t, "holderName", show("name"))} />
             <Field label={a.buyer.document} value={payer.document} autoComplete="off" spellCheck={false} onChange={(e: any) => setPayer((x) => ({ ...x, document: e.target.value }))} onBlur={leave("document")} aria-invalid={show("document") ? true : undefined} hint={show("document") ? errorText(t, "document", show("document")) : undefined} />
-            <Field label={a.buyer.email} type="email" inputMode="email" value={payer.email} autoComplete="email" onChange={(e: any) => setPayer((x) => ({ ...x, email: e.target.value }))} onBlur={leave("email")} aria-invalid={show("email") ? true : undefined} hint={errorText(t, "text", show("email")) ?? a.buyer.emailHint} />
           </div>
         ) : (
           <AccountFields rail={rail} value={account} onChange={setAccount} errors={accountErrors} idPrefix="p2pa-acct" showAll={!!touched.name} />
@@ -370,7 +375,7 @@ function P2pForm({ market, session, unavailable, onRetry, onConnect, onOpened, o
         {expired && <p className="swap-hint">{a.refreshing}</p>}
         <button type="button" className="btn btn-dark swap-cta" disabled={busy || expired} onClick={() => {
           // A first press with a problem shows every field's, and goes to the first one.
-          setTouched({ name: true, document: true, email: true });
+          setTouched({ name: true, document: true });
           if (detailsOk) { openOrder(); return; }
           setTimeout(() => document.querySelector<HTMLInputElement>(".p2pa-form [aria-invalid='true']")?.focus(), 0);
         }}>{busy ? a.opening : a.open}</button>

@@ -71,8 +71,6 @@ export default {
       body: "El comerciante verifica que la transferencia venga de esta persona. Usa una cuenta a tu nombre.",
       name: "Nombre completo",
       document: "Número de documento",
-      email: "Email",
-      emailHint: "Para el comprobante. Opcional.",
       receiveTo: "Los USDC llegan a",
     },
     seller: {
@@ -150,9 +148,8 @@ export default {
     metaTitle: "Solicitud de pago | Cosmos Pay",
     metaDescription: "Paga esta solicitud con una transferencia bancaria.",
     eyebrow: "Solicitud de pago",
-    testnet: "Red de prueba",
     toPay: "A pagar",
-    from: "{merchant} te solicita este pago",
+    to: "Paga a {merchant}",
     loadError: "No pudimos cargar esta solicitud de pago.",
     notFound: "Esta solicitud de pago no existe.",
     retry: "Reintentar",
@@ -168,6 +165,8 @@ export default {
       submitting: "Preparando tu pago…",
       failed: "No pudimos preparar el pago. Prueba de nuevo.",
       busy: "Alguien está pagando esta solicitud ahora. Prueba de nuevo en unos minutos.",
+      noRails: "Ningún comerciante puede tomar este pago ahora. Prueba de nuevo en unos minutos.",
+      limited: "Demasiados intentos. Espera un minuto y prueba de nuevo.",
     },
     transfer: {
       title: "Transfiere exactamente",
@@ -181,6 +180,8 @@ export default {
       done: "Ya transferí",
       sending: "Enviando…",
       failed: "No pudimos avisarle al comerciante. Prueba de nuevo.",
+      cancel: "Cancelar este pago",
+      cancelFailed: "No pudimos cancelar el pago. Prueba de nuevo.",
     },
     status: {
       preparing: "Preparando tu pago…",

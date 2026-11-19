@@ -71,8 +71,6 @@ export default {
       body: "Le marchand vérifie que le virement vient de cette personne. Utilisez un compte à votre nom.",
       name: "Nom complet",
       document: "Numéro de pièce d'identité",
-      email: "E-mail",
-      emailHint: "Pour le reçu. Facultatif.",
       receiveTo: "L'USDC arrive sur",
     },
     seller: {
@@ -150,9 +148,8 @@ export default {
     metaTitle: "Demande de paiement | Cosmos Pay",
     metaDescription: "Réglez cette demande par virement bancaire.",
     eyebrow: "Demande de paiement",
-    testnet: "Réseau de test",
     toPay: "À payer",
-    from: "{merchant} vous demande ce paiement",
+    to: "Payez à {merchant}",
     loadError: "Impossible de charger cette demande de paiement.",
     notFound: "Cette demande de paiement n'existe pas.",
     retry: "Réessayer",
@@ -168,6 +165,8 @@ export default {
       submitting: "Préparation de votre paiement…",
       failed: "Impossible de préparer le paiement. Réessayez.",
       busy: "Quelqu'un règle cette demande en ce moment. Réessayez dans quelques minutes.",
+      noRails: "Aucun marchand ne peut prendre ce paiement pour le moment. Réessayez dans quelques minutes.",
+      limited: "Trop de tentatives. Patientez une minute et réessayez.",
     },
     transfer: {
       title: "Virez exactement",
@@ -181,6 +180,8 @@ export default {
       done: "J'ai fait le virement",
       sending: "Envoi…",
       failed: "Impossible de prévenir le marchand. Réessayez.",
+      cancel: "Annuler ce paiement",
+      cancelFailed: "Impossible d'annuler le paiement. Réessayez.",
     },
     status: {
       preparing: "Préparation de votre paiement…",

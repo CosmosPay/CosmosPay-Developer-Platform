@@ -71,8 +71,6 @@ export default {
       body: "商户会核对转账是否来自此人。请使用你本人名下的账户。",
       name: "全名",
       document: "证件号码",
-      email: "邮箱",
-      emailHint: "用于接收收据。可选。",
       receiveTo: "USDC 到账",
     },
     seller: {
@@ -150,9 +148,8 @@ export default {
     metaTitle: "付款请求 | Cosmos Pay",
     metaDescription: "通过银行转账支付此请求。",
     eyebrow: "付款请求",
-    testnet: "测试网络",
     toPay: "应付金额",
-    from: "{merchant} 向你发起此付款请求",
+    to: "付款给 {merchant}",
     loadError: "无法加载此付款请求。",
     notFound: "此付款请求不存在。",
     retry: "重试",
@@ -168,6 +165,8 @@ export default {
       submitting: "正在准备你的付款…",
       failed: "无法准备付款。请重试。",
       busy: "目前有人正在支付此请求。请几分钟后再试。",
+      noRails: "目前没有商户能承接这笔付款。请几分钟后再试。",
+      limited: "尝试次数过多。请等待一分钟后重试。",
     },
     transfer: {
       title: "请准确转账",
@@ -181,6 +180,8 @@ export default {
       done: "我已转账",
       sending: "正在发送…",
       failed: "无法通知商户。请重试。",
+      cancel: "取消此付款",
+      cancelFailed: "无法取消付款。请重试。",
     },
     status: {
       preparing: "正在准备你的付款…",

@@ -7,6 +7,11 @@ import { useEffect, useState, type ReactNode } from "react";
 import { fmt, useT } from "@/lib/i18n/index";
 import { Field, Sel } from "@/components/cosmos/dashboard/components/Field";
 import { RAILS, fiatDecimals, isRailId, type FieldError, type RailField } from "@/lib/p2p/rails";
+
+/* A field's label and its choices' words: the shared vocabulary names them by kind, and by key for
+   the ones it names that way (a document type); the key itself stands in for an unknown one. */
+const labelOf = (p: any, kind: string, key: string) => p.fields[kind] ?? p.fields[key] ?? key;
+const choicesOf = (p: any, kind: string, key: string): Record<string, string> => p.options[kind] ?? p.options[key] ?? {};
 import { checkTransaction, evmChainOf } from "@/lib/p2p/tx-check";
 import type { P2pNetwork, P2pTransaction } from "@/lib/p2p/types";
 import type { AnyWallet } from "@/lib/wallets/find";
@@ -79,15 +84,11 @@ export function fieldKind(rail: string, key: string): string {
 export function accountRows(t: any, account: { rail: string; holderName: string; document?: string | null; details: Record<string, string> }): [string, string][] {
   const p = t.p2p;
   const rows: [string, string][] = [[p.fields.holderName, account.holderName]];
-  if (account.document) {
-    const docKind = isRailId(account.rail) ? RAILS[account.rail].document : "document";
-    rows.push([p.fields[docKind] ?? p.fields.document, account.document]);
-  }
+  if (account.document) rows.push([p.fields.document, account.document]);
   for (const [key, value] of Object.entries(account.details)) {
     const kind = fieldKind(account.rail, key);
-    const label = kind === "text" ? key : p.fields[kind] ?? key;
-    const shown = (kind === "pixKeyType" || kind === "accountTypeCo" || kind === "accountTypeCl") ? p.options[kind]?.[value] ?? value : value;
-    rows.push([label, shown]);
+    const label = kind === "text" ? key : labelOf(p, kind, key);
+    rows.push([label, choicesOf(p, kind, key)[value] ?? value]);
   }
   return rows;
 }
@@ -98,6 +99,7 @@ export function errorText(t: any, kind: string, error: FieldError | null | undef
   const p = t.p2p;
   if (error === "required") return p.errors.required;
   if (error === "checksum") return p.errors.checksum;
+  if (error === "exclusive") return p.errors.exclusive ?? p.errors.formatPlain;
   const hint = p.hints[kind];
   return hint ? fmt(p.errors.format, { hint }) : p.errors.formatPlain;
 }
@@ -113,9 +115,17 @@ export const emptyAccount = (rail: string): AccountDraft => {
   return { holderName: "", document: "", details };
 };
 
-/** The account a seller is paid into, per rail: the holder, their document and the rail's fields,
-    each checked as it is typed (src/lib/p2p/rails.ts checkAccount), the problem shown once the
-    field was left. */
+/** Whether the holder's document needs a field of its own: a rail that keeps it among its details
+    (a CUIT, a RUT, a document number), or a PIX key that is a CPF or CNPJ, already has it. */
+export function needsDocument(rail: string, details: Record<string, string>): boolean {
+  if (!isRailId(rail)) return true;
+  if (RAILS[rail].documentKey) return false;
+  return !(rail === "br_pix" && (details.keyType === "cpf" || details.keyType === "cnpj"));
+}
+
+/** The account a seller is paid into, per rail: the holder, the rail's fields and, where the rail
+    does not keep it, the holder's document, each checked as it is typed (src/lib/p2p/rails.ts
+    checkBeneficiary), the problem shown once the field was left. */
 export function AccountFields({ rail, value, onChange, errors, idPrefix, showAll = false }: {
   rail: string;
   value: AccountDraft;
@@ -132,7 +142,6 @@ export function AccountFields({ rail, value, onChange, errors, idPrefix, showAll
   const show = (key: string) => (touched[key] || showAll ? errors[key] : undefined);
   const known = isRailId(rail) ? RAILS[rail] : null;
   const fields: RailField[] = known ? [...known.fields] : Object.keys(value.details).map((key) => ({ key, kind: "text" as const }));
-  const docKind = known?.document ?? "document";
   const set = (key: string, v: string) => onChange({ ...value, details: { ...value.details, [key]: v } });
   return (
     <div className="p2pa-fields" id={idPrefix}>
@@ -141,28 +150,29 @@ export function AccountFields({ rail, value, onChange, errors, idPrefix, showAll
         onChange={(e: any) => onChange({ ...value, holderName: e.target.value })} onBlur={leave("holderName")}
         aria-invalid={show("holderName") ? true : undefined} hint={errorText(t, "holderName", show("holderName"))}
       />
-      <Field
-        label={`${p.fields[docKind] ?? p.fields.document}${known?.documentOptional ? ` ${t.dash.common.optional}` : ""}`}
-        value={value.document} autoComplete="off" spellCheck={false} placeholder={p.placeholders[docKind] ?? ""}
-        onChange={(e: any) => onChange({ ...value, document: e.target.value })} onBlur={leave("document")}
-        aria-invalid={show("document") ? true : undefined} hint={errorText(t, docKind, show("document")) ?? p.hints[docKind]}
-      />
       {fields.map((f, i) => f.options
         ? (
           <Sel
-            key={f.key} label={p.fields[f.kind] ?? f.key} value={value.details[f.key] ?? f.options[0]}
-            onChange={(v: string) => set(f.key, v)} options={[...f.options]} labels={p.options[f.kind] ?? {}}
+            key={f.key} label={labelOf(p, f.kind, f.key)} value={value.details[f.key] ?? f.options[0]}
+            onChange={(v: string) => set(f.key, v)} options={[...f.options]} labels={choicesOf(p, f.kind, f.key)}
           />
         )
         : (
           <Field
-            key={f.key} label={f.kind === "text" ? f.key : p.fields[f.kind] ?? f.key} value={value.details[f.key] ?? ""}
+            key={f.key} label={f.kind === "text" ? f.key : labelOf(p, f.kind, f.key)} value={value.details[f.key] ?? ""}
             autoComplete="off" spellCheck={false} placeholder={p.placeholders[f.kind] ?? ""}
             onChange={(e: any) => set(f.key, e.target.value)} onBlur={leave(f.key)}
             aria-invalid={show(f.key) ? true : undefined}
             hint={errorText(t, f.kind, show(f.key)) ?? (f.oneOf && i === fields.findIndex((x) => x.oneOf === f.oneOf) ? p.hints.oneOf : p.hints[f.kind])}
           />
         ))}
+      {needsDocument(rail, value.details) && (
+        <Field
+          label={p.fields.document} value={value.document} autoComplete="off" spellCheck={false}
+          onChange={(e: any) => onChange({ ...value, document: e.target.value })} onBlur={leave("document")}
+          aria-invalid={show("document") ? true : undefined} hint={errorText(t, "document", show("document"))}
+        />
+      )}
     </div>
   );
 }
@@ -173,6 +183,24 @@ export function StepMark({ state }: { state: "todo" | "active" | "done" }) {
 }
 
 export class TxRefused extends Error {}
+
+/* A sale's two unsigned transactions come only with the order's creation (a later read of the order
+   does not repeat them), so this tab keeps them until the wallet sent both: a reload can still sign. */
+const STEPS = (orderId: string) => `cosmospay-p2p-steps:${orderId}`;
+export function saveSteps(orderId: string, steps: P2pTransaction[] | undefined) {
+  try {
+    if (steps?.length) sessionStorage.setItem(STEPS(orderId), JSON.stringify(steps));
+    else sessionStorage.removeItem(STEPS(orderId));
+  } catch { /* private mode: the steps stay in memory for this page only */ }
+}
+export function savedSteps(orderId: string): P2pTransaction[] | undefined {
+  try {
+    const raw = JSON.parse(sessionStorage.getItem(STEPS(orderId)) ?? "null");
+    return Array.isArray(raw) && raw.length ? (raw as P2pTransaction[]) : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 /** Send one transaction from the connected EVM wallet once it matches the order's network (the
     market contract, or the token for an approval), and wait until the network confirms it. */

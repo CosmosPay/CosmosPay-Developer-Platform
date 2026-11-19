@@ -14,7 +14,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { fmt, initLang, useLang, useT } from "@/lib/i18n/index";
 import { copyText } from "@/components/cosmos/lib/clipboard";
 import {
-  fetchCharge, fetchChargeOrder, openChargeOrder, reportChargePaid, saveOrder, savedOrder,
+  cancelChargeOrder, fetchCharge, fetchChargeOrder, openChargeOrder, reportChargePaid, saveOrder, savedOrder,
   type CheckoutCharge, type CheckoutOrder,
 } from "@/lib/p2p/checkout-api";
 import { checkEmail, checkHolderName, checkPayerDocument, type FieldError } from "@/lib/p2p/rails";
@@ -137,13 +137,24 @@ export function P2pChargePay({ id, apiBase, lang }: { id: string; apiBase: strin
     if (!formOk || busy) return;
     setBusy(true);
     setError("");
-    const r = await openChargeOrder(apiBase, id, { payerName: form.name.trim(), payerDocument: form.document.trim(), payerEmail: form.email.trim(), rail: form.rail });
+    const r = await openChargeOrder(apiBase, id, { rail: form.rail, name: form.name, document: form.document, email: form.email });
     setBusy(false);
     if (r.kind === "ok") {
       token.current = r.value.payerToken;
       saveOrder(id, { orderId: r.value.order.id, payerToken: r.value.payerToken });
       setOrder(r.value.order);
-    } else setError(r.kind === "error" && r.status === 409 ? y.payer.busy : y.payer.failed);
+    } else setError(r.kind === "error" && r.status === 409 ? y.payer.busy : r.kind === "error" && r.status === 429 ? y.payer.limited : y.payer.failed);
+  };
+
+  /* The payer gives up before paying: the order is cancelled and the charge is free again. */
+  const cancel = async () => {
+    if (!order || !token.current || busy) return;
+    setBusy(true);
+    setError("");
+    const r = await cancelChargeOrder(apiBase, order.id, token.current);
+    setBusy(false);
+    if (r.kind === "ok") setOrder(r.value);
+    else setError(y.transfer.cancelFailed);
   };
 
   const reportPaid = async () => {
@@ -160,7 +171,8 @@ export function P2pChargePay({ id, apiBase, lang }: { id: string; apiBase: strin
 
   const st = y.status;
   const requestClosed = !order && charge.status !== "open";
-  const someoneElse = !order && !!charge.openOrderId;
+  // No merchant takes this amount on any rail right now: nothing to pay into yet.
+  const noRails = !order && !requestClosed && charge.rails.length === 0;
   const phase = order
     ? ({ pending: ["wait", st.preparing, ""], awaiting_payment: ["wait", st.waiting, ""], paid: ["wait", st.paid, st.paidBody], completed: ["paid", st.completed, st.completedBody], resolved: ["paid", st.completed, st.completedBody], expired: ["expired", st.expired, st.expiredBody], cancelled: ["cancelled", st.cancelled, st.cancelledBody], failed: ["failed", st.cancelled, st.cancelledBody], disputed: ["wait", st.disputed, st.disputedBody], awaiting_acceptance: ["wait", st.preparing, ""] } as Record<string, [string, string, string]>)[order.status]
     : requestClosed
@@ -174,12 +186,10 @@ export function P2pChargePay({ id, apiBase, lang }: { id: string; apiBase: strin
         <div className="ck-brand">
           <span className="cosmos-mark ck-mark" aria-hidden="true" />
           <span className="ck-eyebrow">{y.eyebrow}</span>
-          {charge.tier === "testnet" && <span className="pp-testnet">{y.testnet}</span>}
         </div>
         <div className="ck-amount">
           <span className="ck-caption">{y.toPay}</span>
           <h1 className="pp-amount">{money(L, charge.fiatAmount, charge.currency)}</h1>
-          {charge.merchantName && <p className="pp-hint">{fmt(y.from, { merchant: charge.merchantName })}</p>}
           {charge.description && <p className="pp-msg">{charge.description}</p>}
         </div>
 
@@ -190,17 +200,17 @@ export function P2pChargePay({ id, apiBase, lang }: { id: string; apiBase: strin
 
         {/* Who pays: asked before any account is shown (the merchant checks the payer). */}
         {!order && !requestClosed && (
-          someoneElse
-            ? <p className="pp-hint" role="alert">{y.payer.busy}</p>
+          noRails
+            ? <p className="pp-hint" role="alert">{y.payer.noRails}</p>
             : (
               <form className="ck-payer p2pc-payer" onSubmit={start} noValidate>
                 <span className="ck-field-label">{y.payer.title}</span>
                 <p className="pp-hint">{y.payer.body}</p>
                 <label className="p2pc-l" htmlFor="p2pc-name">{y.payer.name}</label>
-                <input id="p2pc-name" className="ck-payer-input" autoComplete="name" maxLength={80} value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} onBlur={() => setTouched((x) => ({ ...x, name: true }))} aria-invalid={show("name") ? true : undefined} aria-describedby="p2pc-name-e" />
+                <input id="p2pc-name" className="ck-payer-input" autoComplete="name" maxLength={100} value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} onBlur={() => setTouched((x) => ({ ...x, name: true }))} aria-invalid={show("name") ? true : undefined} aria-describedby="p2pc-name-e" />
                 <p className="pp-hint p2pc-e" id="p2pc-name-e">{errorText(t, "holderName", show("name"))}</p>
                 <label className="p2pc-l" htmlFor="p2pc-doc">{y.payer.document}</label>
-                <input id="p2pc-doc" className="ck-payer-input" autoComplete="off" spellCheck={false} maxLength={30} value={form.document} onChange={(e) => setForm((f) => ({ ...f, document: e.target.value }))} onBlur={() => setTouched((x) => ({ ...x, document: true }))} aria-invalid={show("document") ? true : undefined} aria-describedby="p2pc-doc-e" />
+                <input id="p2pc-doc" className="ck-payer-input" autoComplete="off" spellCheck={false} maxLength={20} value={form.document} onChange={(e) => setForm((f) => ({ ...f, document: e.target.value }))} onBlur={() => setTouched((x) => ({ ...x, document: true }))} aria-invalid={show("document") ? true : undefined} aria-describedby="p2pc-doc-e" />
                 <p className="pp-hint p2pc-e" id="p2pc-doc-e">{errorText(t, "document", show("document"))}</p>
                 <label className="p2pc-l" htmlFor="p2pc-email">{y.payer.email}</label>
                 <input id="p2pc-email" className="ck-payer-input" type="email" inputMode="email" autoComplete="email" autoCapitalize="off" spellCheck={false} maxLength={254} value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} onBlur={() => setTouched((x) => ({ ...x, email: true }))} aria-invalid={show("email") ? true : undefined} aria-describedby="p2pc-email-e" />
@@ -225,6 +235,7 @@ export function P2pChargePay({ id, apiBase, lang }: { id: string; apiBase: strin
           <div className="p2pc-transfer">
             {order.payBy && <Digits ms={payLeft} label={y.transfer.timeLeft} />}
             <p className="ck-field-label">{y.transfer.title}</p>
+            {order.merchantName && <p className="pp-hint">{fmt(y.to, { merchant: order.merchantName })}</p>}
             <p className="pp-amount p2pc-exact">{money(L, order.fiatAmount, order.currency)}</p>
             <p className="pp-hint">{y.transfer.body}</p>
             <dl className="pp-details">
@@ -235,6 +246,7 @@ export function P2pChargePay({ id, apiBase, lang }: { id: string; apiBase: strin
             <input id="p2pc-ref" className="ck-payer-input" autoComplete="off" maxLength={60} value={reference} onChange={(e) => setReference(e.target.value)} aria-describedby="p2pc-ref-h" />
             <p className="pp-hint" id="p2pc-ref-h">{y.transfer.referenceHint}</p>
             <button type="button" className="btn btn-dark ck-primary p2pc-cta" disabled={busy || payLeft <= 0} onClick={reportPaid}>{busy ? y.transfer.sending : y.transfer.done}</button>
+            <button type="button" className="btn btn-soft btn-sm p2pc-again" disabled={busy} onClick={cancel}>{y.transfer.cancel}</button>
           </div>
         )}
 

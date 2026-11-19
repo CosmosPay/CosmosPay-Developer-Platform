@@ -71,8 +71,6 @@ export default {
       body: "Der Händler prüft, dass die Überweisung von dieser Person kommt. Nutzen Sie ein Konto auf Ihren Namen.",
       name: "Vollständiger Name",
       document: "Ausweisnummer",
-      email: "E-Mail",
-      emailHint: "Für den Beleg. Optional.",
       receiveTo: "USDC gehen an",
     },
     seller: {
@@ -150,9 +148,8 @@ export default {
     metaTitle: "Zahlungsanforderung | Cosmos Pay",
     metaDescription: "Begleichen Sie diese Anforderung per Banküberweisung.",
     eyebrow: "Zahlungsanforderung",
-    testnet: "Testnetzwerk",
     toPay: "Zu zahlen",
-    from: "{merchant} fordert diese Zahlung an",
+    to: "Zahlung an {merchant}",
     loadError: "Diese Zahlungsanforderung konnte nicht geladen werden.",
     notFound: "Diese Zahlungsanforderung existiert nicht.",
     retry: "Erneut versuchen",
@@ -168,6 +165,8 @@ export default {
       submitting: "Ihre Zahlung wird vorbereitet…",
       failed: "Die Zahlung konnte nicht vorbereitet werden. Versuchen Sie es erneut.",
       busy: "Diese Anforderung wird gerade bezahlt. Versuchen Sie es in einigen Minuten erneut.",
+      noRails: "Gerade kann kein Händler diese Zahlung übernehmen. Versuchen Sie es in einigen Minuten erneut.",
+      limited: "Zu viele Versuche. Warten Sie eine Minute und versuchen Sie es erneut.",
     },
     transfer: {
       title: "Überweisen Sie genau",
@@ -181,6 +180,8 @@ export default {
       done: "Ich habe überwiesen",
       sending: "Wird gesendet…",
       failed: "Der Händler konnte nicht benachrichtigt werden. Versuchen Sie es erneut.",
+      cancel: "Diese Zahlung abbrechen",
+      cancelFailed: "Die Zahlung konnte nicht abgebrochen werden. Versuchen Sie es erneut.",
     },
     status: {
       preparing: "Ihre Zahlung wird vorbereitet…",

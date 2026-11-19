@@ -5,68 +5,80 @@
    order's network and contract is never sent. */
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { fetchCharge, fetchChargeOrder, openChargeOrder, parseAccount, parseCheckoutCharge, parseCheckoutOrder, parseCreatedOrder, reportChargePaid } from "@/lib/p2p/checkout-api";
+import { cancelChargeOrder, fetchCharge, fetchChargeOrder, openChargeOrder, parseAccount, parseCheckoutCharge, parseCheckoutOrder, parseCreatedOrder, reportChargePaid } from "@/lib/p2p/checkout-api";
 import { appApi, parseMarket, parseOrder, parseQuote } from "@/lib/p2p/app-api";
 import { checkTransaction, evmChainOf, explorerTx } from "@/lib/p2p/tx-check";
 
+/* The community server's P2pCheckoutChargeEntity and P2pCheckoutOrderEntity, as it answers them. */
 const CHARGE = {
-  id: "0b9c4a1e-7d2f-4c3a-9e1b-2f6d8a7c5e40", currency: "ARS", fiatAmount: "85000.00", description: "Order #1042", merchantName: "Lumio",
-  network: "base", networkName: "Base", token: "USDC", status: "open", expiresAt: "2026-11-26T12:00:00.000Z", multiUse: false,
-  rails: ["ar_bank_transfer"], tier: "mainnet", openOrderId: null,
+  id: "cm3p2pchg0001l70g8v5q3z2w", network: "base", tokenSymbol: "USDC", currency: "ARS", fiatAmount: "85000.00",
+  description: "Order #1042", status: "open", rails: ["ar_bank_transfer"], expiresAt: "2026-11-26T12:00:00.000Z",
 };
 const ORDER = {
-  id: "5f0c2a9e-1b3d-4e5f-8a7b-9c0d1e2f3a4b", status: "awaiting_payment", currency: "ARS", fiatAmount: "85000.00", rail: "ar_bank_transfer", token: "USDC",
-  tokenAmount: "59.42", network: "base", payBy: "2026-11-19T12:30:00.000Z",
-  paymentDetails: { rail: "ar_bank_transfer", holderName: "Lumio Exchange SRL", document: "30714209879", details: { alias: "lumio.pagos.ars", cbu: "0170099222000001234561" } },
-  paidReference: null, merchantName: "Lumio Exchange", txs: {},
+  id: "5f0c2a9e-1b3d-4e5f-8a7b-9c0d1e2f3a4b", chargeId: CHARGE.id, status: "awaiting_payment", currency: "ARS", fiatAmount: "85000.00",
+  rail: "ar_bank_transfer", merchantName: "Lumio Exchange", paymentDeadline: "2026-11-19T12:30:00.000Z",
+  paymentDetails: { rail: "ar_bank_transfer", holderName: "Lumio Exchange SRL", details: { alias: "lumio.pagos.ars", cuit: "30714209879" } },
+  paidAt: null, createdAt: "2026-11-19T12:00:00.000Z",
 };
 
-test("a charge: every field checked, in or out of the envelope", () => {
-  assert.deepEqual(parseCheckoutCharge(CHARGE), { ...CHARGE, status: "open", tier: "mainnet" });
-  assert.equal(parseCheckoutCharge({ data: CHARGE })?.id, CHARGE.id);
+test("a charge: every field checked, the symbol from tokenSymbol, rails possibly none", () => {
+  assert.deepEqual(parseCheckoutCharge(CHARGE), {
+    id: CHARGE.id, network: "base", token: "USDC", currency: "ARS", fiatAmount: "85000.00", description: "Order #1042", status: "open", rails: ["ar_bank_transfer"], expiresAt: CHARGE.expiresAt,
+  });
+  assert.deepEqual(parseCheckoutCharge({ ...CHARGE, rails: [] })?.rails, [], "no merchant takes it right now");
+  assert.equal(parseCheckoutCharge({ ...CHARGE, description: null })?.description, null);
   for (const bad of [
-    { ...CHARGE, status: "PENDING" }, { ...CHARGE, currency: "ars" }, { ...CHARGE, fiatAmount: "1e5" }, { ...CHARGE, rails: [] },
-    { ...CHARGE, description: "a\u0000b" }, { ...CHARGE, expiresAt: "soon" }, { ...CHARGE, id: "../x" }, { ...CHARGE, network: "Base Main" }, null, [],
+    { ...CHARGE, status: "PENDING" }, { ...CHARGE, currency: "ars" }, { ...CHARGE, fiatAmount: "1e5" }, { ...CHARGE, fiatAmount: "1.234" }, { ...CHARGE, rails: ["<x>"] },
+    { ...CHARGE, rails: "ar_bank_transfer" }, { ...CHARGE, description: "a\u0000b" }, { ...CHARGE, expiresAt: "soon" }, { ...CHARGE, id: "../x" },
+    { ...CHARGE, network: "Base Main" }, { ...CHARGE, tokenSymbol: undefined }, null, [],
   ]) assert.equal(parseCheckoutCharge(bad), null, JSON.stringify(bad));
-  assert.equal(parseCheckoutCharge({ ...CHARGE, openOrderId: ORDER.id })?.openOrderId, ORDER.id);
-  assert.equal(parseCheckoutCharge({ ...CHARGE, tier: "x" })?.tier, "mainnet");
 });
 
-test("an order and the account to pay into: plain short strings under plain keys", () => {
+test("the payer's order and the account to pay into: plain short strings under plain keys", () => {
   const o = parseCheckoutOrder(ORDER);
   assert.ok(o);
+  assert.equal(o!.payBy, ORDER.paymentDeadline);
   assert.equal(o!.paymentDetails?.details.alias, "lumio.pagos.ars");
-  assert.equal(parseCheckoutOrder({ ...ORDER, deadlines: { payBy: ORDER.payBy }, payBy: undefined })?.payBy, ORDER.payBy);
-  assert.equal(parseCheckoutOrder({ ...ORDER, txs: { release: `0x${"a".repeat(64)}` } })?.releaseTx, `0x${"a".repeat(64)}`);
+  assert.equal(o!.paymentDetails?.document, null);
+  assert.equal(o!.merchantName, "Lumio Exchange");
+  assert.equal(parseCheckoutOrder({ ...ORDER, paymentDetails: null })?.paymentDetails, null, "an order that ended shows no account");
   for (const bad of [
     { ...ORDER, status: "PAID" }, { ...ORDER, paymentDetails: { ...ORDER.paymentDetails, details: { "<b>": "x" } } },
     { ...ORDER, paymentDetails: { ...ORDER.paymentDetails, details: { alias: "a\nb" } } }, { ...ORDER, paymentDetails: { rail: "x" } },
-    { ...ORDER, txs: { release: "0x1" } }, { ...ORDER, tokenAmount: 59 },
+    { ...ORDER, paymentDeadline: "tomorrow" }, { ...ORDER, fiatAmount: 85000 }, { ...ORDER, chargeId: "../x" },
   ]) assert.equal(parseCheckoutOrder(bad), null, JSON.stringify(bad));
   assert.equal(parseAccount({ rail: "br_pix", holderName: "João", details: {} }), null, "an account has details");
-  assert.equal(parseCreatedOrder({ data: { order: ORDER, payerToken: "t".repeat(43) } })?.payerToken, "t".repeat(43));
-  assert.equal(parseCreatedOrder({ order: ORDER, payerToken: "short" }), null);
+  // Opening it answers the order's own fields with the token beside them.
+  const created = parseCreatedOrder({ ...ORDER, payerToken: "q3Jx8b2mNfV0tq9Lr5sD1uYc7wHk4eAa6zPgT0oXiEM" });
+  assert.equal(created?.order.id, ORDER.id);
+  assert.equal(created?.payerToken, "q3Jx8b2mNfV0tq9Lr5sD1uYc7wHk4eAa6zPgT0oXiEM");
+  assert.equal(parseCreatedOrder({ ...ORDER, payerToken: "short" }), null);
+  assert.equal(parseCreatedOrder({ order: ORDER, payerToken: "q3Jx8b2mNfV0tq9Lr5sD1uYc7wHk4eAa6zPgT0oXiEM" }), null, "the answer is flat");
 });
 
-test("the calls: the keyless routes, the payer token as a header, errors in their kinds", async () => {
+test("the calls: the keyless routes, the bodies the API takes, the payer token as a header, errors in their kinds", async () => {
   const seen: { url: string; init: RequestInit }[] = [];
   const answer = (status: number, body: unknown, headers: Record<string, string> = {}) => (async (url: string | URL | Request, init?: RequestInit) => {
     seen.push({ url: String(url), init: init ?? {} });
     return new Response(JSON.stringify(body), { status, headers });
   }) as typeof fetch;
-  assert.deepEqual(await fetchCharge("https://api.example/cosmos-api/", CHARGE.id, answer(200, { data: CHARGE })), { kind: "ok", value: parseCheckoutCharge(CHARGE) });
+  assert.deepEqual(await fetchCharge("https://api.example/cosmos-api/", CHARGE.id, answer(200, CHARGE)), { kind: "ok", value: parseCheckoutCharge(CHARGE) });
   assert.equal(seen[0].url, `https://api.example/cosmos-api/v1/p2p-checkout/charges/${CHARGE.id}`);
   assert.equal(seen[0].init.credentials, "omit");
   assert.deepEqual(await fetchCharge("https://api.example", CHARGE.id, answer(404, {})), { kind: "not-found" });
-  assert.deepEqual(await fetchCharge("https://api.example", CHARGE.id, answer(429, { message: "Slow down" }, { "Retry-After": "30" })), { kind: "error", status: 429, message: "Slow down", retryAfter: 30 });
-  assert.deepEqual(await fetchCharge("https://api.example", CHARGE.id, answer(200, { data: { ...CHARGE, status: "x" } })), { kind: "error" });
-  const opened = await openChargeOrder("https://api.example", CHARGE.id, { payerName: "Ana", payerDocument: "1", payerEmail: "a@b.co", rail: "ar_bank_transfer" }, answer(201, { order: ORDER, payerToken: "t".repeat(43) }));
+  assert.deepEqual(await fetchCharge("https://api.example", CHARGE.id, answer(429, { statusCode: 429, code: "rate_limited", message: "Slow down" }, { "Retry-After": "30" })), { kind: "error", status: 429, message: "Slow down", code: "rate_limited", retryAfter: 30 });
+  assert.deepEqual(await fetchCharge("https://api.example", CHARGE.id, answer(200, { ...CHARGE, status: "x" })), { kind: "error" });
+  const opened = await openChargeOrder("https://api.example", CHARGE.id, { rail: "ar_bank_transfer", name: " Ana ", document: "20329642330", email: "a@b.co" }, answer(201, { ...ORDER, payerToken: "t".repeat(43) }));
   assert.equal(opened.kind, "ok");
-  assert.equal(JSON.parse(String(seen.at(-1)!.init.body)).payerEmail, "a@b.co");
+  // Exactly the server's DTO: the rail and the payer (name, document, email), nothing else.
+  assert.deepEqual(JSON.parse(String(seen.at(-1)!.init.body)), { rail: "ar_bank_transfer", payer: { name: "Ana", document: "20329642330", email: "a@b.co" } });
   await fetchChargeOrder("https://api.example", ORDER.id, "tok", answer(200, ORDER));
   assert.equal((seen.at(-1)!.init.headers as Record<string, string>)["X-Payer-Token"], "tok");
   await reportChargePaid("https://api.example", ORDER.id, "tok", " TRX1 ", answer(200, ORDER));
   assert.deepEqual(JSON.parse(String(seen.at(-1)!.init.body)), { reference: "TRX1" });
+  const cancelled = await cancelChargeOrder("https://api.example", ORDER.id, "tok", answer(200, { ...ORDER, status: "cancelled", paymentDetails: null }));
+  assert.equal(cancelled.kind === "ok" && cancelled.value.status, "cancelled");
+  assert.match(seen.at(-1)!.url, /\/orders\/[^/]+\/cancel$/);
   const thrown = (async () => { throw new Error("offline"); }) as unknown as typeof fetch;
   assert.deepEqual(await fetchCharge("https://api.example", CHARGE.id, thrown), { kind: "error" });
 });
@@ -103,7 +115,11 @@ test("the app's market keeps only well-formed networks; orders and quotes are ch
   assert.deepEqual(m?.networks.map((n) => n.id), ["base"]);
   assert.deepEqual(m?.currencies, [{ code: "ARS", rails: ["ar_bank_transfer"] }]);
   assert.equal(m?.windows.paymentSeconds, 1800);
-  const order = { ...ORDER, kind: "BUY", buyer: "0x1111111111111111111111111111111111111111", seller: null, price: "1430", deadlines: { payBy: ORDER.payBy }, createdAt: "2026-11-19T12:00:00.000Z", merchant: { displayName: "Lumio" } };
+  const order = {
+    id: ORDER.id, kind: "BUY", status: "awaiting_payment", network: "base", token: "USDC", tokenAmount: "59.42", fiatAmount: "85000.00", currency: "ARS", rail: "ar_bank_transfer",
+    buyer: "0x1111111111111111111111111111111111111111", seller: null, price: "1430", deadlines: { payBy: ORDER.paymentDeadline }, createdAt: "2026-11-19T12:00:00.000Z",
+    merchant: { displayName: "Lumio" }, paymentDetails: { rail: "ar_bank_transfer", holderName: "Lumio Exchange SRL", details: { alias: "lumio.pagos.ars" } },
+  };
   assert.equal(parseOrder(order)?.paymentDetails?.holderName, "Lumio Exchange SRL");
   assert.equal(parseOrder({ ...order, paymentDetails: { rail: "x" } })?.paymentDetails, null, "a doubtful account is dropped");
   assert.equal(parseOrder({ ...order, status: "nope" }), null);

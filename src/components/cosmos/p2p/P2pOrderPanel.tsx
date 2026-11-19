@@ -14,9 +14,10 @@ import { TokenMark } from "@/components/cosmos/dashboard/components/TokenMark";
 import { ConfirmModal } from "@/components/cosmos/ui/ConfirmModal";
 import { activeDeadline, clientActions, isTerminal, orderTone, pollDelay } from "@/lib/p2p/orders";
 import { explorerTx } from "@/lib/p2p/tx-check";
+import { explorerTxUrl } from "@/lib/chains";
 import { AppApiError, appApi } from "@/lib/p2p/app-api";
 import type { P2pMarket, P2pOrder } from "@/lib/p2p/types";
-import { NBSP, Row, StepMark, TxRefused, accountRows, amountOnly, money, sendChecked, timeLeft, units, useNow } from "@/components/cosmos/p2p/p2p-ui";
+import { NBSP, Row, StepMark, TxRefused, accountRows, amountOnly, money, saveSteps, savedSteps, sendChecked, timeLeft, units, useNow } from "@/components/cosmos/p2p/p2p-ui";
 
 type Confirming = null | "cancel" | "dispute";
 
@@ -58,6 +59,9 @@ export function P2pOrderPanel({ id, address, market, onNew, onSessionEnded, onSt
       api.order(id)
         .then((x) => {
           if (!alive) return;
+          // A sale waiting for its seller's signatures: the steps this tab kept at its creation.
+          if (x.status === "pending" && x.kind === "SELL" && !x.transactions?.length) x.transactions = savedSteps(x.id);
+          if (x.status !== "pending") saveSteps(x.id, undefined);
           setOrder(x);
           const delay = pollDelay(x.status);
           if (delay) timer = setTimeout(read, document.hidden ? delay * 3 : delay);
@@ -148,7 +152,8 @@ export function P2pOrderPanel({ id, address, market, onNew, onSessionEnded, onSt
   // A purchase delivers the amount less the fees (protocol and partner), as its price said.
   const net = Number(order.tokenAmount) * (1 - ((order.feeBps ?? 0) + (order.integratorFeeBps ?? 0)) / 10_000);
   const gets = buy ? units(lang, Math.floor(net * 1e6) / 1e6, order.token) : money(lang, order.fiatAmount, order.currency);
-  const releaseTx = explorerTx(network, order.txs?.release ?? order.txs?.open ?? null);
+  const shownTx = order.txs?.release ?? order.txs?.open ?? null;
+  const releaseTx = explorerTx(network, shownTx) ?? explorerTxUrl(order.network, market.tier === "mainnet" ? "public" : "testnet", shownTx);
   const shortId = order.id.slice(0, 8);
   const walletSign = (onUse, title?: string) => (
     <WalletSign ecosystem="evm" chainName={network?.name ?? order.network} signer={address} busy={busy} title={title} onUse={async (w, from, progress) => {

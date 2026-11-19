@@ -11,6 +11,10 @@
  * per wallet (src/lib/rate-limit.ts), bodies read up to 16 KB, only this origin may write, and
  * nothing is cached.
  *
+ * The Payments API answers its own shapes (base units, `buyerAddress`, `tokenSymbol`, lists as
+ * `{data, total, take, skip}`, no envelope); this route hands the page the screens' shapes
+ * (src/lib/p2p/normalize.ts), so the browser reads one vocabulary in mock mode and in production.
+ *
  * Mock mode answers from the mock market (src/lib/mock/handlers/p2p-public.ts, consumer "app")
  * instead of the gateway, and takes any well-formed signature, as every wallet proof there; the
  * session, the whitelist, the binding and the limits run as in production. */
@@ -25,9 +29,10 @@ import {
   type AppEnv, type AppSession,
 } from "@/lib/p2p/app-session";
 import {
-  LIMITS, MAX_BODY, challengeAddress, clientKey, needsSession, orderBody, originAllowed, ownOrders, ownsOrder, paidBody, quoteBody, routeOf, transactionBody,
+  HISTORY_PAGES, HISTORY_TAKE, LIMITS, MAX_BODY, challengeAddress, clientKey, needsSession, orderBody, originAllowed, ownOrders, ownsOrder, paidBody, quoteBody, routeOf, transactionBody,
   type AppRoute,
 } from "@/lib/p2p/app-guard";
+import { normalizeMarket, normalizeOrder, normalizeQuote } from "@/lib/p2p/normalize";
 import type { P2pOrder } from "@/lib/p2p/types";
 
 const MOCK = isMockMode();
@@ -67,18 +72,22 @@ function config(): { key: string; secret: string; env: AppEnv } | null {
 interface Upstream { status: number; data: unknown; message: string }
 
 const obj = (v: unknown): Record<string, unknown> | null => (v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : null);
-function unwrap(status: number, json: unknown): Upstream {
+/* The Payments API answers its objects as they are (no envelope: a transaction's own `data` is its
+   calldata) and its errors as `{statusCode, message}`. */
+function answer(status: number, json: unknown): Upstream {
   const o = obj(json);
-  const message = typeof o?.message === "string" && o.message.length <= 300 ? o.message : "";
-  return { status, data: o && "data" in o ? o.data : json, message };
+  const message = status >= 400 && typeof o?.message === "string" && o.message.length <= 300 ? o.message : "";
+  return { status, data: json, message };
 }
+/* The rows of a list page (`{data, total, take, skip}`), or of a bare array. */
+const rowsOf = (v: unknown): unknown[] => (Array.isArray(v) ? v : Array.isArray(obj(v)?.data) ? (obj(v)!.data as unknown[]) : []);
 
 /** One call to the Payments API's /v1/p2p/<path> with the integrator key (or the mock market). */
 async function upstream(cfg: { key: string; env: AppEnv }, method: string, path: string, body?: Record<string, unknown>, query?: URLSearchParams): Promise<Upstream> {
   if (MOCK) {
     const { mockAppUpstream } = await import("@/lib/mock/handlers/p2p-public");
     const a = mockAppUpstream(cfg.env, method, path, query ?? new URLSearchParams(), body ?? null);
-    return unwrap(a.status, a.body);
+    return answer(a.status, a.body);
   }
   const base = (P2P_APP_API_URL.trim() || API_BASE).replace(/\/+$/, "");
   const url = `${base}/v1/p2p/${path}${query && [...query].length ? `?${query}` : ""}`;
@@ -89,7 +98,7 @@ async function upstream(cfg: { key: string; env: AppEnv }, method: string, path:
       body: body ? JSON.stringify(body) : undefined,
       signal: AbortSignal.timeout(15_000),
     });
-    return unwrap(res.status, await res.json().catch(() => null));
+    return answer(res.status, await res.json().catch(() => null));
   } catch (err) {
     console.error(`[p2p-app] /v1/p2p/${path.split("/")[0]} failed: ${(err as { cause?: { code?: string } })?.cause?.code ?? (err as Error)?.name}`);
     return { status: 502, data: null, message: "" };
@@ -104,13 +113,16 @@ const pass = (u: Upstream, data: unknown = u.data) =>
       ? refuse(u.status === 401 || u.status === 403 ? 503 : u.status, u.message || "The request was refused.")
       : reply(u.status, data);
 
-const asOrder = (v: unknown) => (obj(v) as unknown as P2pOrder | null);
+/* An order in the screens' shape (amounts in the token's decimals, the parties as buyer and
+   seller, a sale's two transactions tagged). */
+const asOrder = (v: unknown): P2pOrder | null => (obj(v) ? normalizeOrder(v) : null);
 
 async function readOwnOrder(cfg: { key: string; env: AppEnv }, id: string, address: string): Promise<{ order: P2pOrder } | { response: Response }> {
   const u = await upstream(cfg, "GET", `orders/${encodeURIComponent(id)}`);
-  if (u.status === 404 || (u.status < 400 && !ownsOrder(asOrder(u.data), address))) return { response: refuse(404, "Order not found") };
-  if (u.status >= 400) return { response: pass(u) };
-  return { order: asOrder(u.data)! };
+  if (u.status >= 400 && u.status !== 404) return { response: pass(u) };
+  const order = u.status < 400 ? asOrder(u.data) : null;
+  if (!order || !ownsOrder(order, address)) return { response: refuse(404, "Order not found") };
+  return { order };
 }
 
 export const ALL: APIRoute = async ({ request, url, clientAddress }) => {
@@ -165,30 +177,39 @@ export const ALL: APIRoute = async ({ request, url, clientAddress }) => {
       return reply(200, session ? { address: session.address, expiresAt: new Date(session.exp).toISOString() } : null);
     case "signOut":
       return reply(200, null, "OK", { "Set-Cookie": clearSessionCookie(SECURE) });
-    case "market":
-      return pass(await upstream(cfg, "GET", "market"));
+    case "market": {
+      const u = await upstream(cfg, "GET", "market");
+      return u.status < 400 ? pass(u, normalizeMarket(u.data)) : pass(u);
+    }
     case "quote": {
       const shaped = quoteBody(body);
       if (!shaped.ok) return refuse(400, shaped.message);
-      return pass(await upstream(cfg, "POST", "quotes", shaped.body));
+      const u = await upstream(cfg, "POST", "quotes", shaped.body);
+      return u.status < 400 ? pass(u, normalizeQuote(u.data)) : pass(u);
     }
     case "createOrder": {
       const shaped = orderBody(body, session!.address);
       if (!shaped.ok) return refuse(400, shaped.message);
       const u = await upstream(cfg, "POST", "orders", shaped.body);
+      if (u.status >= 400) return pass(u);
       // The API answered an order: it must be this wallet's, or nothing is shown.
-      if (u.status < 400 && !ownsOrder(asOrder(u.data), session!.address)) {
+      const order = asOrder(u.data);
+      if (!order || !ownsOrder(order, session!.address)) {
         console.error("[p2p-app] the API answered an order that is not the session's wallet's");
         return refuse(502, "The P2P market could not be reached. Try again in a moment.");
       }
-      return pass(u);
+      return pass(u, order);
     }
     case "listOrders": {
-      const u = await upstream(cfg, "GET", "orders", undefined, new URLSearchParams({ address: session!.address, take: "50" }));
-      if (u.status >= 400) return pass(u);
-      const page = obj(u.data);
-      const rows = Array.isArray(u.data) ? u.data : Array.isArray(page?.data) ? (page!.data as unknown[]) : [];
-      const own = ownOrders(rows.map(asOrder).filter((o): o is P2pOrder => !!o), session!.address);
+      // The API takes no address filter: the integrator's newest pages, the wallet's rows kept.
+      const own: P2pOrder[] = [];
+      for (let p = 0; p < HISTORY_PAGES; p++) {
+        const u = await upstream(cfg, "GET", "orders", undefined, new URLSearchParams({ take: String(HISTORY_TAKE), skip: String(p * HISTORY_TAKE) }));
+        if (u.status >= 400) return p === 0 ? pass(u) : reply(200, own);
+        const rows = rowsOf(u.data);
+        own.push(...ownOrders(rows.map(asOrder).filter((o): o is P2pOrder => !!o), session!.address));
+        if (rows.length < HISTORY_TAKE) break;
+      }
       return reply(200, own);
     }
     case "getOrder": {
@@ -198,7 +219,8 @@ export const ALL: APIRoute = async ({ request, url, clientAddress }) => {
     case "orderAction": {
       const got = await readOwnOrder(cfg, r.id, session!.address);
       if ("response" in got) return got.response;
-      return pass(await upstream(cfg, "POST", `orders/${encodeURIComponent(r.id)}/${r.action}`, r.action === "paid" ? paidBody(body) : {}));
+      const u = await upstream(cfg, "POST", `orders/${encodeURIComponent(r.id)}/${r.action}`, r.action === "paid" ? paidBody(body) : {});
+      return u.status < 400 ? pass(u, asOrder(u.data) ?? got.order) : pass(u);
     }
     case "transaction": {
       const id = typeof body?.orderId === "string" && /^[a-z0-9][a-z0-9-]{7,63}$/i.test(body.orderId) ? body.orderId : "";

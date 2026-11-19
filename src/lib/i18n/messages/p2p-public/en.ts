@@ -73,8 +73,6 @@ export default {
       body: "The merchant checks that the transfer comes from this person. Use an account in your name.",
       name: "Full name",
       document: "ID number",
-      email: "Email",
-      emailHint: "For the receipt. Optional.",
       receiveTo: "USDC arrives in",
     },
     seller: {
@@ -152,9 +150,8 @@ export default {
     metaTitle: "Payment request | Cosmos Pay",
     metaDescription: "Pay this request with a bank transfer.",
     eyebrow: "Payment request",
-    testnet: "Test network",
     toPay: "To pay",
-    from: "{merchant} requests this payment",
+    to: "Pay to {merchant}",
     loadError: "Couldn't load this payment request.",
     notFound: "This payment request does not exist.",
     retry: "Try again",
@@ -170,6 +167,8 @@ export default {
       submitting: "Preparing your payment…",
       failed: "Couldn't prepare the payment. Try again.",
       busy: "Someone is paying this request right now. Try again in a few minutes.",
+      noRails: "No merchant can take this payment right now. Try again in a few minutes.",
+      limited: "Too many attempts. Wait a minute and try again.",
     },
     transfer: {
       title: "Transfer exactly",
@@ -183,6 +182,8 @@ export default {
       done: "I transferred",
       sending: "Sending…",
       failed: "Couldn't tell the merchant. Try again.",
+      cancel: "Cancel this payment",
+      cancelFailed: "Couldn't cancel the payment. Try again.",
     },
     status: {
       preparing: "Preparing your payment…",

@@ -72,67 +72,82 @@ type Body = Record<string, unknown> | null;
 type Shaped = { ok: true; body: Record<string, unknown> } | { ok: false; message: string };
 
 const text = (v: unknown, max: number) => (typeof v === "string" && v.trim() && v.length <= max ? v.trim() : undefined);
-const amount = (v: unknown) => (typeof v === "string" && /^\d{1,18}(\.\d{1,18})?$/.test(v.trim()) && Number(v) > 0 ? v.trim() : undefined);
+/* The Payments API's shapes (its DTOs refuse anything else, unknown fields included): local money
+   with up to two decimals, a token amount in base units. */
+const FIAT = /^\d{1,15}(\.\d{1,2})?$/;
+const UNITS = /^[1-9]\d{0,37}$/;
+const DOCUMENT = /^[A-Za-z0-9./-]{4,20}$/;
 
-/** A quote's body: only the fields a quote takes, checked for shape (the API checks the rest). */
+/** A quote's body: only the fields a quote takes, checked for shape (the API checks the rest).
+    A purchase names the local money it pays, a sale the token amount it sells, in base units. */
 export function quoteBody(body: Body): Shaped {
   const side = body?.side;
   if (!SIDES.includes(side as never)) return { ok: false, message: "Choose to buy or to sell." };
   const network = text(body?.network, 40);
-  const token = text(body?.token, 20);
+  const token = text(body?.token, 64);
   const currency = text(body?.currency, 3);
   const rail = text(body?.rail, 40);
   if (!network || !token || !currency || !rail) return { ok: false, message: "A network, a token, a currency and a payment method are required." };
-  const fiatAmount = amount(body?.fiatAmount);
-  const tokenAmount = amount(body?.tokenAmount);
+  const fiatAmount = typeof body?.fiatAmount === "string" && FIAT.test(body.fiatAmount.trim()) && Number(body.fiatAmount) > 0 ? body.fiatAmount.trim() : undefined;
+  const tokenAmount = typeof body?.tokenAmount === "string" && UNITS.test(body.tokenAmount.trim()) ? body.tokenAmount.trim() : undefined;
   if (!!fiatAmount === !!tokenAmount) return { ok: false, message: "Enter one amount." };
   return { ok: true, body: { side, network, token, currency, rail, ...(fiatAmount ? { fiatAmount } : { tokenAmount }) } };
 }
 
 /** An order's body for the session's wallet: a purchase delivers to it, a sale is sent from it.
-    Whatever the browser said about either address is dropped. */
+    Whatever the browser said about either address is dropped. A purchase carries who pays (name
+    and document); a sale the account the merchant pays into (`beneficiary`). */
 export function orderBody(body: Body, address: string): Shaped {
   const quoteId = text(body?.quoteId, 80);
   if (!quoteId) return { ok: false, message: "A quote is required." };
   const side = body?.side;
   if (side === "BUY") {
     const payer = (body?.payer && typeof body.payer === "object" ? body.payer : {}) as Record<string, unknown>;
-    const name = text(payer.name, 80);
-    const document = text(payer.document, 30);
-    const email = payer.email === undefined || payer.email === "" ? undefined : text(payer.email, 254);
-    if (!name || !document) return { ok: false, message: "The payer's name and document are required." };
-    if (payer.email !== undefined && payer.email !== "" && !email) return { ok: false, message: "The payer's email is not valid." };
-    return { ok: true, body: { quoteId, kind: "BUY", recipient: address, payer: { name, document, ...(email ? { email } : {}) } } };
+    const name = text(payer.name, 100);
+    const document = text(payer.document, 20);
+    if (!name || name.length < 2 || !document || document.length < 4) return { ok: false, message: "The payer's name and document are required." };
+    return { ok: true, body: { quoteId, kind: "BUY", recipient: address, payer: { name, document } } };
   }
   if (side === "SELL") {
-    const payout = (body?.payout && typeof body.payout === "object" ? body.payout : {}) as Record<string, unknown>;
-    const holderName = text(payout.holderName, 80);
-    const document = typeof payout.document === "string" ? payout.document.trim().slice(0, 30) : "";
-    const raw = (payout.details && typeof payout.details === "object" ? payout.details : {}) as Record<string, unknown>;
+    const ben = (body?.beneficiary && typeof body.beneficiary === "object" ? body.beneficiary : {}) as Record<string, unknown>;
+    const holderName = text(ben.holderName, 100);
+    const document = typeof ben.document === "string" ? ben.document.trim() : "";
+    const raw = (ben.details && typeof ben.details === "object" ? ben.details : {}) as Record<string, unknown>;
     const details: Record<string, string> = {};
     for (const [k, v] of Object.entries(raw).slice(0, 12)) {
       if (/^[a-zA-Z]{1,24}$/.test(k) && typeof v === "string" && v.trim() && v.length <= 80) details[k] = v.trim();
     }
-    if (!holderName || !Object.keys(details).length) return { ok: false, message: "The account the money goes to is required." };
-    return { ok: true, body: { quoteId, kind: "SELL", seller: address, payout: { holderName, document, details } } };
+    if (!holderName || holderName.length < 2 || !Object.keys(details).length) return { ok: false, message: "The account the money goes to is required." };
+    if (!DOCUMENT.test(document)) return { ok: false, message: "The account holder's document is required." };
+    return { ok: true, body: { quoteId, kind: "SELL", seller: address, beneficiary: { holderName, document, details } } };
   }
   return { ok: false, message: "Choose to buy or to sell." };
 }
 
 const same = (a: string | null | undefined, b: string) => typeof a === "string" && a.toLowerCase() === b.toLowerCase();
 
+/* An order as the screens read it (`buyer`, `seller`) or as the Payments API answers it
+   (`buyerAddress`, `sellerAddress`): the check reads either. */
+type Parties = Pick<P2pOrder, "kind"> & { buyer?: string | null; seller?: string | null; buyerAddress?: string | null; sellerAddress?: string | null };
+
 /** Whether an order is the wallet's: a purchase it receives, or a sale it sends. */
-export function ownsOrder(order: Pick<P2pOrder, "kind" | "buyer" | "seller"> | null | undefined, address: string): boolean {
+export function ownsOrder(order: Parties | null | undefined, address: string): boolean {
   if (!order) return false;
-  if (order.kind === "BUY") return same(order.buyer, address);
-  if (order.kind === "SELL") return same(order.seller, address);
+  if (order.kind === "BUY") return same(order.buyer ?? order.buyerAddress, address);
+  if (order.kind === "SELL") return same(order.seller ?? order.sellerAddress, address);
   return false;
 }
 
-/** The wallet's own orders out of an upstream list (whatever filter the API applied). */
-export function ownOrders<T extends Pick<P2pOrder, "kind" | "buyer" | "seller">>(orders: T[], address: string): T[] {
+/** The wallet's own orders out of an upstream list. The API lists the integrator's orders (it
+    takes no address filter), so the history reads its newest pages and keeps the wallet's. */
+export function ownOrders<T extends Parties>(orders: T[], address: string): T[] {
   return orders.filter((o) => ownsOrder(o, address));
 }
+
+/** How the history reads the integrator's orders: pages of the API's largest size, newest first,
+    and how many at most per request. */
+export const HISTORY_TAKE = 100;
+export const HISTORY_PAGES = 5;
 
 /** The transaction builder's body for the wallet's own sale: release, cancel or dispute only, from
     the wallet's address, on the order's network. */
