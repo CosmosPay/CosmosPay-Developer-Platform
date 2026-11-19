@@ -61,8 +61,10 @@ Senden Sie sie aus Ihrer Wallet, warten Sie auf die Bestätigung und wiederholen
 Symbol oder eine Vertragsadresse, die dort aufgeführt ist. `withdraw` nimmt dieselben Argumente und
 bringt freie Token jederzeit in Ihre Wallet zurück.
 
-`GET /v1/p2p/accounts/{id}` liest den Vertrag live: pro Netzwerk die freien `balances` in
-Basiseinheiten, die festgelegten Matcher-Bedingungen und die autorisierten Bots.
+`GET /v1/p2p/accounts/{id}` liest den Vertrag live: pro Netzwerk und Token den freien `amount` und den in
+laufenden Aufträgen gesperrten Betrag `locked`, beide in Basiseinheiten, dann die festgelegten
+Matcher-Bedingungen und die autorisierten Bots. Der freie Betrag stammt aus dem Vertrag; `locked`
+wird aus den über diese API eröffneten Aufträgen berechnet.
 
 ## 4. Cosmos Pay mit einem Limit pro Auftrag autorisieren
 
@@ -150,7 +152,7 @@ Person, danach die Bilanz: Abschlussquote, Freigabezeit und verlorene Streitfäl
 ## 7. Aufträge bearbeiten
 
 `GET /v1/p2p/merchant/orders` listet die Aufträge, die Ihren Wallets zugeordnet wurden, filterbar nach
-`status` und `kind`. Jeder liefert `merchantSide`, Ihre Seite, und was Sie für diese Seite brauchen:
+`status`, `kind` und `address`. Jeder liefert `merchantSide`, Ihre Seite, und was Sie für diese Seite brauchen:
 Name und Dokument des `payer` bei einem Kauf, das Konto des `beneficiary` bei einem Verkauf oder einer
 Auszahlung.
 
@@ -166,8 +168,8 @@ curl -X POST $API/transactions -H "$AUTH" -H "Content-Type: application/json" \
   -d '{ "network": "base", "from": "ACCOUNT_ID", "action": "release", "args": { "orderId": "ORDER_ID" } }'
 ```
 
-`cancel` lehnt einen Verkauf oder eine Auszahlung ab, bevor Sie zahlen, und `dispute` bittet die
-Schiedsstelle, über einen bezahlten Auftrag zu entscheiden. Geben Sie einen Kauf nie frei, bevor das
+`cancel` lehnt einen Verkauf oder eine Auszahlung ab, bevor Sie zahlen, und `dispute` bittet die Schiedsstelle, über einen bezahlten Auftrag zu entscheiden: als Käufer eines
+Verkaufs oder einer Auszahlung jederzeit, als Verkäufer nur vor der `settleDeadline` des Auftrags. Geben Sie einen Kauf nie frei, bevor das
 Geld auf Ihrem Konto ist, und akzeptieren Sie nie eine Überweisung von jemand anderem als dem
 genannten Zahler.
 

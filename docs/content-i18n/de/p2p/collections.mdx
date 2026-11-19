@@ -23,16 +23,19 @@ curl -X POST https://api.cosmospay.lat/cosmos-api/v1/p2p/charges \
     "token": "USDC",
     "recipient": "ACCOUNT_ID",
     "description": "Order #1042",
+    "payeeName": "Tienda Salta",
     "expiresAt": "2026-12-01T00:00:00Z",
     "multiUse": false
   }'
-# → { "id": "…", "url": "https://payments.cosmospay.lat/p2p/…", "status": "open", "recipientAddress": "0x…", "paidCount": 0, … }
+# → { "id": "…", "url": "https://payments.cosmospay.lat/p2p/…", "qr": "data:image/png;base64,…", "status": "open", "recipientAddress": "0x…", "paidCount": 0, … }
 ```
 
-`recipient` ist eine Ihrer Konto-IDs. Eine Zahlungsanforderung läuft 24 Stunden nach ihrer
-Erstellung ab, sofern `expiresAt` nichts anderes sagt, höchstens 30 Tage im Voraus.
+`recipient` ist eine Ihrer Konto-IDs. `payeeName` ist Pflicht: der Name, den die Seite des Zahlers
+zeigt, 2 bis 60 Zeichen, meist Ihr Unternehmen. Eine Zahlungsanforderung läuft 24 Stunden nach
+ihrer Erstellung ab, sofern `expiresAt` nichts anderes sagt, höchstens 30 Tage im Voraus.
 
-Teilen Sie die `url` als Link; sie öffnet die Seite für den Zahler. Auf dieser Seite:
+Teilen Sie die `url` als Link oder als ihren `qr`, ein PNG desselben Links; das Dashboard zeigt beides.
+Auf dieser Seite:
 
 1. Sieht der Zahler den Betrag in Landeswährung.
 2. Gibt er Name, Ausweisdokument und E-Mail an. Der Händler prüft, dass die Überweisung von dieser Person kommt.
@@ -51,7 +54,9 @@ beginnen, und ein bereits laufender Auftrag zahlt den Empfänger trotzdem, wenn 
 Die gehostete Seite ruft die schlüssellosen Routen der [P2P-Checkout-API](/api/p2p-checkout/) auf:
 Sie liest die Zahlungsanforderung, beginnt die Zahlung mit `POST /v1/p2p-checkout/charges/{id}/orders`
 und dem Zahlungsweg, dem Namen, dem Dokument und der E-Mail des Zahlers, und verfolgt den Auftrag mit
-dem `payerToken` aus dieser Antwort, gesendet als `X-Payer-Token`.
+dem `payerToken` aus dieser Antwort, gesendet als `X-Payer-Token`. Solange der Auftrag auf Zahlung wartet, kann der Zahler ihn mit
+`POST /v1/p2p-checkout/orders/{id}/cancel` stornieren. Das Lesen der Zahlungsanforderung liefert Ihren
+`payeeName` als `merchantName`; der `merchantName` des Auftrags ist der Händler, an den der Zahler überweist.
 
 ## Eingebettete Rampe
 
@@ -88,7 +93,8 @@ curl -X POST $API/orders/ORDER_ID/paid -H "$AUTH" -H "Content-Type: application/
 
 Name und Dokument des Zahlers sind Pflicht: Der Händler gibt nur eine Überweisung dieser Person frei.
 `POST /v1/p2p/orders/{id}/cancel` storniert vor der Überweisung, und `/dispute` bittet die
-Schiedsstelle, über einen bezahlten Auftrag zu entscheiden, den der Händler nicht freigibt.
+Schiedsstelle, über einen bezahlten Auftrag zu entscheiden, den der Händler nicht freigibt. Diese
+drei Routen wirken nur auf Käufe und Zahlungsanforderungen, bei denen Cosmos Pay für den Käufer handelt.
 
 Für eine eigene Gebühr übergeben Sie `integratorFeeBps` und `integratorAccountId` im Angebot. Die
 Gebühr wird von dem abgezogen, was der Käufer erhält, und On-Chain an diese Wallet gezahlt.
@@ -113,10 +119,12 @@ Der Auftrag liefert `transactions`: ein `approve` und ein `openWithDeposit`, uns
 Ihres Nutzers sendet beide, in dieser Reihenfolge. Der Händler nimmt an, überweist das Geld auf das
 Konto des `beneficiary` und markiert den Auftrag als bezahlt. Danach gibt Ihr Nutzer mit einer
 `release`-Transaktion des Builders frei, mit seiner Adresse als `from`. Ficht niemand den Auftrag an,
-kann ihn nach Ablauf des Abwicklungsfensters jeder freigeben.
+kann ihn nach Ablauf des Abwicklungsfensters jeder freigeben. Seine `settleDeadline` nennt, wann
+dieses Fenster schließt: Ihr Nutzer kann nur davor anfechten, mit einer `dispute`-Transaktion desselben
+Builders. Jede Aktion auf einem Verkauf wird so signiert, nie über die Routen des Auftrags.
 
-`GET /v1/p2p/orders` listet die Aufträge, die Sie eröffnet haben, filterbar nach `status` und `kind`.
-Ihre Webhooks erreichen Ihre Endpunkte mit `role: "client"`.
+`GET /v1/p2p/orders` listet die Aufträge, die Sie eröffnet haben, filterbar nach `status`, `kind` und `address`, der Wallet auf
+Käufer- oder Verkäuferseite. Ihre Webhooks erreichen Ihre Endpunkte mit `role: "client"`.
 
 <Cards>
   <Card title="Webhooks" href="/p2p/webhooks/" description="Jede Zahlungsanforderung und jeden Auftrag auf Ihrem Server verfolgen." />

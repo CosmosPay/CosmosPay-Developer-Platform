@@ -28,7 +28,9 @@ lesquels elle opère, et chaque portefeuille signe ses propres transactions.
 Le marché fonctionne sur les réseaux EVM où son contrat est déployé. `GET /v1/p2p/market` les liste
 avec l'adresse du contrat, les jetons et les frais de protocole de chacun, les devises et les moyens
 de paiement avec leurs champs, la caution, les délais et l'adresse du matcher. Lisez-le au démarrage
-de votre intégration plutôt que de figer les réseaux dans le code. S'il répond `available: false`,
+de votre intégration plutôt que de figer les réseaux dans le code. Chaque
+réseau renvoie aussi `nativeSymbol`, `explorerUrl` et un `rpcUrl` public, ce dont un portefeuille a
+besoin pour l'ajouter. S'il répond `available: false`,
 le marché n'est pas encore proposé dans l'environnement de votre clé.
 
 ```bash
@@ -60,7 +62,7 @@ Une **vente** donne de la monnaie locale à votre utilisateur contre des jetons 
 2. Vous ouvrez l'ordre. La réponse contient deux transactions non signées pour le portefeuille de votre utilisateur, `approve` et `openWithDeposit`. L'utilisateur signe et envoie les deux, et ses jetons sont bloqués dans le contrat.
 3. Le marchand accepte avant l'échéance d'acceptation et bloque une caution de 10 % de l'ordre.
 4. Le marchand vire la monnaie locale sur le compte de votre utilisateur et marque l'ordre comme payé.
-5. Votre utilisateur libère les jetons. Si personne ne conteste l'ordre, n'importe qui peut le libérer une fois la fenêtre de règlement écoulée.
+5. Votre utilisateur libère les jetons. Si personne ne conteste l'ordre, n'importe qui peut le libérer une fois la fenêtre de règlement écoulée. Son `settleDeadline` indique quand ; le vendeur ne peut le contester qu'avant.
 
 Les encaissements et les versements sont ces deux mêmes parcours, ouverts par votre organisation
 pour quelqu'un d'autre. Voir [Encaissements](/p2p/collections/) et [Versements](/p2p/payouts/).

@@ -54,6 +54,11 @@ Un élément qu'aucun marchand ne peut prendre pour l'instant figure dans `faile
 `reason` ; vos jetons n'ont jamais bougé pour lui. Si un marchand n'accepte pas ou ne paie pas à
 temps, l'échéance vous rend vos jetons.
 
+Avant qu'un marchand n'accepte, `POST /v1/p2p/orders/{id}/cancel` retire un versement et ses jetons
+restent dans votre solde. Ensuite, vous agissez dessus depuis votre portefeuille via
+`POST /v1/p2p/transactions` : `release` une fois payé, ou `dispute` avant son `settleDeadline` quand il
+en a un.
+
 ## Statut du lot
 
 `GET /v1/p2p/payouts/{id}` renvoie le lot avec ses `orders`, ses `failedItems` et `itemCount`. La

@@ -54,6 +54,10 @@ Ein Eintrag, den gerade kein Händler übernehmen kann, landet mit seinem `reaso
 Ihre Token haben sich dafür nie bewegt. Nimmt ein Händler nicht rechtzeitig an oder zahlt nicht
 rechtzeitig, gibt die Frist Ihre Token zurück.
 
+Bevor ein Händler annimmt, zieht `POST /v1/p2p/orders/{id}/cancel` eine Auszahlung zurück, und ihre
+Token bleiben in Ihrem Guthaben. Danach handeln Sie über Ihre Wallet mit `POST /v1/p2p/transactions`:
+`release`, sobald sie bezahlt ist, oder `dispute` vor ihrer `settleDeadline`, wenn sie eine hat.
+
 ## Status des Stapels
 
 `GET /v1/p2p/payouts/{id}` liefert den Stapel mit seinen `orders`, seinen `failedItems` und

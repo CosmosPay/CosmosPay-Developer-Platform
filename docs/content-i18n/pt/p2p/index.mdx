@@ -28,7 +28,9 @@ que opera, e cada carteira assina as próprias transações.
 O mercado funciona nas redes EVM onde seu contrato está implantado. `GET /v1/p2p/market` lista essas
 redes com o endereço do contrato, os tokens e a tarifa do protocolo de cada uma, as moedas e os
 meios de pagamento com seus campos, a garantia, as janelas de tempo e o endereço do matcher. Leia
-esse recurso quando sua integração iniciar, em vez de fixar as redes no código. Se ele responder
+esse recurso quando sua integração iniciar, em vez de fixar as redes no código. Cada rede
+responde também `nativeSymbol`, `explorerUrl` e um `rpcUrl` público, o que uma carteira precisa para
+adicioná-la. Se ele responder
 `available: false`, o mercado ainda não é oferecido no ambiente da sua chave.
 
 ```bash
@@ -60,7 +62,7 @@ Uma **venda** dá moeda local ao seu usuário em troca de tokens:
 2. Você abre a ordem. A resposta traz duas transações não assinadas para a carteira do seu usuário, `approve` e `openWithDeposit`. O usuário assina e envia as duas, e os tokens dele ficam bloqueados no contrato.
 3. O comerciante aceita antes do prazo de aceitação e bloqueia uma garantia de 10% da ordem.
 4. O comerciante transfere a moeda local para a conta do seu usuário e marca a ordem como paga.
-5. Seu usuário libera os tokens. Se ninguém disputar a ordem, qualquer pessoa pode liberá-la depois que a janela de liquidação passar.
+5. Seu usuário libera os tokens. Se ninguém disputar a ordem, qualquer pessoa pode liberá-la depois que a janela de liquidação passar. O `settleDeadline` dela diz quando; o vendedor só pode disputá-la antes disso.
 
 Cobranças e pagamentos a terceiros são os mesmos dois fluxos, abertos pela sua organização para
 outra pessoa. Veja [Cobranças](/p2p/collections/) e [Pagamentos a terceiros](/p2p/payouts/).

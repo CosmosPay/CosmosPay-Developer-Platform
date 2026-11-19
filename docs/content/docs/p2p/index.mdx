@@ -27,7 +27,8 @@ and each wallet signs its own transactions.
 The market runs on the EVM networks where its contract is deployed. `GET /v1/p2p/market` lists
 them with each contract address, its tokens and its protocol fee, the currencies and the rails with
 their fields, the bond, the time windows and the matcher's address. Read it when your integration
-starts instead of hard-coding networks. When it answers `available: false`, the market is not
+starts instead of hard-coding networks. Each network also answers
+`nativeSymbol`, `explorerUrl` and a public `rpcUrl`, what a wallet needs to add it. When it answers `available: false`, the market is not
 offered on your key's tier yet.
 
 ```bash
@@ -59,7 +60,7 @@ A **sale** gives your user local money for tokens:
 2. You open the order. The response holds two unsigned transactions for your user's wallet, `approve` and `openWithDeposit`. The user signs and sends both, and their tokens are locked in the contract.
 3. The merchant accepts before the acceptance deadline and locks a bond of 10% of the order.
 4. The merchant transfers the local money to your user's account and marks the order paid.
-5. Your user releases the tokens. If nobody disputes the order, it can be released by anyone once the settle window has passed.
+5. Your user releases the tokens. If nobody disputes the order, it can be released by anyone once the settle window has passed. Its `settleDeadline` says when; the seller may dispute only before it.
 
 Charges and payouts are the same two flows, opened by your organization for someone else. See
 [Collections](/p2p/collections/) and [Payouts](/p2p/payouts/).

@@ -28,7 +28,8 @@ que opera, y cada billetera firma sus propias transacciones.
 El mercado funciona en las redes EVM donde su contrato está desplegado. `GET /v1/p2p/market` las
 lista con la dirección del contrato, los tokens y la comisión del protocolo de cada una, las monedas
 y los medios de pago con sus campos, la garantía, las ventanas de tiempo y la dirección del matcher.
-Léelo cuando tu integración arranca, en lugar de fijar las redes en el código. Si responde
+Léelo cuando tu integración arranca, en lugar de fijar las redes en el código. Cada red responde además
+`nativeSymbol`, `explorerUrl` y un `rpcUrl` público, lo que una billetera necesita para agregarla. Si responde
 `available: false`, el mercado todavía no se ofrece en el entorno de tu clave.
 
 ```bash
@@ -60,7 +61,7 @@ Una **venta** le da moneda local a tu usuario a cambio de tokens:
 2. Abres la orden. La respuesta trae dos transacciones sin firmar para la billetera de tu usuario, `approve` y `openWithDeposit`. El usuario firma y envía ambas, y sus tokens quedan bloqueados en el contrato.
 3. El comerciante acepta antes del plazo de aceptación y bloquea una garantía del 10% de la orden.
 4. El comerciante transfiere la moneda local a la cuenta de tu usuario y marca la orden como pagada.
-5. Tu usuario libera los tokens. Si nadie disputa la orden, cualquiera puede liberarla una vez pasada la ventana de liquidación.
+5. Tu usuario libera los tokens. Si nadie disputa la orden, cualquiera puede liberarla una vez pasada la ventana de liquidación. Su `settleDeadline` indica cuándo; el vendedor puede disputarla solo antes.
 
 Los cobros y los pagos a terceros son los mismos dos flujos, abiertos por tu organización para
 otra persona. Consulta [Cobros](/p2p/collections/) y [Pagos a terceros](/p2p/payouts/).

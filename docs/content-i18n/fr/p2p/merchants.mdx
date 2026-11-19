@@ -61,8 +61,10 @@ Envoyez-la depuis votre portefeuille, attendez sa confirmation, puis recommencez
 `token` un symbole ou une adresse de contrat qui y figure. `withdraw` prend les mêmes arguments et
 renvoie à tout moment des jetons libres vers votre portefeuille.
 
-`GET /v1/p2p/accounts/{id}` lit le contrat en direct : pour chaque réseau, les `balances` libres en
-unités de base, les conditions du matcher que vous avez fixées et les bots que vous avez autorisés.
+`GET /v1/p2p/accounts/{id}` lit le contrat en direct : pour chaque réseau et chaque jeton, l'`amount`
+libre et le montant `locked` dans les ordres en cours, tous deux en unités de base, puis les conditions
+du matcher que vous avez fixées et les bots que vous avez autorisés. Le montant libre est lu dans le
+contrat ; `locked` est compté à partir des ordres ouverts via cette API.
 
 ## 4. Autorisez Cosmos Pay avec un plafond par ordre
 
@@ -149,7 +151,7 @@ aboutis, délai de libération et litiges perdus.
 ## 7. Gérez les ordres
 
 `GET /v1/p2p/merchant/orders` liste les ordres appariés à vos portefeuilles, avec des filtres par
-`status` et `kind`. Chacun renvoie `merchantSide`, votre côté, et ce dont vous avez besoin pour ce
+`status`, `kind` et `address`. Chacun renvoie `merchantSide`, votre côté, et ce dont vous avez besoin pour ce
 côté : le nom et le document du `payer` pour un achat, le compte du `beneficiary` pour une vente ou
 un versement.
 
@@ -165,8 +167,8 @@ curl -X POST $API/transactions -H "$AUTH" -H "Content-Type: application/json" \
   -d '{ "network": "base", "from": "ACCOUNT_ID", "action": "release", "args": { "orderId": "ORDER_ID" } }'
 ```
 
-`cancel` refuse une vente ou un versement avant que vous ne payiez, et `dispute` demande à l'arbitre
-de trancher un ordre payé. Ne libérez jamais un achat avant que l'argent soit sur votre compte, et
+`cancel` refuse une vente ou un versement avant que vous ne payiez, et `dispute` demande à l'arbitre de trancher un ordre payé : en tant qu'acheteur d'une vente ou d'un
+versement, à tout moment ; en tant que vendeur, seulement avant le `settleDeadline` de l'ordre. Ne libérez jamais un achat avant que l'argent soit sur votre compte, et
 n'acceptez jamais un virement d'une autre personne que le payeur indiqué.
 
 <Cards>

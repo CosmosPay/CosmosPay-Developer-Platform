@@ -28,7 +28,9 @@ handelt, und jede Wallet signiert ihre eigenen Transaktionen.
 Der Markt läuft auf den EVM-Netzwerken, auf denen sein Vertrag bereitgestellt ist. `GET /v1/p2p/market`
 listet sie mit Vertragsadresse, Token und Protokollgebühr, die Währungen und Zahlungswege mit ihren
 Feldern, die Sicherheitsleistung, die Fristen und die Adresse des Matchers. Lesen Sie die Liste beim
-Start Ihrer Integration, statt Netzwerke fest im Code zu hinterlegen. Antwortet er mit
+Start Ihrer Integration, statt Netzwerke fest im Code zu hinterlegen. Jedes
+Netzwerk liefert außerdem `nativeSymbol`, `explorerUrl` und eine öffentliche `rpcUrl`, alles, was eine
+Wallet braucht, um es hinzuzufügen. Antwortet er mit
 `available: false`, wird der Markt in der Umgebung Ihres Schlüssels noch nicht angeboten.
 
 ```bash
@@ -60,7 +62,7 @@ Ein **Verkauf** gibt Ihrem Nutzer Landeswährung gegen Token:
 2. Sie eröffnen den Auftrag. Die Antwort enthält zwei unsignierte Transaktionen für die Wallet Ihres Nutzers, `approve` und `openWithDeposit`. Der Nutzer signiert und sendet beide, und seine Token sind im Vertrag gesperrt.
 3. Der Händler nimmt vor Ablauf der Annahmefrist an und sperrt eine Sicherheitsleistung von 10 % des Auftrags.
 4. Der Händler überweist die Landeswährung auf das Konto Ihres Nutzers und markiert den Auftrag als bezahlt.
-5. Ihr Nutzer gibt die Token frei. Ficht niemand den Auftrag an, kann ihn nach Ablauf des Abwicklungsfensters jeder freigeben.
+5. Ihr Nutzer gibt die Token frei. Ficht niemand den Auftrag an, kann ihn nach Ablauf des Abwicklungsfensters jeder freigeben. Seine `settleDeadline` nennt den Zeitpunkt; der Verkäufer kann nur davor anfechten.
 
 Zahlungsanforderungen und Auszahlungen sind dieselben zwei Abläufe, eröffnet von Ihrer Organisation
 für jemand anderen. Siehe [Zahlungsanforderungen](/p2p/collections/) und [Auszahlungen](/p2p/payouts/).

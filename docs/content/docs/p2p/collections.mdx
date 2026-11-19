@@ -21,16 +21,19 @@ curl -X POST https://api.cosmospay.lat/cosmos-api/v1/p2p/charges \
     "token": "USDC",
     "recipient": "ACCOUNT_ID",
     "description": "Order #1042",
+    "payeeName": "Tienda Salta",
     "expiresAt": "2026-12-01T00:00:00Z",
     "multiUse": false
   }'
-# → { "id": "…", "url": "https://payments.cosmospay.lat/p2p/…", "status": "open", "recipientAddress": "0x…", "paidCount": 0, … }
+# → { "id": "…", "url": "https://payments.cosmospay.lat/p2p/…", "qr": "data:image/png;base64,…", "status": "open", "recipientAddress": "0x…", "paidCount": 0, … }
 ```
 
-`recipient` is one of your account ids. A charge expires 24 hours after it is created unless
+`recipient` is one of your account ids. `payeeName` is required: the name the payer page shows,
+2 to 60 characters, usually your business. A charge expires 24 hours after it is created unless
 `expiresAt` says otherwise, at most 30 days ahead.
 
-Share the `url` as a link; it opens the payer page. On that page the payer:
+Share the `url` as a link or as its `qr`, a PNG of the same link; the dashboard shows both. On that
+page the payer:
 
 1. Sees the amount in local money.
 2. Enters their name, ID document and email. The merchant checks the transfer comes from that person.
@@ -48,7 +51,9 @@ order already under way still pays the recipient when it completes. Every charge
 The hosted page calls the keyless routes of the [P2P checkout API](/api/p2p-checkout/): it reads the
 charge, starts paying it with `POST /v1/p2p-checkout/charges/{id}/orders` and the payer's rail, name,
 document and email, and follows the order with the `payerToken` that answer carries, sent as
-`X-Payer-Token`.
+`X-Payer-Token`. While the order awaits payment, the payer can cancel it with
+`POST /v1/p2p-checkout/orders/{id}/cancel`. The charge read answers your `payeeName` as `merchantName`;
+the order's `merchantName` is the merchant the payer transfers to.
 
 ## Embedded ramp
 
@@ -85,7 +90,8 @@ curl -X POST $API/orders/ORDER_ID/paid -H "$AUTH" -H "Content-Type: application/
 
 The payer's name and document are required: the merchant releases only a transfer from that
 person. `POST /v1/p2p/orders/{id}/cancel` cancels before the transfer, and `/dispute` asks the
-arbiter to decide a paid order the merchant does not release.
+arbiter to decide a paid order the merchant does not release. These three routes act only on
+purchases and charges, where Cosmos Pay acts for the buyer.
 
 To charge your own fee, pass `integratorFeeBps` and `integratorAccountId` on the quote. The fee is
 taken from what the buyer receives and paid on-chain to that wallet.
@@ -110,9 +116,12 @@ The order answers `transactions`: an `approve` and an `openWithDeposit`, unsigne
 wallet sends both, in that order. The merchant accepts, transfers the money to the `beneficiary`
 account and marks the order paid. Your user then releases with a `release` transaction from the
 builder, with their address as `from`. If nobody disputes the order, it can be released by anyone
-once the settle window has passed.
+once the settle window has passed. Its `settleDeadline` says when that
+window closes: your user can dispute only before it, with a `dispute` transaction from the same builder.
+Every action on a sale is signed this way, never through the order routes.
 
-`GET /v1/p2p/orders` lists the orders you opened, filtered by `status` and `kind`. Their webhooks
+`GET /v1/p2p/orders` lists the orders you opened, filtered by `status`, `kind` and `address`, the wallet that is the buyer or the
+seller. Their webhooks
 reach your endpoints with `role: "client"`.
 
 <Cards>

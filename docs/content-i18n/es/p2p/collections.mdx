@@ -21,16 +21,19 @@ curl -X POST https://api.cosmospay.lat/cosmos-api/v1/p2p/charges \
     "token": "USDC",
     "recipient": "ACCOUNT_ID",
     "description": "Order #1042",
+    "payeeName": "Tienda Salta",
     "expiresAt": "2026-12-01T00:00:00Z",
     "multiUse": false
   }'
-# → { "id": "…", "url": "https://payments.cosmospay.lat/p2p/…", "status": "open", "recipientAddress": "0x…", "paidCount": 0, … }
+# → { "id": "…", "url": "https://payments.cosmospay.lat/p2p/…", "qr": "data:image/png;base64,…", "status": "open", "recipientAddress": "0x…", "paidCount": 0, … }
 ```
 
-`recipient` es uno de tus identificadores de cuenta. Un cobro vence 24 horas después de crearse,
-salvo que `expiresAt` diga otra cosa, con un máximo de 30 días.
+`recipient` es uno de tus identificadores de cuenta. `payeeName` es obligatorio: el nombre que muestra
+la página del pagador, de 2 a 60 caracteres, en general tu negocio. Un cobro vence 24 horas después
+de crearse, salvo que `expiresAt` diga otra cosa, con un máximo de 30 días.
 
-Comparte la `url` como enlace; abre la página del pagador. En esa página, el pagador:
+Comparte la `url` como enlace o como su `qr`, un PNG del mismo enlace; el panel muestra ambos. En esa
+página, el pagador:
 
 1. Ve el monto en moneda local.
 2. Ingresa su nombre, su documento de identidad y su email. El comerciante verifica que la transferencia venga de esa persona.
@@ -48,7 +51,9 @@ puede empezar, y una orden ya en curso igual le paga al receptor cuando se compl
 La página alojada llama a las rutas sin clave de la [API de checkout P2P](/api/p2p-checkout/): lee el
 cobro, empieza a pagarlo con `POST /v1/p2p-checkout/charges/{id}/orders` y el medio, el nombre, el
 documento y el email del pagador, y sigue la orden con el `payerToken` que trae esa respuesta,
-enviado como `X-Payer-Token`.
+enviado como `X-Payer-Token`. Mientras la orden espera el pago, el pagador puede cancelarla con
+`POST /v1/p2p-checkout/orders/{id}/cancel`. La lectura del cobro responde tu `payeeName` como
+`merchantName`; el `merchantName` de la orden es el comerciante al que el pagador transfiere.
 
 ## Rampa integrada
 
@@ -85,7 +90,8 @@ curl -X POST $API/orders/ORDER_ID/paid -H "$AUTH" -H "Content-Type: application/
 
 El nombre y el documento del pagador son obligatorios: el comerciante libera solo una
 transferencia de esa persona. `POST /v1/p2p/orders/{id}/cancel` cancela antes de la transferencia, y
-`/dispute` le pide al árbitro que decida sobre una orden pagada que el comerciante no libera.
+`/dispute` le pide al árbitro que decida sobre una orden pagada que el comerciante no libera. Estas tres rutas
+actúan solo sobre compras y cobros, donde Cosmos Pay actúa por el comprador.
 
 Para cobrar tu propia comisión, envía `integratorFeeBps` e `integratorAccountId` en la cotización. La
 comisión se descuenta de lo que recibe el comprador y se paga en cadena a esa billetera.
@@ -110,9 +116,12 @@ La orden responde `transactions`: un `approve` y un `openWithDeposit`, sin firma
 tu usuario envía ambas, en ese orden. El comerciante acepta, transfiere el dinero a la cuenta del
 `beneficiary` y marca la orden como pagada. Luego tu usuario libera con una transacción `release` del
 generador, con su dirección como `from`. Si nadie disputa la orden, cualquiera puede liberarla una
-vez pasada la ventana de liquidación.
+vez pasada la ventana de liquidación. Su `settleDeadline` indica cuándo
+cierra esa ventana: tu usuario puede disputarla solo antes, con una transacción `dispute` del mismo
+generador. Cada acción sobre una venta se firma así, nunca con las rutas de la orden.
 
-`GET /v1/p2p/orders` lista las órdenes que abriste, con filtros por `status` y `kind`. Sus webhooks
+`GET /v1/p2p/orders` lista las órdenes que abriste, con filtros por `status`, `kind` y `address`, la billetera compradora o
+vendedora. Sus webhooks
 llegan a tus endpoints con `role: "client"`.
 
 <Cards>

@@ -53,6 +53,10 @@ one. Each beneficiary has a name, an identity document of 4 to 20 characters and
 An item no merchant can take right now lands in `failedItems` with its `reason`; your tokens never
 moved for it. A merchant that does not accept or pay in time lets the deadline return your tokens.
 
+Before a merchant accepts, `POST /v1/p2p/orders/{id}/cancel` withdraws a payout and its tokens stay in
+your balance. After that, you act on it from your wallet through `POST /v1/p2p/transactions`:
+`release` once it is paid, or `dispute` before its `settleDeadline` when it has one.
+
 ## Batch status
 
 `GET /v1/p2p/payouts/{id}` answers the batch with its `orders`, its `failedItems` and `itemCount`.

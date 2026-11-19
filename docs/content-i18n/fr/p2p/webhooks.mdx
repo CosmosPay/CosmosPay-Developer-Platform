@@ -12,7 +12,7 @@ avec l'API, et choisissez les événements ci-dessous.
 | Événement | Envoyé quand |
 | --- | --- |
 | `P2P_ORDER_CREATED` | Un ordre s'est ouvert sur la chaîne. |
-| `P2P_ORDER_ACCEPTED` | Un ordre attend le paiement : un marchand a accepté une vente ou un versement, ou un achat s'est ouvert. |
+| `P2P_ORDER_ACCEPTED` | Un marchand a accepté une vente ou un versement et bloqué sa caution. Les achats et les encaissements sautent cette étape. |
 | `P2P_ORDER_PAID` | Le côté acheteur a marqué l'ordre comme payé. |
 | `P2P_ORDER_COMPLETED` | Le vendeur a libéré. L'acheteur a reçu les jetons. |
 | `P2P_ORDER_CANCELLED` | L'ordre a été annulé. Les jetons sont revenus au vendeur. |
@@ -64,6 +64,7 @@ client, `GET /v1/p2p/merchant/orders/{id}` en tant que marchand.
     "tokenAmount": "104712041",
     "netAmount": "104397905",
     "paymentDeadline": "2026-11-19T14:30:02.000Z",
+    "settleDeadline": null,
     "paidReference": "TRX-88421"
   }
 }

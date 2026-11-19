@@ -54,6 +54,10 @@ Un ítem que ningún comerciante puede tomar en este momento queda en `failedIte
 tus tokens nunca se movieron por él. Si un comerciante no acepta o no paga a tiempo, el plazo
 devuelve tus tokens.
 
+Antes de que un comerciante acepte, `POST /v1/p2p/orders/{id}/cancel` retira un pago a terceros y sus
+tokens quedan en tu saldo. Después, actúas sobre él desde tu billetera con `POST /v1/p2p/transactions`:
+`release` una vez pagado, o `dispute` antes de su `settleDeadline` cuando lo tiene.
+
 ## Estado del lote
 
 `GET /v1/p2p/payouts/{id}` responde el lote con sus `orders`, sus `failedItems` y `itemCount`. La

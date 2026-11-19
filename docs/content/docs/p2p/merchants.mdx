@@ -61,8 +61,10 @@ Send it from your wallet, wait until it is mined, then repeat with `"action": "d
 address it lists there. `withdraw` takes the same arguments and returns free tokens to your wallet
 at any time.
 
-`GET /v1/p2p/accounts/{id}` reads the contract live: for each network, the free `balances` in base
-units, the matcher terms you set and the bots you authorised.
+`GET /v1/p2p/accounts/{id}` reads the contract live: for each network and token, the free `amount` and
+the `locked` amount in live orders, both in base units, then the matcher terms you set and the bots
+you authorised. The free amount is read from the contract; `locked` is counted from the orders
+opened through this API.
 
 ## 4. Authorise Cosmos Pay with a per-order cap
 
@@ -146,8 +148,8 @@ best price for the person wins, then the record: completion rate, release time a
 
 ## 7. Handle orders
 
-`GET /v1/p2p/merchant/orders` lists the orders matched to your wallets, filtered by `status` and
-`kind`. Each answers `merchantSide`, your side of it, and what you need for that side: the
+`GET /v1/p2p/merchant/orders` lists the orders matched to your wallets, filtered by `status`,
+`kind` and `address`. Each answers `merchantSide`, your side of it, and what you need for that side: the
 `payer`'s name and document on a purchase, the `beneficiary`'s account on a sale or payout.
 
 | Order | Your role | What you do |
@@ -162,8 +164,8 @@ curl -X POST $API/transactions -H "$AUTH" -H "Content-Type: application/json" \
   -d '{ "network": "base", "from": "ACCOUNT_ID", "action": "release", "args": { "orderId": "ORDER_ID" } }'
 ```
 
-`cancel` declines a sale or payout before you pay, and `dispute` asks the arbiter to decide a paid
-order. Never release a purchase before the money is in your account, and never accept a transfer
+`cancel` declines a sale or payout before you pay, and `dispute` asks the arbiter to decide a paid order: as the buyer of a sale or payout at any time, as
+the seller only before the order's `settleDeadline`. Never release a purchase before the money is in your account, and never accept a transfer
 from someone other than the named payer.
 
 <Cards>

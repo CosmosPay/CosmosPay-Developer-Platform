@@ -22,16 +22,19 @@ curl -X POST https://api.cosmospay.lat/cosmos-api/v1/p2p/charges \
     "token": "USDC",
     "recipient": "ACCOUNT_ID",
     "description": "Order #1042",
+    "payeeName": "Tienda Salta",
     "expiresAt": "2026-12-01T00:00:00Z",
     "multiUse": false
   }'
-# → { "id": "…", "url": "https://payments.cosmospay.lat/p2p/…", "status": "open", "recipientAddress": "0x…", "paidCount": 0, … }
+# → { "id": "…", "url": "https://payments.cosmospay.lat/p2p/…", "qr": "data:image/png;base64,…", "status": "open", "recipientAddress": "0x…", "paidCount": 0, … }
 ```
 
-`recipient` est l'un de vos identifiants de compte. Un encaissement expire 24 heures après sa
-création, sauf si `expiresAt` en décide autrement, au plus tard 30 jours après.
+`recipient` est l'un de vos identifiants de compte. `payeeName` est obligatoire : le nom que montre la
+page du payeur, de 2 à 60 caractères, en général votre entreprise. Un encaissement expire 24 heures
+après sa création, sauf si `expiresAt` en décide autrement, au plus tard 30 jours après.
 
-Partagez l'`url` en lien ; elle ouvre la page du payeur. Sur cette page, le payeur :
+Partagez l'`url` en lien ou sous forme de son `qr`, un PNG du même lien ; le tableau de bord montre les
+deux. Sur cette page, le payeur :
 
 1. Voit le montant en monnaie locale.
 2. Saisit son nom, sa pièce d'identité et son email. Le marchand vérifie que le virement vient de cette personne.
@@ -50,7 +53,9 @@ même le destinataire quand il aboutit. Toutes les routes des encaissements figu
 La page hébergée appelle les routes sans clé de l'[API de checkout P2P](/api/p2p-checkout/) : elle lit
 l'encaissement, commence à le payer avec `POST /v1/p2p-checkout/charges/{id}/orders` et le moyen, le
 nom, le document et l'email du payeur, et suit l'ordre avec le `payerToken` que porte cette réponse,
-envoyé en `X-Payer-Token`.
+envoyé en `X-Payer-Token`. Tant que l'ordre attend le paiement, le payeur peut l'annuler avec
+`POST /v1/p2p-checkout/orders/{id}/cancel`. La lecture de l'encaissement renvoie votre `payeeName`
+dans `merchantName` ; le `merchantName` de l'ordre est le marchand vers qui le payeur vire.
 
 ## Rampe intégrée
 
@@ -87,7 +92,8 @@ curl -X POST $API/orders/ORDER_ID/paid -H "$AUTH" -H "Content-Type: application/
 
 Le nom et le document du payeur sont obligatoires : le marchand ne libère qu'un virement de cette
 personne. `POST /v1/p2p/orders/{id}/cancel` annule avant le virement, et `/dispute` demande à
-l'arbitre de trancher un ordre payé que le marchand ne libère pas.
+l'arbitre de trancher un ordre payé que le marchand ne libère pas. Ces trois routes
+n'agissent que sur les achats et les encaissements, où Cosmos Pay agit pour l'acheteur.
 
 Pour prélever vos propres frais, passez `integratorFeeBps` et `integratorAccountId` dans la
 cotation. Ils sont prélevés sur ce que reçoit l'acheteur et versés sur la chaîne à ce portefeuille.
@@ -112,10 +118,13 @@ L'ordre renvoie `transactions` : un `approve` et un `openWithDeposit`, non sign�
 votre utilisateur envoie les deux, dans cet ordre. Le marchand accepte, vire l'argent sur le compte
 du `beneficiary` et marque l'ordre comme payé. Votre utilisateur libère ensuite avec une transaction
 `release` du générateur, avec son adresse en `from`. Si personne ne conteste l'ordre, n'importe qui
-peut le libérer une fois la fenêtre de règlement écoulée.
+peut le libérer une fois la fenêtre de règlement écoulée. Son `settleDeadline`
+indique quand cette fenêtre se ferme : votre utilisateur ne peut le contester qu'avant, avec une
+transaction `dispute` du même générateur. Chaque action sur une vente se signe ainsi, jamais par les
+routes de l'ordre.
 
-`GET /v1/p2p/orders` liste les ordres que vous avez ouverts, avec des filtres par `status` et `kind`.
-Leurs webhooks atteignent vos endpoints avec `role: "client"`.
+`GET /v1/p2p/orders` liste les ordres que vous avez ouverts, avec des filtres par `status`, `kind` et `address`, le portefeuille
+acheteur ou vendeur. Leurs webhooks atteignent vos endpoints avec `role: "client"`.
 
 <Cards>
   <Card title="Webhooks" href="/p2p/webhooks/" description="Suivez chaque encaissement et chaque ordre depuis votre serveur." />

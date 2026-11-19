@@ -12,7 +12,7 @@ below.
 | Event | Sent when |
 | --- | --- |
 | `P2P_ORDER_CREATED` | An order opened on-chain. |
-| `P2P_ORDER_ACCEPTED` | An order is waiting for payment: a merchant accepted a sale or payout, or a purchase opened. |
+| `P2P_ORDER_ACCEPTED` | A merchant accepted a sale or a payout and locked its bond. Purchases and charges skip this step. |
 | `P2P_ORDER_PAID` | The buyer side marked the order paid. |
 | `P2P_ORDER_COMPLETED` | The seller released. The buyer received the tokens. |
 | `P2P_ORDER_CANCELLED` | The order was cancelled. The tokens went back to the seller. |
@@ -64,6 +64,7 @@ Read the order from the API for what a webhook leaves out: `GET /v1/p2p/orders/{
     "tokenAmount": "104712041",
     "netAmount": "104397905",
     "paymentDeadline": "2026-11-19T14:30:02.000Z",
+    "settleDeadline": null,
     "paidReference": "TRX-88421"
   }
 }

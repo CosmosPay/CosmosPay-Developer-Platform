@@ -12,7 +12,7 @@ und wählen Sie die Ereignisse unten aus.
 | Ereignis | Gesendet, wenn |
 | --- | --- |
 | `P2P_ORDER_CREATED` | Ein Auftrag wurde On-Chain eröffnet. |
-| `P2P_ORDER_ACCEPTED` | Ein Auftrag wartet auf Zahlung: Ein Händler hat einen Verkauf oder eine Auszahlung angenommen, oder ein Kauf wurde eröffnet. |
+| `P2P_ORDER_ACCEPTED` | Ein Händler hat einen Verkauf oder eine Auszahlung angenommen und seine Sicherheitsleistung gesperrt. Käufe und Zahlungsanforderungen überspringen diesen Schritt. |
 | `P2P_ORDER_PAID` | Die Käuferseite hat den Auftrag als bezahlt markiert. |
 | `P2P_ORDER_COMPLETED` | Der Verkäufer hat freigegeben. Der Käufer hat die Token erhalten. |
 | `P2P_ORDER_CANCELLED` | Der Auftrag wurde storniert. Die Token gingen an den Verkäufer zurück. |
@@ -64,6 +64,7 @@ Kunde, `GET /v1/p2p/merchant/orders/{id}` als Händler.
     "tokenAmount": "104712041",
     "netAmount": "104397905",
     "paymentDeadline": "2026-11-19T14:30:02.000Z",
+    "settleDeadline": null,
     "paidReference": "TRX-88421"
   }
 }

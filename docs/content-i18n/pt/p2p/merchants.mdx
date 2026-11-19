@@ -61,8 +61,10 @@ Envie a transação da sua carteira, espere a confirmação e repita com `"actio
 endereço de contrato que aparece ali. `withdraw` recebe os mesmos argumentos e devolve tokens livres
 para a sua carteira a qualquer momento.
 
-`GET /v1/p2p/accounts/{id}` lê o contrato ao vivo: para cada rede, os `balances` livres em unidades
-base, as condições do matcher que você definiu e os bots que você autorizou.
+`GET /v1/p2p/accounts/{id}` lê o contrato ao vivo: para cada rede e token, o `amount` livre e o valor
+`locked` em ordens em andamento, ambos em unidades base, e depois as condições do matcher que você
+definiu e os bots que você autorizou. O valor livre é lido do contrato; `locked` é contado a partir
+das ordens abertas por esta API.
 
 ## 4. Autorize a Cosmos Pay com um limite por ordem
 
@@ -148,7 +150,7 @@ ordens concluídas, tempo de liberação e disputas perdidas.
 ## 7. Gerencie ordens
 
 `GET /v1/p2p/merchant/orders` lista as ordens combinadas com as suas carteiras, com filtros por
-`status` e `kind`. Cada uma responde `merchantSide`, o seu lado nela, e o que você precisa para esse
+`status`, `kind` e `address`. Cada uma responde `merchantSide`, o seu lado nela, e o que você precisa para esse
 lado: o nome e o documento do `payer` em uma compra, a conta do `beneficiary` em uma venda ou um
 pagamento a terceiros.
 
@@ -164,8 +166,8 @@ curl -X POST $API/transactions -H "$AUTH" -H "Content-Type: application/json" \
   -d '{ "network": "base", "from": "ACCOUNT_ID", "action": "release", "args": { "orderId": "ORDER_ID" } }'
 ```
 
-`cancel` recusa uma venda ou um pagamento a terceiros antes de você pagar, e `dispute` pede ao
-árbitro que decida sobre uma ordem paga. Nunca libere uma compra antes de o dinheiro estar na sua
+`cancel` recusa uma venda ou um pagamento a terceiros antes de você pagar, e `dispute` pede ao árbitro que decida sobre uma ordem paga: como comprador de uma venda ou de um
+pagamento a terceiros, a qualquer momento; como vendedor, só antes do `settleDeadline` da ordem. Nunca libere uma compra antes de o dinheiro estar na sua
 conta, e nunca aceite uma transferência de alguém diferente do pagador indicado.
 
 <Cards>

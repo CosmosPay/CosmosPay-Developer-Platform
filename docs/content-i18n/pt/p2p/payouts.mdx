@@ -54,6 +54,11 @@ Um item que nenhum comerciante consegue assumir agora fica em `failedItems` com 
 tokens nunca se moveram por ele. Se um comerciante não aceitar ou não pagar a tempo, o prazo devolve
 seus tokens.
 
+Antes que um comerciante aceite, `POST /v1/p2p/orders/{id}/cancel` retira um pagamento a terceiros e os
+tokens dele ficam no seu saldo. Depois disso, você age sobre ele pela sua carteira com
+`POST /v1/p2p/transactions`: `release` quando estiver pago, ou `dispute` antes do `settleDeadline`
+dele, quando houver um.
+
 ## Status do lote
 
 `GET /v1/p2p/payouts/{id}` responde o lote com suas `orders`, seus `failedItems` e `itemCount`. A

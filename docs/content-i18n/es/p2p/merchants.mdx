@@ -61,8 +61,10 @@ Envíala desde tu billetera, espera a que se confirme y repite con `"action": "d
 una dirección de contrato que figura ahí. `withdraw` recibe los mismos argumentos y devuelve tokens
 libres a tu billetera en cualquier momento.
 
-`GET /v1/p2p/accounts/{id}` lee el contrato en vivo: para cada red, los `balances` libres en
-unidades base, las condiciones del matcher que fijaste y los bots que autorizaste.
+`GET /v1/p2p/accounts/{id}` lee el contrato en vivo: para cada red y token, el `amount` libre y el monto
+`locked` en órdenes en curso, ambos en unidades base, y luego las condiciones del matcher que fijaste
+y los bots que autorizaste. El monto libre se lee del contrato; `locked` se cuenta a partir de las
+órdenes abiertas con esta API.
 
 ## 4. Autoriza a Cosmos Pay con un tope por orden
 
@@ -148,7 +150,7 @@ comerciantes que califican gana el mejor precio para la persona, y luego el hist
 ## 7. Gestiona órdenes
 
 `GET /v1/p2p/merchant/orders` lista las órdenes emparejadas con tus billeteras, con filtros por
-`status` y `kind`. Cada una responde `merchantSide`, tu lado en ella, y lo que necesitas para ese
+`status`, `kind` y `address`. Cada una responde `merchantSide`, tu lado en ella, y lo que necesitas para ese
 lado: el nombre y el documento del `payer` en una compra, la cuenta del `beneficiary` en una venta o
 un pago a terceros.
 
@@ -164,8 +166,8 @@ curl -X POST $API/transactions -H "$AUTH" -H "Content-Type: application/json" \
   -d '{ "network": "base", "from": "ACCOUNT_ID", "action": "release", "args": { "orderId": "ORDER_ID" } }'
 ```
 
-`cancel` rechaza una venta o un pago a terceros antes de que pagues, y `dispute` le pide al árbitro
-que decida sobre una orden pagada. Nunca liberes una compra antes de tener el dinero en tu cuenta,
+`cancel` rechaza una venta o un pago a terceros antes de que pagues, y `dispute` le pide al árbitro que decida sobre una orden pagada: como comprador de una venta o de un pago
+a terceros, en cualquier momento; como vendedor, solo antes del `settleDeadline` de la orden. Nunca liberes una compra antes de tener el dinero en tu cuenta,
 y nunca aceptes una transferencia de alguien distinto del pagador indicado.
 
 <Cards>
