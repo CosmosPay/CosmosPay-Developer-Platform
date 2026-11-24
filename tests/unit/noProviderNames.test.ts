@@ -17,8 +17,10 @@ import { llmsFullDocs } from "@/lib/seo/llms-full";
    terms of service name them, where the law requires it (src/lib/site/terms.ts, not a catalog). */
 
 /* El Dorado is the P2P marketplace behind the ramps and the charges in local money: its window's
-   hostnames live in code (src/lib/payments/fiat-request.ts WIDGET_HOSTS), never in copy. */
-const PROVIDERS = /NEAR Intents|1Click|LayerZero|Jupiter|Kuru|OpenZeppelin|BlindPay|Trustless Work|El ?Dorado/i;
+   hostnames live in code (src/lib/payments/fiat-request.ts WIDGET_HOSTS), never in copy. Koywe is
+   the bank-transfer rail behind a charge paid by transfer: copy says a transfer to an alias and a
+   CVU in the organization's name, never who runs it. */
+const PROVIDERS = /NEAR Intents|1Click|LayerZero|Jupiter|Kuru|OpenZeppelin|BlindPay|Trustless Work|El ?Dorado|Koywe/i;
 
 type Leaf = string | number | boolean | null;
 function flatten(value: unknown, prefix = "", out: Record<string, Leaf> = {}): Record<string, Leaf> {

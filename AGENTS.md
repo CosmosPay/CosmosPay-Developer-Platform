@@ -157,7 +157,7 @@ These were said more than once; breaking one is a bug, whatever the task was.
 - **Never name a provider** (product owner, 2026-11-03: "no deben saber quiénes son nuestros
   proveedores"): no copy a customer reads names the services Cosmos Pay is built on: NEAR Intents
   (and 1Click), LayerZero (and LayerZero Scan), Jupiter, Kuru Flow, OpenZeppelin, BlindPay,
-  Trustless Work. The landing, the company site, the dashboard, the guides, llms.txt, the JSON-LD
+  Trustless Work, El Dorado (the P2P marketplace) and Koywe (the bank-transfer rail). The landing, the company site, the dashboard, the guides, llms.txt, the JSON-LD
   and the docs home say what happens instead: a cross-chain swap, the USDT0 bridge and its fee,
   Solana's or Monad's market (the dashboard's route labels: "Solana DEX", "Monad DEX",
   "Cross-chain", "USDT0 bridge"), a confidential token on Stellar, a deposit address made for the
