@@ -3,8 +3,7 @@ title: Getting started
 description: Everything you need before your first Cosmos Pay payment, including what it is, how a payment flows, and the two ways to integrate.
 ---
 
-**Cosmos Pay** lets you accept payments on [Stellar](https://stellar.org),
-[Solana](https://solana.com) and [Monad](https://monad.xyz) using **payment intents**: you
+**Cosmos Pay** lets you accept payments on every network we work with, using **payment intents**: you
 describe a payment, the payer completes it from their own wallet, and you confirm it on-chain.
 Around that core you also get **swaps** (on each chain and between them), **webhooks**,
 **products**, **customers** and **analytics**.
@@ -27,6 +26,12 @@ Every payment moves through the same three steps (shown here with the SDK, on St
 On Solana and Monad, pass `chain`, with the SDK (`createPay({ chain: 'solana', ... })`, from version 2.2) or the [REST API](/api/payment-intents):
 you get a Solana Pay or EIP-681 link instead of a SEP-7 one, the payer pays it from any wallet on
 that chain, and the Payments API detects the payment on-chain and fires the same webhooks.
+
+On every other network the Payments API lists (Ethereum, Base, Tron, Bitcoin, TON and the rest), pass its
+`chain` with a `prod_` key and an `amount`: the link's `uri` is the hosted checkout, where the payer picks
+the network and token they pay with and gets a deposit address made for that payment. You receive exactly
+the `amount` on the link's network, and the same webhooks fire. Any mainnet link with an amount and no
+merchant fee can be paid that way from another network too.
 
 <Callout title="Testnet vs mainnet">
 You never choose the network in code; it's decided by your **API key prefix**: `dv_` keys run

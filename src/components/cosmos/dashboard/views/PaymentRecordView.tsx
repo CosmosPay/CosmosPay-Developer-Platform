@@ -13,9 +13,13 @@
    the last half minute means someone is on it now), the payer's wallet (the checkout reports it
    opened, `checkoutWalletAt`, or back without paying, `checkoutWalletClosedAt`), the payment
    sent (the checkout saw the wallet send it, `checkoutSentAt`, or the chain has it), and paid or
-   how it ended. */
+   how it ended. A link that takes payments from other networks also shows, with an amount, the
+   main origins the cross-chain route cannot take that amount from (a warning, never a block), and
+   its limits on those payments, which the merchant may raise while it is open. The payer's email
+   (typed on the payment page, unverified) the receipt went to is among its fields, and every email
+   payers gave there is listed under the deposits. */
 import { useEffect, useState } from "react";
-import { showToast, checkoutUrl } from "@/components/cosmos/shared";
+import { Modal, showToast, checkoutUrl } from "@/components/cosmos/shared";
 import { fmt, useT } from "@/lib/i18n/index";
 import { paymentIntents as payApi } from "@/lib/api-client";
 import { DI } from "@/components/cosmos/dashboard/icons";
@@ -27,9 +31,14 @@ import { CopyBlock, CopyField, PaymentAmount, STATUS_PILL, assetLabel, amountLab
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { paymentTone } from "@/components/cosmos/dashboard/components/StatusIcon";
 import { NetworkMark } from "@/components/cosmos/dashboard/components/OrgWallets";
-import { AddressLink } from "@/components/cosmos/dashboard/components/AddressLink";
+import { AddressLink, TxLink } from "@/components/cosmos/dashboard/components/AddressLink";
 import { CopyRef } from "@/components/cosmos/dashboard/components/RecordLink";
 import { shortAddress } from "@/components/cosmos/dashboard/components/RecordPreview";
+import { Field } from "@/components/cosmos/dashboard/components/Field";
+import { isDepositNetwork, networkName, tierOf } from "@/lib/chains";
+import { DEPOSIT_LIMIT_PER_PAYER, DEPOSIT_LIMIT_PER_WINDOW, DEPOSIT_LIMIT_WINDOW_MINUTES, takesDeposits } from "@/lib/deposit-limits";
+import { parsePaymentDeposit, type PaymentDeposit } from "@/lib/payments/deposits";
+import type { PaymentIntent, PaymentPayerEmail, PaymentRouteCheck } from "@/lib/cosmos";
 
 const TERMINAL = ["SUCCEEDED", "FAILED", "CANCELLED", "EXPIRED"];
 /* How recent the checkout's last read must be to count as a payer on the page now: it polls every
@@ -166,6 +175,7 @@ function PaymentRecord({ data, setData, env, canManage, onDeleted }) {
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [savingTheme, setSavingTheme] = useState(false);
+  const [editingLimits, setEditingLimits] = useState(false);
   // A Stellar payment still open can be checked against a transaction the payer sent from a
   // wallet that never reported back: the Payments API verifies it and settles the link.
   const [txHash, setTxHash] = useState("");
@@ -216,13 +226,38 @@ function PaymentRecord({ data, setData, env, canManage, onDeleted }) {
     [F.kind, pl.kinds[data.kind] || data.kind],
     [F.amount, amountLabel(data, pl)],
     [F.asset, assetLabel(data.asset, chain)],
-    [chain === "stellar" ? pl.modal.assetIssuer : t.dash.tokens.address[chain], data.assetIssuer],
+    [chain === "stellar" ? pl.modal.assetIssuer : t.dash.tokens.address[chain] ?? t.dash.tokens.address.monad, data.assetIssuer],
     [F.memo, data.memo],
     [F.message, data.msg],
     // The organization's own fee, paid to its wallet in the same transaction.
     [F.merchantFee, data.merchantFee ? `${data.merchantFee.amount} ${assetLabel(data.merchantFee.asset, chain)} · ${shortAddress(data.merchantFee.wallet)}` : null],
+    // Where the payer paid from, when a payment from another network settled it.
+    [F.paidFrom, data.paidFrom ? `${data.paidFrom.amount} ${data.paidFrom.asset} · ${networkName(data.paidFrom.chain)}` : null],
     // The on-chain transaction id, only present once paid or submitted.
     [F.txHash, data.txHash],
+    // Where the receipt went: an email a payer typed on the payment page (unverified).
+    [F.payerEmail, data.receiptTo],
+  ].filter(([, v]) => v !== null && v !== undefined && v !== "");
+  // Read-only facts, not worth a copy button: the receipt and the limits.
+  const canDeposit = takesDeposits(chain, tierOf(data.network) === "public", !!data.merchantFee);
+  const limits = data.depositLimits;
+  const [payerEmails, setPayerEmails] = useState<PaymentPayerEmail[] | null>(null);
+  useEffect(() => {
+    let alive = true;
+    payApi.payerEmails(data.id, env)
+      .then((res) => { if (alive) setPayerEmails(Array.isArray(res) ? res : []); })
+      .catch(() => { if (alive) setPayerEmails(null); });
+    return () => { alive = false; };
+  }, [data.id, env, data.status]);
+  // Sent; or decided not to (no email given, or payers that cannot be told apart); or waiting.
+  const receipt = data.receiptSentAt
+    ? fmt(d.receipt.sent, { time: fmtDateTime(data.receiptSentAt) })
+    : data.receiptSkippedAt
+      ? (payerEmails && payerEmails.length > 0 ? d.receipt.skippedMany : d.receipt.skippedNone)
+      : paid && payerEmails && payerEmails.length > 0 ? d.receipt.pending : null;
+  const facts = [
+    [F.receipt, receipt],
+    [F.depositLimits, canDeposit && limits ? fmt(d.limitsValue, { perPayer: limits.perPayer, perWindow: limits.perWindow, minutes: Math.round((limits.windowSeconds || DEPOSIT_LIMIT_WINDOW_MINUTES * 60) / 60) }) : null],
   ].filter(([, v]) => v !== null && v !== undefined && v !== "");
 
   return (
@@ -262,8 +297,9 @@ function PaymentRecord({ data, setData, env, canManage, onDeleted }) {
       </section>
 
       <PaymentProgress data={data} />
+      <RouteCheckWarning data={data} env={env} />
 
-      {(payable || fields.length > 0 || canCheck) && <div className={payable ? "pay-record-grid" : "pay-record-grid history"}>
+      {(payable || fields.length > 0 || facts.length > 0 || canCheck || tierOf(data.network) === "public") && <div className={payable ? "pay-record-grid" : "pay-record-grid history"}>
         {payable && <section className="pay-record-qr" aria-label={d.scan}>
           {data.qr
             ? <img className="paylink-qr" src={data.qr} alt={d.scan} width={220} height={220} />
@@ -276,7 +312,9 @@ function PaymentRecord({ data, setData, env, canManage, onDeleted }) {
           {/* The hosted page on payments.cosmospay.lat: what to send a payer who has no wallet
               open on this screen. It reads the link itself and follows its status. */}
           {payable && <CopyBlock label={d.checkout} value={checkoutUrl(data.id)} />}
-          {payable && data.uri && (
+          {/* A link on a network paid through a deposit address has no wallet link: its uri is
+              the checkout above. */}
+          {payable && data.uri && !isDepositNetwork(chain) && (
             <CopyBlock label={d.uriLabels[chain]} value={data.uri}>
               <div className="paylink-actions">
                 <a className="btn btn-soft btn-sm" href={data.uri}>{DI.link} {d.openWallet}</a>
@@ -284,9 +322,15 @@ function PaymentRecord({ data, setData, env, canManage, onDeleted }) {
             </CopyBlock>
           )}
           {payable && data.xdr && <CopyBlock label={d.xdr} value={data.xdr} />}
-          {fields.length > 0 && (
+          {(fields.length > 0 || facts.length > 0) && (
             <div className="paylink-fields">
               {fields.map(([label, v]) => <CopyField key={label} label={label} value={v} />)}
+              {facts.map(([label, v]) => <div className="paylink-field" key={label}><span className="pf-k">{label}</span><span className="pf-v">{v}</span></div>)}
+            </div>
+          )}
+          {canManage && payable && canDeposit && (
+            <div className="paylink-actions">
+              <button type="button" className="btn btn-outline-w btn-sm" onClick={() => setEditingLimits(true)}>{DI.edit} {d.limitsEdit}</button>
             </div>
           )}
           {canCheck && (
@@ -298,6 +342,8 @@ function PaymentRecord({ data, setData, env, canManage, onDeleted }) {
               </div>
             </div>
           )}
+          <PaymentDeposits data={data} env={env} />
+          <PayerEmails rows={payerEmails} id={data.id} />
           {/* The checkout's look last: it takes room, and the essentials come first. */}
           {canManage && payable && (
             <div className="paylink-block">
@@ -307,6 +353,184 @@ function PaymentRecord({ data, setData, env, canManage, onDeleted }) {
           )}
         </section>
       </div>}
+      {editingLimits && (
+        <DepositLimitsModal
+          data={data} env={env}
+          onClose={() => setEditingLimits(false)}
+          onSaved={(updated) => { setData((x: PaymentIntent) => ({ ...x, ...updated })); setEditingLimits(false); }}
+        />
+      )}
+    </div>
+  );
+}
+
+/* The main origins the cross-chain route cannot take this link's amount from, and why (its own
+   minimums, which change over time): a warning panel, never a block, asked once per amount while
+   the link is open. Not drawn when every origin can pay, when the check could not be made, or for a
+   link without an amount or one that takes no payments from other networks. */
+function RouteCheckWarning({ data, env }: { data: PaymentIntent; env: string }) {
+  const t = useT();
+  const r = t.dash.paylinks.detail.routes;
+  const chain = chainOf(data);
+  const check = data.status === "PENDING" && !!data.amount && takesDeposits(chain, tierOf(data.network) === "public", !!data.merchantFee);
+  const [routes, setRoutes] = useState<PaymentRouteCheck[] | null>(null);
+  useEffect(() => {
+    setRoutes(null);
+    if (!check) return;
+    let alive = true;
+    payApi.routeCheck(data.id, env)
+      .then((res) => { if (alive) setRoutes(Array.isArray(res) ? res : []); })
+      .catch(() => { if (alive) setRoutes(null); });
+    return () => { alive = false; };
+  }, [data.id, env, check, data.amount]);
+  const blocked = (routes || []).filter((x) => x && x.available === false);
+  if (!blocked.length) return null;
+  const titleId = `pay-routes-${data.id}`;
+  return (
+    <div className="zka-exists pay-routes" role="note" aria-labelledby={titleId}>
+      <div className="zka-exists-head">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5" /><path d="M12 7.5v5.5M12 16.4v.1" /></svg>
+        <b id={titleId}>{r.title}</b>
+      </div>
+      <ul className="pay-routes-list">
+        {blocked.map((x) => (
+          <li key={`${x.chain}:${x.asset}`}>
+            <span className="cell-mark"><NetworkMark chain={x.chain} size={18} /><b>{fmt(r.item, { asset: x.asset, network: networkName(x.chain) })}</b></span>
+            {x.reason && <span className="pay-routes-why">{x.reason}</span>}
+          </li>
+        ))}
+      </ul>
+      <p className="zka-exists-meta">{r.hint}</p>
+    </div>
+  );
+}
+
+/* The link's limits on payments from other networks, raised from the defaults up to the ceilings
+   (src/lib/deposit-limits.ts), while it is open. The Payments API has the last word. */
+function DepositLimitsModal({ data, env, onClose, onSaved }: { data: PaymentIntent; env: string; onClose: () => void; onSaved: (updated: PaymentIntent) => void }) {
+  const t = useT();
+  const m = t.dash.paylinks.modal;
+  const d = t.dash.paylinks.detail;
+  const cur = data.depositLimits;
+  const [perPayer, setPerPayer] = useState(String(cur?.perPayer ?? DEPOSIT_LIMIT_PER_PAYER.min));
+  const [perWindow, setPerWindow] = useState(String(cur?.perWindow ?? DEPOSIT_LIMIT_PER_WINDOW.min));
+  const [busy, setBusy] = useState(false);
+  const within = (v: string, b: { min: number; max: number }) => /^\d+$/.test(v.trim()) && Number(v) >= b.min && Number(v) <= b.max;
+  const payerOk = within(perPayer, DEPOSIT_LIMIT_PER_PAYER);
+  const windowOk = within(perWindow, DEPOSIT_LIMIT_PER_WINDOW);
+  const changed = Number(perPayer) !== cur?.perPayer || Number(perWindow) !== cur?.perWindow;
+  const save = () => {
+    if (!payerOk || !windowOk || busy) return;
+    setBusy(true);
+    payApi.update(data.id, env, { depositLimits: { perPayer: Number(perPayer), perWindow: Number(perWindow) } })
+      .then((updated) => { if (updated) onSaved(updated); showToast(d.limitsSaved); })
+      .catch((err) => showToast((err && err.message) || d.limitsError, "error"))
+      .finally(() => setBusy(false));
+  };
+  return (
+    <Modal onClose={onClose}>
+      <div className="modal-body">
+        <div className="modal-eyebrow">{d.eyebrow}</div>
+        <h3>{m.limits.title}</h3>
+        <p className="field-help">{m.limits.hint}</p>
+        <Field
+          label={m.limits.perPayer}
+          hint={fmt(payerOk ? m.limits.range : m.limits.invalid, { min: DEPOSIT_LIMIT_PER_PAYER.min, max: DEPOSIT_LIMIT_PER_PAYER.max })}
+          value={perPayer} onChange={(e: { target: { value: string } }) => setPerPayer(e.target.value.trim())} inputMode="numeric" autoComplete="off" autoFocus
+          aria-invalid={payerOk ? undefined : true}
+        />
+        <Field
+          label={fmt(m.limits.perWindow, { minutes: DEPOSIT_LIMIT_WINDOW_MINUTES })}
+          hint={fmt(windowOk ? m.limits.range : m.limits.invalid, { min: DEPOSIT_LIMIT_PER_WINDOW.min, max: DEPOSIT_LIMIT_PER_WINDOW.max })}
+          value={perWindow} onChange={(e: { target: { value: string } }) => setPerWindow(e.target.value.trim())} inputMode="numeric" autoComplete="off"
+          aria-invalid={windowOk ? undefined : true}
+        />
+        <div className="modal-actions">
+          <button type="button" className="btn btn-dark" disabled={!payerOk || !windowOk || !changed || busy} onClick={save}>{d.limitsSave}</button>
+          <button type="button" className="btn btn-soft" onClick={onClose}>{t.dash.common.cancel}</button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+/* The deposit addresses made for paying this link from another network (mainnet only): what each
+   payer chose to send, and how it went. Not drawn while there are none; a failed read says so. It
+   follows them while the link is open. */
+/* The emails payers gave in this link's hosted checkout, one per checkout session, newest first:
+   unverified, so the merchant can reach a payer when no receipt could be sent. Drawn only when
+   there is one: no empty-state text. */
+function PayerEmails({ rows, id }: { rows: PaymentPayerEmail[] | null; id: string }) {
+  const t = useT();
+  const e = t.dash.paylinks.detail.payerEmails;
+  if (!rows || rows.length === 0) return null;
+  const titleId = `pe-${id}`;
+  return (
+    <div className="paylink-block">
+      <div className="paylink-block-head"><span className="field-l" id={titleId}>{e.title}</span></div>
+      <p className="field-h">{e.hint}</p>
+      <ul className="pay-emails" aria-labelledby={titleId}>
+        {rows.map((row) => (
+          <li key={`${row.email}-${row.recordedAt}`}>
+            <span className="pay-emails-addr">{row.email}</span>
+            <CopyRef value={row.email} />
+            <span className="pay-emails-meta">
+              {fmtDateTime(row.recordedAt)}
+              {row.sentAt && <> · {e.sent}</>}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function PaymentDeposits({ data, env }: { data: PaymentIntent; env: string }) {
+  const t = useT();
+  const d = t.dash.paylinks.detail;
+  const x = d.deposits;
+  // undefined while loading, null when they could not be read.
+  const [rows, setRows] = useState<PaymentDeposit[] | null | undefined>(undefined);
+  const mainnet = tierOf(data.network) === "public";
+  useEffect(() => {
+    if (!mainnet) return;
+    let current = true;
+    const load = () =>
+      payApi.deposits(data.id, env)
+        .then((res) => { if (current) setRows((Array.isArray(res) ? res : []).map(parsePaymentDeposit).filter((r): r is PaymentDeposit => r !== null)); })
+        .catch(() => { if (current) setRows(null); });
+    load();
+    const open = data.status === "PENDING" || data.status === "SUBMITTED";
+    const timer = open ? window.setInterval(load, 15_000) : undefined;
+    return () => { current = false; window.clearInterval(timer); };
+  }, [data.id, data.status, env, mainnet]);
+  if (!mainnet || rows === undefined || (Array.isArray(rows) && rows.length === 0)) return null;
+  return (
+    <div className="paylink-block">
+      <div className="paylink-block-head"><span className="field-l" id={`pd-${data.id}`}>{x.title}</span></div>
+      {rows === null ? <p className="field-err" role="alert">{x.loadError}</p> : (
+        <div className="t-scroll" tabIndex={0}>
+          <table className="tx" aria-labelledby={`pd-${data.id}`}>
+            <thead><tr><th>{x.sent}</th><th>{x.from}</th><th>{x.status}</th><th>{x.created}</th></tr></thead>
+            <tbody>
+              {rows.map((r) => {
+                const payout = r.destinationTxHashes[0]?.hash ?? null;
+                return (
+                  <tr key={r.id}>
+                    <td className="cust">{`${r.amountIn} ${r.originAsset} · ${networkName(r.originChain)}`}</td>
+                    <td className="cust"><AddressLink chain={r.originChain} network="public" address={r.refundTo} label={x.refundTo} /></td>
+                    <td className="cust">
+                      {x.statuses[r.status as keyof typeof x.statuses] || r.status}
+                      {payout && <> · <TxLink chain={data.chain} network="public" hash={payout} label={x.payout} /></>}
+                    </td>
+                    <td className="cust">{fmtDateTime(r.createdAt)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

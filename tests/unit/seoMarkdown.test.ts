@@ -104,8 +104,9 @@ test('every page in every language it is written in is a document: its title, it
     assert.doesNotMatch(text, /\{\w+\}/, `${area} ${path} ${lang}: no placeholder left`);
     assert.doesNotMatch(text, /undefined|\[object Object\]/, `${area} ${path} ${lang}`);
   }
-  // 4 company pages (/tos in two languages) and every gateway page in seven.
-  assert.equal(ALL.length, 3 * 7 + 2 + (1 + PAYMENTS_PAGE_PATHS.length) * 7);
+  // 5 company pages (the home, /pricing, /about and /brand in seven languages, /tos in two) and
+  // every gateway page in seven.
+  assert.equal(ALL.length, 4 * 7 + 2 + (1 + PAYMENTS_PAGE_PATHS.length) * 7);
   // A language a page is not written in has no document of its own.
   assert.equal(pageDoc('site', '/tos', 'fr', INPUT), null);
   assert.equal(pageDoc('site', '/swaps', 'en', INPUT), null);
@@ -247,6 +248,40 @@ test('each page carries what its page shows: every question, fact and guide, in 
   assert.ok(terms.includes('## Términos y Condiciones de Uso') && terms.includes('Última actualización: 2026-11-03'));
   const about = md('site', '/about');
   assert.ok(about.includes('[X](https://x.com/CosmosPay)') && about.includes('Cosmos Network (ATOM)'));
+});
+
+test("/brand's Markdown says what the page shows: the name, every file, the colours, the typeface and its licence", () => {
+  const brand = md('site', '/brand');
+  for (const part of [
+    '## Cosmos Pay brand assets',
+    '(https://cosmospay.lat/brand/kit/cosmos-pay-brand-kit.zip)',
+    '**Cosmos Pay Wallet**',
+    '#000000', '#FFFFFF', '#05064F', '#000877', 'RGB 0, 8, 119',
+    '[SIL Open Font License 1.1](https://github.com/marcologous/Open-Sauce-Fonts/blob/master/Open%20Sauce%20One%20OFL.txt)',
+    '(https://cosmospay.lat/brand/kit/cosmos-pay-logo-black.svg)',
+    '[Cosmos Pay logo, Cosmic Blue (SVG)](https://cosmospay.lat/brand/kit/cosmos-pay-logo-blue.svg)',
+    '[Cosmos Pay logo, Cosmic Blue (PNG)](https://cosmospay.lat/brand/lockup-cosmos-pay.png)',
+    '(https://cosmospay.lat/brand/kit/cosmos-pay-app-icon-one-colour-white.svg)',
+    '[Open Sauce One SemiBold (TTF)](https://cosmospay.lat/brand/fonts/OpenSauceOne-SemiBold.ttf)',
+    '[Download the licence (TXT)](https://cosmospay.lat/brand/fonts/OFL.txt)',
+    '(https://cosmospay.lat/brand/personaje/celular-sticker.png)',
+    '[With a phone, Cosmic Blue sticker (SVG)](https://cosmospay.lat/brand/personaje/celular-2.svg)',
+    'organization@cosmospay.lat',
+  ]) {
+    assert.ok(brand.includes(part), part);
+  }
+  // Every language reads its own words.
+  const es = md('site', '/brand', 'es');
+  assert.ok(es.includes(`## ${messages.es.brand.title}`));
+  assert.ok(es.includes('(https://payments.cosmospay.lat/?lang=es)'), 'the gateway in the page language');
+  assert.ok(!/aeronaut|lazos/i.test(brand), 'the trial display face is never offered');
+  // Press and directories copy from this page: it never carries the About page's line on the
+  // Cosmos Network, in any language.
+  for (const lang of Object.keys(messages) as (keyof typeof messages)[]) {
+    const page = md('site', '/brand', lang);
+    assert.ok(!page.includes(messages[lang].about.disambiguation), `${lang}: no disambiguation`);
+    assert.ok(!/Cosmos Network|\bATOM\b/.test(page), `${lang}: no Cosmos Network`);
+  }
 });
 
 test('a Markdown address answers its version, or a 301 to its one address', () => {

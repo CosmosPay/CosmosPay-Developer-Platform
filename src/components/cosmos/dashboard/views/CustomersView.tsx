@@ -160,7 +160,7 @@ export function CustomersView({ canManage = true, orgId, env = "dev", onGo = (v)
                     </div>
                   </td>
                   <td className="cust"><WalletStack wallets={wallets} count={cv.walletsCount} /></td>
-                  <td className="cust">{c.email || "-"}</td>
+                  <td className="cust">{c.email ? <CustomerEmail c={c} /> : "-"}</td>
                   <td className="amt">{c.total || "0"}</td>
                   <td className="cust">{c.payments ? <button type="button" className="link-btn" onClick={(e) => { e.stopPropagation(); paymentsOf(c); }}>{c.succeeded ?? 0}/{c.payments}</button> : `${c.succeeded ?? 0}/${c.payments ?? 0}`}</td>
                   <td className="cust">{fmtDate(c.createdAt)}</td>
@@ -338,7 +338,7 @@ function CustomerDetailModal({ cv, cx, customer, startEditing = false, env, orgI
             <div className="paylink-fields" style={{ marginBottom: 18 }}>
               {[[m.name, customer.name], [cd.alias, customer.alias], [m.email, customer.email], [cd.note, customer.note], [cv.tableHead.spend, customer.total], [cv.tableHead.payments, `${customer.succeeded ?? 0}/${customer.payments ?? 0}`]]
                 .filter(([, v]) => v !== null && v !== undefined && v !== "")
-                .map(([k, v]) => (<div className="paylink-field" key={k}><span className="pf-k">{k}</span><span className="pf-v">{String(v)}</span></div>))}
+                .map(([k, v]) => (<div className="paylink-field" key={k}><span className="pf-k">{k}</span><span className="pf-v">{k === m.email ? <CustomerEmail c={customer} /> : String(v)}</span></div>))}
             </div>
             <div className="paylink-actions" style={{ marginBottom: 18 }}>
               {canManage && <button className="btn btn-dark btn-sm" onClick={() => setEdit(true)}>{DI.edit} {cd.edit}</button>}
@@ -439,5 +439,19 @@ function CustomerWallets({ customer, wallets, env, orgId, canManage, onChange })
       )}
       {toRemove && <ConfirmModal title={cv.removeWalletTitle} body={fmt(cv.removeWalletBody, { account: shortAcct(toRemove.address), name: customer.alias || customer.name })} confirmLabel={cd.removeWallet} cancelLabel={t.dash.common.cancel} onConfirm={confirmRemove} onClose={() => { if (!busy) setToRemove(null); }} />}
     </section>
+  );
+}
+
+/* A customer's email, and, when a payer typed it on the payment page rather than the merchant
+   setting it, a line of coloured text that says so (unverified; the hint says it in full). */
+function CustomerEmail({ c }: { c: { email: string | null; emailProvidedByPayer?: boolean } }) {
+  const t = useT();
+  const cv = t.dash.customers;
+  if (!c.emailProvidedByPayer) return <>{c.email}</>;
+  return (
+    <span className="cust-email">
+      <span>{c.email}</span>
+      <span className="cust-email-payer" title={cv.payerEmailHint}>{cv.payerEmail}<span className="sr-only">. {cv.payerEmailHint}</span></span>
+    </span>
   );
 }

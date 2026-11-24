@@ -203,7 +203,7 @@ export const fr: LearnMessages = {
       title: "Stellar vs Solana vs Monad pour accepter des paiements",
       meta: "Stellar vs Solana vs Monad pour les paiements | Cosmos Pay",
       description: "Stellar, Solana et Monad comparés pour accepter des paiements en stablecoins avec Cosmos Pay : standard de lien, actifs, réseaux de test, frais et tarifs.",
-      summary: "Les trois réseaux où se règlent les paiements, côte à côte : format de lien, actifs, réseaux de test et frais.",
+      summary: "Les trois réseaux dotés de leur propre standard de lien de paiement, côte à côte : format de lien, actifs, réseaux de test et frais.",
       lede: "Avec Cosmos Pay, un paiement sur Stellar, Solana ou Monad arrive à votre adresse et paie le même tarif, celui de votre offre. Ce qui change : le lien que lit le wallet (SEP-7 sur Stellar, Solana Pay sur Solana, EIP-681 vers une adresse de dépôt sur Monad), la façon dont un paiement est rattaché à son lien et les actifs préconfigurés. Le tableau les compare tels que Cosmos Pay les prend en charge ; les swaps relient les trois au reste des {n} réseaux avec lesquels Cosmos Pay fonctionne.",
       table: {
         title: "Les trois réseaux de règlement côte à côte",

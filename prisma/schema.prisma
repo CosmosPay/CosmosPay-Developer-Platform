@@ -209,6 +209,7 @@ model Organization {
   members     OrganizationMember[]
   invitations OrganizationInvitation[]
   wallets     OrganizationWallet[]
+  walletProofChallenges WalletProofChallenge[]
 
   @@index([ownerId])
   @@map("organization")
@@ -255,17 +256,17 @@ model OrganizationMember {
 }
 
 // The wallets an organization receives payments in. Members allowed to (`wallets:create`)
-// connect one from Settings, and the wallet signs a message naming the organization to prove it
+// connect one from Settings, and the wallet signs a challenge naming the organization to prove it
 // is theirs (src/lib/org-wallets.ts); renaming and removing need `wallets:edit` / `wallets:delete`.
 // Payment forms offer only these, and the API refuses any other receiving address.
 // `address` is as the chain writes it (EVM lower-cased), one row per chain and address.
 model OrganizationWallet {
   id        String   @id @default(cuid())
   orgId     String
-  chain     String // stellar | solana | monad
+  chain     String // any network of NETWORK_IDS (src/lib/chains.ts)
   address   String
   label     String?
-  provider  String? // the wallet that proved it: freighter | phantom | solflare | evm
+  provider  String? // what proved it (WalletProvider, src/lib/org-wallets.ts); null: a signed Stellar XDR
   addedById String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -275,6 +276,28 @@ model OrganizationWallet {
   @@unique([orgId, chain, address])
   @@index([orgId])
   @@map("organization_wallet")
+}
+
+// A challenge a wallet signs to be connected (src/lib/org-wallet-challenges.ts): issued to one
+// member for one organization, network and address (none on TON, whose wallet names it while
+// signing), valid until `expiresAt` and used once (`usedAt`). Expired rows are cleared as new
+// ones are issued.
+model WalletProofChallenge {
+  id        String    @id @default(cuid())
+  nonce     String    @unique
+  orgId     String
+  userId    String
+  chain     String
+  address   String?
+  issuedAt  DateTime  @default(now())
+  expiresAt DateTime
+  usedAt    DateTime?
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, userId])
+  @@index([expiresAt])
+  @@map("wallet_proof_challenge")
 }
 
 // ---------------- Wallet account provisioning (RETIRED) ----------------

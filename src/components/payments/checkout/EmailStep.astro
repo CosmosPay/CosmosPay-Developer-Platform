@@ -1,0 +1,37 @@
+---
+// The payer's email, asked before any way to pay is shown: the receipt goes there once the
+// payment is confirmed, and the merchant receives it with the payment. The script records it
+// (`recordPayer`) and sends it with every deposit, then shows the payment methods; the line
+// under it names where the receipt goes, with a button to change it. Shown only on an open link.
+import { MESSAGES } from "@/lib/payments/i18n";
+
+const t = MESSAGES[Astro.locals.lang ?? "en"].checkout;
+const e = t.email;
+---
+
+<form class="ck-payer ck-email" data-email-step hidden novalidate>
+  <label class="ck-field-label" for="ck-email">{e.title}</label>
+  <p class="ck-field-hint" id="ck-email-hint">{e.hint}</p>
+  <div class="ck-payer-row">
+    <input
+      id="ck-email"
+      class="ck-payer-input"
+      name="email"
+      type="email"
+      inputmode="email"
+      autocomplete="email"
+      autocapitalize="off"
+      spellcheck="false"
+      maxlength="254"
+      required
+      placeholder={e.placeholder}
+      aria-describedby="ck-email-hint ck-email-status"
+    />
+    <button class="btn btn-dark btn-sm" type="submit" data-email-submit>{e.submit}</button>
+  </div>
+  <p class="pp-hint" id="ck-email-status" data-slot="email-status" role="status" aria-live="polite"></p>
+</form>
+<p class="pp-hint ck-email-given" data-email-given hidden>
+  <span data-slot="email-given"></span>
+  <button class="ck-email-change" type="button" data-action="email-change">{e.change}</button>
+</p>
