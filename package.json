@@ -75,6 +75,7 @@
     "mysql2": "^3.24.4",
     "deepmerge-ts": "^8.0.2",
     "toml": "5.0.1",
-    "effect": "^3.22.5"
+    "effect": "^3.22.5",
+    "@astrojs/compiler-rs": "0.5.2"
   }
 }
