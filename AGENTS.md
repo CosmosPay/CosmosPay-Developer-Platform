@@ -157,7 +157,7 @@ These were said more than once; breaking one is a bug, whatever the task was.
 - **Never name a provider** (product owner, 2026-11-03: "no deben saber quiénes son nuestros
   proveedores"): no copy a customer reads names the services Cosmos Pay is built on: NEAR Intents
   (and 1Click), LayerZero (and LayerZero Scan), Jupiter, Kuru Flow, OpenZeppelin, BlindPay,
-  Trustless Work. The landing, the company site, the dashboard, the guides, llms.txt, the JSON-LD
+  Trustless Work, El Dorado (the P2P marketplace) and Koywe (the bank-transfer rail). The landing, the company site, the dashboard, the guides, llms.txt, the JSON-LD
   and the docs home say what happens instead: a cross-chain swap, the USDT0 bridge and its fee,
   Solana's or Monad's market (the dashboard's route labels: "Solana DEX", "Monad DEX",
   "Cross-chain", "USDT0 bridge"), a confidential token on Stellar, a deposit address made for the
@@ -183,7 +183,7 @@ These were said more than once; breaking one is a bug, whatever the task was.
 | :--- | :--- | :--- |
 | `cosmospay.lat` | `site` | `src/pages/site/`: landing, `/pricing`, `/swaps`, `/tos`, `/about` |
 | `dev.cosmospay.lat` | `dev` | everything else in `src/pages/`: `/login`, dashboard, onboarding, invite, kyc, `/docs`, `/swagger`, `/api/*` |
-| `payments.cosmospay.lat` | `payments` | `src/pages/payments/`: `/` home, the content pages `/integrations`, `/use-cases`, `/security`, `/fees`, `/compare`, `/faq`, the network pages `/stellar`, `/solana`, `/monad`, the guides `/learn` and `/learn/{slug}`, `/{id}` hosted checkout, `/pay` SEP-7 handler, `/contact` (the contact form's POST), `/preview/{design}` |
+| `payments.cosmospay.lat` | `payments` | `src/pages/payments/`: `/` home, the content pages `/integrations`, `/use-cases`, `/security`, `/fees`, `/compare`, `/faq`, the network pages `/stellar`, `/solana`, `/monad`, the guides `/learn` and `/learn/{slug}`, `/{id}` hosted checkout, `/fiat/{id}` a charge in local money, `/pay` SEP-7 handler, `/contact` (the contact form's POST), `/preview/{design}` |
 
 One build, one process, one Better Auth. `src/middleware.ts` applies `routeRequest` from
 `src/lib/hosts.ts` (fully covered by `tests/unit/hosts.test.ts`) before any database work:

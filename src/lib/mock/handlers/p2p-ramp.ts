@@ -5,11 +5,18 @@
    network, a firm quote and the sessions it opened. The market is the marketplace's public one
    recorded in p2p-ramp-market.ts; a session is stored per environment and side with the widget URL
    the real API builds, so opening one in mock mode opens the real hosted window (the sandbox's in
-   dev). The checks and messages are the Payments API's. */
-import { badRequest, created, intParam, notFound, ok, route, str, type MockEnv, type MockRoute } from "@/lib/mock/http";
+   dev). The checks and messages are the Payments API's.
+
+   The on-ramp side also answers the seller's charges in local money shown as a QR (Fiat > QR
+   charges: /api/onramp/p2p/payment-requests, the Payments API's /v1/onramp/p2p/payment-requests),
+   kept in src/lib/mock/fiat-requests.ts with the payer page's, so a charge created in the
+   dashboard opens on the local payer page and turns paid there. */
+import { badRequest, conflict, created, intParam, notFound, ok, route, str, type MockEnv, type MockRoute } from "@/lib/mock/http";
 import { mockEnvStore } from "@/lib/mock/store";
 import { nowIso } from "@/lib/mock/fixtures";
 import { RECORDED_MARKET } from "@/lib/mock/handlers/p2p-ramp-market";
+import { cancelFiatRequest, createFiatRequest, getFiatRequest, listFiatRequests } from "@/lib/mock/fiat-requests";
+import { DEFAULT_EXPIRY, chargeAmountProblem, descriptionProblem, evmAddressProblem, expiryOk, toChecksumAddress } from "@/lib/qr-charges";
 
 type Side = "buy" | "sell";
 interface P2pToken { chainId: number; address: string; symbol: string; decimals: number; priceUsd: string | null; logoUrl: string | null; main: boolean }
@@ -176,4 +183,82 @@ function sideRoutes(side: Side): MockRoute[] {
   ];
 }
 
-export const routes: MockRoute[] = [...sideRoutes("buy"), ...sideRoutes("sell")];
+/* ---- charges in local money shown as a QR (the on-ramp's payment requests) ---- */
+
+/** The create body checked as the Payments API checks it: the terms of a purchase against the live
+    market (currency, amount in local money with two decimals at most and at least the currency's
+    minimum, network, token), the seller's EVM address, an optional one-line description and the
+    minutes it can be paid (5 to 43200, a day by default). */
+function readCharge(env: MockEnv, body: Record<string, unknown> | null) {
+  const terms = {
+    currency: str(body, "currency") ?? "",
+    amount: typeof body?.amount === "string" ? body.amount : "",
+    chainId: Number(body?.chainId),
+    token: str(body, "token") ?? "",
+    address: str(body, "address") ?? "",
+  };
+  if (evmAddressProblem(terms.address) !== null) return { error: "address must be an EVM address (0x and 40 hex digits, EIP-55 when mixed case)" };
+  if (!ADDRESS.test(terms.token)) return { error: "token must be a token contract address (0x and 40 hex digits)" };
+  const m = market(env, "buy");
+  const currency = m.currencies.find((c) => c.id === terms.currency);
+  if (!currency) return { error: `currency ${terms.currency} cannot be bought (offered: ${m.currencies.map((c) => c.id).join(", ")})` };
+  const amountProblem = chargeAmountProblem(terms.amount, currency.minAmount);
+  if (amountProblem === "empty" || amountProblem === "shape") return { error: "amount must be a positive decimal string with at most two decimals (local money)" };
+  if (amountProblem === "min") return { error: `amount is below the minimum of ${currency.minAmount} ${currency.id}` };
+  if (!m.networks.some((n) => n.chainId === terms.chainId)) return { error: `chainId ${terms.chainId} is not offered (offered: ${m.networks.map((n) => n.chainId).join(", ")})` };
+  const token = tokensOf(env, terms.chainId).find((t) => t.address.toLowerCase() === terms.token.toLowerCase());
+  if (!token) return { error: `token ${terms.token} is not offered on chain ${terms.chainId}; list them with GET /v1/onramp/p2p/tokens?chainId=${terms.chainId}` };
+  let description: string | null = null;
+  if (body?.description !== undefined && body.description !== null) {
+    if (typeof body.description !== "string" || !body.description.trim() || descriptionProblem(body.description) !== null) {
+      return { error: "description must be one line of 1 to 140 characters, without control or bidirectional characters" };
+    }
+    description = body.description.trim();
+  }
+  const expires = body?.expiresInMinutes === undefined ? DEFAULT_EXPIRY : body.expiresInMinutes;
+  if (!expiryOk(expires)) return { error: "expiresInMinutes must be an integer from 5 to 43200" };
+  return { terms, currency, token, description, expiresInMinutes: expires as number };
+}
+
+const CHARGES = "/api/onramp/p2p/payment-requests";
+
+const chargeRoutes: MockRoute[] = [
+  route("GET", CHARGES, (req) => {
+    const list = listFiatRequests(req.env);
+    const take = intParam(req.url, "take", 100, 100);
+    const skip = Math.max(0, Math.trunc(Number(req.url.searchParams.get("skip"))) || 0);
+    return ok({ data: list.slice(skip, skip + take), total: list.length, take, skip }, "OK");
+  }),
+
+  route("POST", CHARGES, (req) => {
+    const read = readCharge(req.env, req.body);
+    if ("error" in read) return badRequest(read.error);
+    const { terms, currency, token, description, expiresInMinutes } = read;
+    return created(createFiatRequest(req.env, {
+      currency: currency.id,
+      amount: terms.amount,
+      chainId: terms.chainId,
+      token: token.symbol,
+      tokenAddress: token.address,
+      tokenDecimals: token.decimals,
+      address: toChecksumAddress(terms.address),
+      description,
+      estimatedAmountOut: estimate("buy", terms.amount, currency.price, usdOf(token)),
+      paymentMethods: currency.paymentMethods,
+      expiresInMinutes,
+    }), "Created");
+  }),
+
+  route("GET", `${CHARGES}/:id`, (req) => {
+    const charge = getFiatRequest(req.env, req.params.id);
+    return charge ? ok(charge, "OK") : notFound("Payment request not found");
+  }),
+
+  route("POST", `${CHARGES}/:id/cancel`, (req) => {
+    const done = cancelFiatRequest(req.env, req.params.id);
+    if ("charge" in done) return ok(done.charge, "OK");
+    return done.error === "not_found" ? notFound("Payment request not found") : conflict("The payment request is closed");
+  }),
+];
+
+export const routes: MockRoute[] = [...sideRoutes("buy"), ...sideRoutes("sell"), ...chargeRoutes];

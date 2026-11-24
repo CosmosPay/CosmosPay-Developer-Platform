@@ -28,6 +28,7 @@ import { Select } from "@/components/cosmos/dashboard/components/Select";
 import { Sk } from "@/components/cosmos/dashboard/components/Skeleton";
 import { TokenMark } from "@/components/cosmos/dashboard/components/TokenMark";
 import { NetworkMark } from "@/components/cosmos/dashboard/components/OrgWallets";
+import { currencyName, methodName, rampChainMark, rampChainName, rampExplorer, rampTxExplorer } from "@/lib/ramp-format";
 
 export type RampSide = "buy" | "sell";
 export interface RampToken { chainId: number; address: string; symbol: string; decimals: number; priceUsd?: string | null; logoUrl?: string | null; main?: boolean }
@@ -39,36 +40,14 @@ export interface RampMarket { currencies: RampCurrency[]; networks: RampNetwork[
 /** The proxy each side calls. */
 export const rampApi = (side: RampSide) => (side === "buy" ? onramp : offramp);
 
+/* The ramps' names for networks, currencies and payment methods live in src/lib/ramp-format.ts,
+   shared with the payments domain's payer page (vanilla TS); re-exported for the views. */
+export { currencyName, methodName, rampChainMark, rampChainName, rampExplorer, rampTxExplorer };
+
 const EVM_ADDRESS = /^0x[a-fA-F0-9]{40}$/;
 const FIAT_AMOUNT = /^(0|[1-9]\d{0,14})(\.\d{1,2})?$/;
 const TOKEN_AMOUNT = /^(0|[1-9]\d{0,17})(\.\d{1,18})?$/;
 const NATIVE = "0x0000000000000000000000000000000000000000";
-
-/* The marketplace's networks by EIP-155 id: their name, the dashboard's network id for the logo
-   (`NetworkMark`, `TokenMark`'s badge; a network without artwork keeps its initial) and the
-   explorer an account opens on. */
-const CHAINS: Record<number, { name: string; mark: string; explorer: string }> = {
-  1: { name: "Ethereum", mark: "eth", explorer: "https://etherscan.io" },
-  10: { name: "Optimism", mark: "op", explorer: "https://optimistic.etherscan.io" },
-  56: { name: "BNB Chain", mark: "bsc", explorer: "https://bscscan.com" },
-  130: { name: "Unichain", mark: "unichain", explorer: "https://uniscan.xyz" },
-  137: { name: "Polygon", mark: "pol", explorer: "https://polygonscan.com" },
-  480: { name: "World Chain", mark: "world", explorer: "https://worldscan.org" },
-  8453: { name: "Base", mark: "base", explorer: "https://basescan.org" },
-  42161: { name: "Arbitrum", mark: "arb", explorer: "https://arbiscan.io" },
-  42220: { name: "Celo", mark: "celo", explorer: "https://celoscan.io" },
-  43114: { name: "Avalanche", mark: "avax", explorer: "https://snowtrace.io" },
-  81457: { name: "Blast", mark: "blast", explorer: "https://blastscan.io" },
-  421614: { name: "Arbitrum Sepolia", mark: "arb", explorer: "https://sepolia.arbiscan.io" },
-};
-export const rampChainName = (chainId: number | null | undefined, networks?: RampNetwork[]) =>
-  networks?.find((n) => n.chainId === chainId)?.name ?? CHAINS[Number(chainId)]?.name ?? `Chain ${chainId ?? ""}`;
-export const rampChainMark = (chainId: number | null | undefined) => CHAINS[Number(chainId)]?.mark ?? `chain-${chainId}`;
-/** An account's page on its network's explorer, or null for a network without one here. */
-export const rampExplorer = (chainId: number, address: string) => {
-  const base = CHAINS[chainId]?.explorer;
-  return base ? `${base}/address/${address}` : null;
-};
 
 /** USD stablecoins: worth a dollar when the marketplace lists no price (the sandbox's test USDT). */
 const USD_STABLE = new Set(["USDT", "USDT0", "USDC", "USDC.e", "DAI", "USDS"]);
@@ -78,18 +57,6 @@ export const tokenUsd = (t: RampToken | null) => {
   const n = Number(t.priceUsd);
   return t.priceUsd != null && Number.isFinite(n) && n > 0 ? n : USD_STABLE.has(t.symbol) ? 1 : null;
 };
-
-/** A currency's name in the reader's language (the market's English one when the browser has none). */
-export function currencyName(id: string, lang: string, fallback?: string) {
-  try {
-    const name = new Intl.DisplayNames([lang], { type: "currency" }).of(id);
-    if (name && name !== id) return name.charAt(0).toLocaleUpperCase(lang) + name.slice(1);
-  } catch (e) {}
-  return fallback || id;
-}
-
-/** A payment method's name without the currency the market appends ("Nequi (COP)"). */
-export const methodName = (name: string, currency: string) => name.replace(new RegExp(`\\s*\\(${currency}\\)$`), "");
 
 /* A local currency's mark: the flag of the country its ISO code starts with, round. Only the flag
    shows (product owner: "the flag is more than enough"); the two letters stand in only when the
@@ -421,8 +388,9 @@ export function RampWidget({ side, market, env, orgId, onCreated }: {
 
 /* The token sheet: every network the marketplace offers (a filter with their marks and how many
    tokens each lists) and each network's tokens, searched on the Payments API by symbol or by a
-   pasted address. The swap's token picker's look (`.tpick`), arrow keys between the rows. */
-function RampTokenSheet({ side, env, orgId, networks, selected, onPick, onClose }: {
+   pasted address. The swap's token picker's look (`.tpick`), arrow keys between the rows. Also the
+   QR charge dialog's token picker (views/QrChargesView.tsx). */
+export function RampTokenSheet({ side, env, orgId, networks, selected, onPick, onClose }: {
   side: RampSide; env: string; orgId: string; networks: RampNetwork[]; selected: RampToken;
   onPick: (token: RampToken) => void; onClose: () => void;
 }) {
@@ -494,8 +462,8 @@ function RampTokenSheet({ side, env, orgId, networks, selected, onPick, onClose 
 }
 
 /* The currency sheet: the swap's token picker's look (`.tpick`), a search when the list is long,
-   arrow keys between the rows. */
-function RampPicker({ title, items, selected, onPick, onClose, searchable = false }: {
+   arrow keys between the rows. Also the QR charge dialog's currency picker. */
+export function RampPicker({ title, items, selected, onPick, onClose, searchable = false }: {
   title: string;
   items: { key: string; mark: ReactNode; title: string; sub: string; aside?: string; search: string }[];
   selected: string;

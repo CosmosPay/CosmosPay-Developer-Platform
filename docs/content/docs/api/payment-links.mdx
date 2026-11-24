@@ -4,7 +4,8 @@ metaDescription: "Read one payment link as the payer sees it, without an API key
 description: 'The payer’s view of one payment link, served without a key to the
   hosted checkout on payments.cosmospay.lat. The link id is the capability:
   anyone holding it can read the amount, the address to pay and the live status,
-  and nothing about the merchant.'
+  and nothing about the merchant. A charge in local money shown as a QR is read
+  and paid the same way, under `/fiat/{id}`.'
 full: true
 _openapi:
   preload:

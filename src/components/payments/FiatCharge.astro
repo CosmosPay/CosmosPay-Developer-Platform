@@ -1,0 +1,126 @@
+---
+/* FiatCharge.astro: the shell of /fiat/{id}, a charge in local money.
+ *
+ * Every string is rendered here from the payments catalog; the script
+ * (src/scripts/payments/fiat-request.ts) reads the charge, fills the data-slot elements with
+ * textContent and switches the views: open (pick a method, pay), opening (the button busy),
+ * waiting (the secure window is open), paid, expired, cancelled. The loading, not-found and error
+ * states are cards of their own, as on the checkout. Mobile first: a buyer scans the seller's QR
+ * with a phone.
+ */
+import "@/styles/checkout.css";
+import "@/styles/fiat.css";
+import { MESSAGES } from "@/lib/payments/i18n";
+import { API_BASE } from "@/lib/payments/urls";
+
+interface Props {
+  /** The charge to read. */
+  id: string;
+}
+
+const { id } = Astro.props;
+const lang = Astro.locals.lang ?? "en";
+const m = MESSAGES[lang];
+const t = m.fiat;
+// Only the strings the script swaps in at runtime; the rest is rendered here.
+const runtime = {
+  phase: t.phase,
+  body: t.body,
+  receives: t.receives,
+  networkFallback: t.networkFallback,
+  methodRequired: t.methodRequired,
+  noMethods: t.noMethods,
+  pay: t.pay,
+  opening: t.opening,
+  methodUnavailable: t.methodUnavailable,
+  openFailed: t.openFailed,
+  closed: t.closed,
+  errorBody: t.errorBody,
+  rateLimited: t.rateLimited,
+};
+// `<` escaped so no string can close the JSON <script> block early.
+const runtimeJson = JSON.stringify(runtime).replace(/</g, "\\u003c");
+---
+
+<main id="main" class="ck-page">
+  <section class="ck fq" id="fiat" data-id={id} data-api={API_BASE} data-lang={lang} aria-label={t.eyebrow}>
+    <div class="ck-card ck-solo" data-state="loading" role="status">
+      <div class="pp-loading"><span class="pp-spinner" aria-hidden="true"></span>{t.loading}</div>
+    </div>
+
+    <div class="ck-card ck-solo" data-state="not-found" hidden>
+      <h1 class="pp-title">{t.notFoundTitle}</h1>
+      <p class="pp-body">{t.notFoundBody}</p>
+    </div>
+
+    <div class="ck-card ck-solo" data-state="error" hidden>
+      <h1 class="pp-title">{t.errorTitle}</h1>
+      <p class="pp-body" data-slot="error-body" role="status" aria-live="polite">{t.errorBody}</p>
+      <button class="btn btn-dark btn-sm" type="button" data-action="retry">{t.retry}</button>
+    </div>
+
+    <div class="ck-card fq-card" data-state="request" hidden>
+      <div class="ck-brand">
+        <span class="cosmos-mark ck-mark" aria-hidden="true"></span>
+        <span class="ck-eyebrow">{t.eyebrow}</span>
+        <span class="pp-testnet" data-slot="testnet" hidden>{m.checkout.testnetTier}</span>
+      </div>
+
+      <div class="fq-head">
+        <h1 class="fq-amount" data-slot="amount"></h1>
+        <p class="fq-currency" data-slot="currency"></p>
+        <p class="fq-desc" data-slot="description" hidden></p>
+      </div>
+
+      <div class="pp-status fq-status" role="status" aria-live="polite">
+        <span class="pp-pill" data-slot="phase"></span>
+        <p class="pp-body" data-slot="phase-body"></p>
+      </div>
+
+      <p class="fq-receives" data-slot="receives" hidden></p>
+
+      <form class="fq-pay" data-when="open opening" novalidate>
+        <fieldset class="fq-methods" aria-describedby="fq-method-error">
+          <legend class="fq-legend">{t.methodLabel}</legend>
+          <div class="fq-method-list" data-slot="methods"></div>
+        </fieldset>
+        <p class="fq-error" id="fq-method-error" data-slot="pay-error" role="alert" hidden></p>
+        <button class="btn btn-dark fq-cta" type="submit" data-slot="pay-button">
+          <span class="pp-spinner fq-busy" aria-hidden="true" hidden></span>
+          <span data-slot="pay-label"></span>
+        </button>
+      </form>
+
+      <div class="fq-waiting" data-when="waiting" hidden>
+        <p class="fq-blocked" data-slot="blocked" hidden>{t.blocked}</p>
+        <a class="btn btn-dark fq-cta" data-slot="widget-open" target="_blank" rel="noopener noreferrer" hidden>{t.openWindow}</a>
+        <div class="fq-waiting-actions">
+          <a class="fq-link" data-slot="widget-reopen" target="_blank" rel="noopener noreferrer">{t.reopen}</a>
+          <button class="fq-link" type="button" data-action="change">{t.changeMethod}</button>
+        </div>
+      </div>
+
+      {/* How paying goes, in order and by who does it: before the click and while the window is open
+          (the identity check happens there, the first time). */}
+      <ol class="fq-steps" data-when="open opening waiting" aria-label={t.stepsLabel}>
+        <li>{t.step1}</li>
+        <li>{t.step2}</li>
+        <li>{t.step3}</li>
+      </ol>
+
+      <dl class="pp-details ck-facts fq-facts">
+        <div class="pp-row" data-row="method" hidden><dt>{t.methodLabel}</dt><dd data-slot="method-name"></dd></div>
+        <div class="pp-row" data-row="expires" hidden><dt>{t.expires}</dt><dd><time data-slot="expires"></time></dd></div>
+        <div class="pp-row" data-row="paid" hidden><dt>{t.paidAt}</dt><dd><time data-slot="paid-at"></time></dd></div>
+      </dl>
+    </div>
+  </section>
+</main>
+
+<script type="application/json" id="fiat-i18n" set:html={runtimeJson} />
+
+<script>
+  import { startFiatRequest } from "@/scripts/payments/fiat-request";
+
+  startFiatRequest();
+</script>
