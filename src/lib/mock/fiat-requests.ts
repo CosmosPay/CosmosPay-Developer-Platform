@@ -348,6 +348,7 @@ export function sellerView(r: MockFiatRequest) {
     description: r.description,
     estimatedAmountOut: r.estimatedAmountOut,
     methods: r.methods,
+    p2pDirect: r.p2pDirect,
     url: `${PAYMENTS_ORIGIN}/fiat/${r.id}`,
     qr: qrImage(`fiat-request:${r.id}`),
     expiresAt: r.expiresAt,

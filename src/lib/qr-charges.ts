@@ -35,6 +35,9 @@ export interface QrCharge {
   estimatedAmountOut: string | null;
   /** The ways the payer can pay it, preferred first (absent from a server before bank transfers). */
   methods?: ChargeMethod[];
+  /** Whether `p2p` is paid inside the payer page, by transfer to a verified person (absent from a
+      server before it). */
+  p2pDirect?: boolean;
   url: string;
   qr: string;
   expiresAt: string;
