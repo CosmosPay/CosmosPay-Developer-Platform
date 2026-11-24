@@ -15,7 +15,7 @@ import { withNetworkCounts } from "@/lib/chains";
 /** The company site's languages, in the language picker's order. */
 export const SITE_LANGS: readonly string[] = LOCALES.map((l) => l.code);
 
-export type SitePage = "home" | "pricing" | "swaps" | "tos" | "about";
+export type SitePage = "home" | "pricing" | "swaps" | "tos" | "about" | "brand";
 
 export interface PageMeta {
   title: string;
@@ -23,7 +23,7 @@ export interface PageMeta {
 }
 
 /** The public path of each page of the company site. */
-export const SITE_PAGE_PATHS: Record<SitePage, string> = { home: "/", pricing: "/pricing", swaps: "/swaps", tos: "/tos", about: "/about" };
+export const SITE_PAGE_PATHS: Record<SitePage, string> = { home: "/", pricing: "/pricing", swaps: "/swaps", tos: "/tos", about: "/about", brand: "/brand" };
 
 /** The languages each page's own text is written in: its hreflang versions. The terms exist in
  *  English and Spanish only (src/pages/site/tos.astro); any other language shows the English text. */
@@ -33,6 +33,7 @@ export const PAGE_LANGS: Record<SitePage, readonly string[]> = {
   swaps: SITE_LANGS,
   tos: TOS_LANGS,
   about: SITE_LANGS,
+  brand: SITE_LANGS,
 };
 
 /** The date the terms show as their last update (src/pages/site/tos.astro), also the sitemap's lastmod. */
@@ -57,7 +58,12 @@ const META: Record<string, Partial<Record<MetaPage, PageMeta>> & { crumbs: Crumb
       description:
         "Cosmos Pay builds a stablecoin payments API, a hosted checkout, swaps, private payments and a non-custodial wallet. Its code is public on GitHub.",
     },
-    crumbs: { home: "Home", pricing: "Pricing", swaps: "Swaps", tos: "Terms", about: "About" },
+    brand: {
+      title: "Cosmos Pay brand assets | Logo, colours and typeface",
+      description:
+        "Download the Cosmos Pay logo, isotype, colours, typeface and astronaut illustrations in SVG and PNG, one by one or as a brand kit, and see how to use them.",
+    },
+    crumbs: { home: "Home", pricing: "Pricing", swaps: "Swaps", tos: "Terms", about: "About", brand: "Brand" },
   },
   es: {
     pricing: {
@@ -74,7 +80,12 @@ const META: Record<string, Partial<Record<MetaPage, PageMeta>> & { crumbs: Crumb
       description:
         "Cosmos Pay hace una API de pagos en stablecoins, un checkout alojado, swaps, pagos privados y una wallet sin custodia. Su código es público en GitHub.",
     },
-    crumbs: { home: "Inicio", pricing: "Precios", swaps: "Swaps", tos: "Términos", about: "Acerca de" },
+    brand: {
+      title: "Recursos de marca de Cosmos Pay | Logo, colores y tipografía",
+      description:
+        "Descargá el logo, el isotipo, los colores, la tipografía y el astronauta de Cosmos Pay en SVG y PNG, uno por uno o en un kit de marca, y mirá cómo usarlos.",
+    },
+    crumbs: { home: "Inicio", pricing: "Precios", swaps: "Swaps", tos: "Términos", about: "Acerca de", brand: "Marca" },
   },
   pt: {
     pricing: {
@@ -87,7 +98,12 @@ const META: Record<string, Partial<Record<MetaPage, PageMeta>> & { crumbs: Crumb
       description:
         "A Cosmos Pay faz uma API de pagamentos em stablecoins, checkout hospedado, swaps, pagamentos privados e carteira sem custódia, com código público no GitHub.",
     },
-    crumbs: { home: "Início", pricing: "Preços", swaps: "Swaps", tos: "Termos", about: "Sobre" },
+    brand: {
+      title: "Recursos de marca da Cosmos Pay | Logo, cores e tipografia",
+      description:
+        "Baixe o logo, o isotipo, as cores, a tipografia e o astronauta da Cosmos Pay em SVG e PNG, um a um ou em um kit de marca, e veja como usá-los.",
+    },
+    crumbs: { home: "Início", pricing: "Preços", swaps: "Swaps", tos: "Termos", about: "Sobre", brand: "Marca" },
   },
   fr: {
     pricing: {
@@ -100,7 +116,12 @@ const META: Record<string, Partial<Record<MetaPage, PageMeta>> & { crumbs: Crumb
       description:
         "API de paiement en stablecoins, checkout hébergé, swaps, paiements privés et wallet non dépositaire : ce que fait Cosmos Pay, avec son code public sur GitHub.",
     },
-    crumbs: { home: "Accueil", pricing: "Tarifs", swaps: "Swaps", tos: "Conditions", about: "À propos" },
+    brand: {
+      title: "Ressources de marque Cosmos Pay | Logo, couleurs, police",
+      description:
+        "Téléchargez le logo, le symbole, les couleurs, la police et l’astronaute de Cosmos Pay en SVG et PNG, un par un ou en kit de marque, avec leur mode d’emploi.",
+    },
+    crumbs: { home: "Accueil", pricing: "Tarifs", swaps: "Swaps", tos: "Conditions", about: "À propos", brand: "Marque" },
   },
   de: {
     pricing: {
@@ -113,7 +134,12 @@ const META: Record<string, Partial<Record<MetaPage, PageMeta>> & { crumbs: Crumb
       description:
         "Stablecoin-Zahlungs-API, gehosteter Checkout, Swaps, private Zahlungen und eine nicht verwahrte Wallet: das baut Cosmos Pay, mit öffentlichem Code auf GitHub.",
     },
-    crumbs: { home: "Startseite", pricing: "Preise", swaps: "Swaps", tos: "Bedingungen", about: "Über uns" },
+    brand: {
+      title: "Markenressourcen von Cosmos Pay | Logo, Farben, Schrift",
+      description:
+        "Laden Sie Logo, Bildmarke, Farben, Schrift und den Astronauten von Cosmos Pay als SVG und PNG herunter, einzeln oder als Markenkit, mit ihrer Verwendung.",
+    },
+    crumbs: { home: "Startseite", pricing: "Preise", swaps: "Swaps", tos: "Bedingungen", about: "Über uns", brand: "Marke" },
   },
   hi: {
     pricing: {
@@ -126,7 +152,12 @@ const META: Record<string, Partial<Record<MetaPage, PageMeta>> & { crumbs: Crumb
       description:
         "Cosmos Pay स्टेबलकॉइन पेमेंट्स API, होस्टेड चेकआउट, स्वैप, निजी भुगतान और नॉन-कस्टोडियल वॉलेट बनाता है। उसका कोड GitHub पर सार्वजनिक है।",
     },
-    crumbs: { home: "होम", pricing: "प्राइसिंग", swaps: "स्वैप", tos: "शर्तें", about: "हमारे बारे में" },
+    brand: {
+      title: "Cosmos Pay ब्रांड एसेट्स | लोगो, रंग और टाइपफ़ेस",
+      description:
+        "Cosmos Pay का लोगो, आइसोटाइप, रंग, टाइपफ़ेस और अंतरिक्ष यात्री SVG और PNG में डाउनलोड करें, एक-एक करके या ब्रांड किट में, और उनका सही उपयोग देखें।",
+    },
+    crumbs: { home: "होम", pricing: "प्राइसिंग", swaps: "स्वैप", tos: "शर्तें", about: "हमारे बारे में", brand: "ब्रांड" },
   },
   zh: {
     pricing: {
@@ -139,7 +170,12 @@ const META: Record<string, Partial<Record<MetaPage, PageMeta>> & { crumbs: Crumb
       description:
         "Cosmos Pay 打造稳定币支付 API、托管收银台、兑换、隐私支付和非托管钱包，其代码在 GitHub 上公开。",
     },
-    crumbs: { home: "首页", pricing: "定价", swaps: "兑换", tos: "条款", about: "关于我们" },
+    brand: {
+      title: "Cosmos Pay 品牌资源 | 标志、颜色和字体",
+      description:
+        "下载 Cosmos Pay 的标志、图形标、颜色、字体和宇航员插画，SVG 和 PNG 格式，可单独下载或打包为品牌资源包，并了解使用方法。",
+    },
+    crumbs: { home: "首页", pricing: "定价", swaps: "兑换", tos: "条款", about: "关于我们", brand: "品牌" },
   },
 };
 

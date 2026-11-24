@@ -10,7 +10,7 @@ npm run dev               # astro dev --host; predev runs `prisma migrate deploy
 npm run dev:mock          # the portal on sample data: no Postgres, Authentik or Payments API (src/lib/mock;
                           #   `-- --role user|support|admin|owner --plan starter --fresh --latency 800 --port N --auto`)
 npm run build             # prisma generate -> docs:build (Fumadocs export into public/docs) -> astro build
-npm run build:app         # prisma generate -> embed:build -> og:build -> astro build: no docs build (563 pages on 8
+npm run build:app         # prisma generate -> embed:build -> og:build -> brand:build -> astro build: no docs build (563 pages on 8
                           #   workers), docs/ untouched; enough to check a change outside the docs
 npm start                 # node dist/server/entry.mjs; prestart runs ensure-docs. Production runs under PM2
 npm test                  # = test:unit (node:test over tests/unit/**/*.test.ts; no DB, no astro:env),
@@ -22,6 +22,8 @@ npm run check:api-spec    # fails if docs/openapi.json differs from the communit
 npm run docs:api          # regenerates docs/openapi.json + the API pages inside docs/
 npm run embed:build       # bundles src/embed into public/embed/cosmos-pay.js (run by build and predev)
 npm run og:build          # draws every indexable page's share card per language into src/assets/og
+npm run brand:build       # makes /brand's logo SVGs and PNGs, phone PNGs, palette and kit ZIP into public/brand/kit
+                          #   (run by build, build:app, predev and dev:mock; about a second)
                           #   (run by build, build:app and predev; redraws only what changed)
 npm run db:migrate        # prisma migrate dev (db:deploy = migrate deploy, db:generate, db:push)
 npm run sync:route        # re-points every APISIX route's upstream at COSMOS_API_URL, no restart
@@ -187,7 +189,7 @@ These were said more than once; breaking one is a bug, whatever the task was.
 
 | Domain | Area | Pages |
 | :--- | :--- | :--- |
-| `cosmospay.lat` | `site` | `src/pages/site/`: landing, `/pricing`, `/swaps`, `/tos`, `/about` |
+| `cosmospay.lat` | `site` | `src/pages/site/`: landing, `/pricing`, `/swaps`, `/tos`, `/about`, `/brand` |
 | `dev.cosmospay.lat` | `dev` | everything else in `src/pages/`: `/login`, dashboard, onboarding, invite, kyc, `/docs`, `/swagger`, `/api/*` |
 | `payments.cosmospay.lat` | `payments` | `src/pages/payments/`: `/` home, the content pages `/integrations`, `/use-cases`, `/security`, `/fees`, `/compare`, `/faq`, the network pages `/stellar`, `/solana`, `/monad`, `/arc`, the guides `/learn` and `/learn/{slug}`, `/{id}` hosted checkout, `/pay` SEP-7 handler, `/contact` (the contact form's POST), `/preview/{design}` |
 
@@ -535,6 +537,68 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   lede one visible line (`about.disambiguation`) says Cosmos Pay is a different project from the
   Cosmos Network (ATOM), in the words of the Organization's `disambiguatingDescription` and
   llms.txt.
+
+### The company Brand page (cosmospay.lat/brand)
+
+- `src/pages/site/brand.astro`: what press, partners, integrators and directories need to name and show
+  Cosmos Pay, server-rendered from the platform catalogs' `brand` block (seven languages) on the
+  company skin, panels alternating black and white, `/0n` headings, the navy closing panel. Registered
+  everywhere /about is: `site-meta.ts` (titles, descriptions, `PAGE_LANGS`, crumbs), `lang-urls.ts`,
+  `indexable.ts` (so the sitemap with hreflang, llms-full.txt, the share cards and analytics), `SITE_PATHS`
+  in `hosts.ts`, the footer's Company group (`BRAND` in constants.ts, all three domains), both llms.txt,
+  its Markdown (`brand` in `site-markdown.ts`) and `page-dates.ts`. Its JSON-LD is a WebPage `about` the
+  shared Organization (`CosmosLayout about`) with its BreadcrumbList.
+- **What it shows is `src/lib/site/brand.ts`** (pure; the page, its Markdown and the kit read it): how the
+  name is written ("Cosmos Pay", the products Cosmos Pay Payments and Cosmos Pay Wallet, "CosmosPay" only
+  as the GitHub and X handle). **Never the About page's `about.disambiguation` line** (product owner,
+  2026-11-24): press and directories copy from this page, and that line never appears in commercial copy;
+  `seoMarkdown.test.ts` fails on it (or on "Cosmos Network") in the page's Markdown in any language. The
+  logos (the Cosmos Pay lockup in black, white and the agency's all Cosmic Blue, the wallet's lockup, the
+  isotype, the app icon and the one-colour app icon, each SVG and PNG), clear space (the height of the
+  wordmark's c, measured on the file and checked by the test), the isotype's 24 px minimum and five
+  things not to do, drawn; the four colours (the `--cosmos-*` tokens of cosmos.css, which the test
+  reads), each value a copy button; Open Sauce One as its own files state it (designer, SIL OFL 1.1, the
+  project's repository: the test reads the WOFF2 name tables) with its desktop files (below); the
+  astronaut's seven poses in their three drawings (black line, Cosmic Blue line, sticker for dark grounds)
+  and BRAND.md's rules for it, then the phone pose's four vector drawings (`personaje/celular-1..4.svg`);
+  the ribbon and the six strokes; a usage line (to refer to Cosmos Pay, not a partnership or an
+  endorsement) and the contact address. The rules are BRAND.md's (sections 3, 5 and 6); the blue lockup,
+  the one-colour icon and the phone drawings have none there, so the page gives them none.
+  - **The blue lockup**: its PNG is the agency's `lockup-cosmos-pay.png`; its SVG is the lockup's
+    `currentColor` file written in `#000877`. The test draws the SVG over the PNG (one colour, the same
+    proportions, alpha within anti-aliasing at the best quarter-pixel offset).
+  - **The one-colour app icon is `isotipo-variante-1-mono.svg`**, the square with the C cut out (one path,
+    `fill-rule="evenodd"`). The agency's `-mono` icons filled the C and the square in one colour, so the C
+    vanished; all three were redrawn that way, and the test renders each against the two-colour icons.
+  - **The typeface's desktop files** are `public/brand/fonts/OpenSauceOne-{Light,Regular,Medium,SemiBold,Bold}.ttf`
+    and `OFL.txt`: the project's `fonts/ttf` and "Open Sauce One OFL.txt" at commit `TYPEFACE.commit`
+    (github.com/marcologous/Open-Sauce-Fonts), unchanged. The test checks each file's git blob id against
+    that commit, their name tables, and that their metrics and kerning tables are the WOFF2 files'. A
+    font update moves the files, the commit and the blob ids together.
+  **Left out on purpose**, each named in the file's header: the "cosmos" wordmark alone, the duplicate
+  app icons (`isotipo-variante-3*`, `isotipo-variante-2-mono`), `planeta.png`, and the Aeronaut-based
+  display face (a trial licence: never shipped or named).
+- **The kit holds exactly what the page offers.** `npm run brand:build` (`scripts/build-brand-kit.mjs`
+  over `src/lib/site/brand-kit.ts`) makes, from the committed files, the SVGs of the logos drawn in
+  `currentColor` in each ink they have no file in (black, the lockup's blue, the one-colour icon's
+  white), every logo's PNG but the agency's blue one and the phone drawings' PNGs (resvg, pinned,
+  transparent), the palette text and the ZIP
+  (`src/lib/zip.ts`: Node's zlib, no dependency, one fixed timestamp, so the same files make the same
+  bytes) into `public/brand/kit/` (git-ignored), and the kit's size into `src/assets/brand-kit.json`
+  (git-ignored) for the download button. It runs in build, build:app, predev and dev:mock, so nothing
+  there is older than the drawings. `tests/unit/brandKit.test.ts` builds the kit and reads it back (its
+  entries are `brandDownloads()` and the README, each byte as committed or made); `npm run test:smoke`
+  fetches every download link of the built page (200 and its type) and compares the served ZIP's entries
+  with them.
+- **`/brand` shares its name with the static folder `public/brand/`.** The Node adapter serves files
+  first, but a directory with no `index.html` is handed on (`trailingSlash` is "ignore"), so `/brand`
+  reaches the middleware and renders, `/brand/` is the page's slash form (a 301 to `/brand`), and every
+  file under `/brand/` still answers on all three domains. Never put an `index.html` in `public/brand/`,
+  and keep the payments robots.txt's `Allow: /brand/`; the smoke test checks all of it on the build.
+  **In `astro dev` on a case-insensitive disk (Windows, macOS) `/brand.md` is this repository's
+  `BRAND.md`**: Vite serves files from the project root before the app sees the request (a browser
+  then gets a 404). Production serves only `public/`, so there `/brand.md` is the page's Markdown;
+  read it on a build (`npm run build:app`, then `npm start`), as the smoke test does.
 
 ### The institutional skin (payments site and dashboard)
 

@@ -1,9 +1,9 @@
-/* site-markdown.ts: the company site's indexable pages (cosmospay.lat: the home, /pricing, /about
-   and /tos) as Markdown, in each language they are written in. Each page is read from what its
+/* site-markdown.ts: the company site's indexable pages (cosmospay.lat: the home, /pricing, /about,
+   /brand and /tos) as Markdown, in each language they are written in. Each page is read from what its
    components render, section by section and in their order: the platform catalogs
    (src/lib/i18n/messages), the home's figures and lists (src/components/cosmos/marketing/data.ts),
    the plans (src/lib/plans.ts, every rate read from there), the About page's links
-   (src/lib/site/about.ts) and the terms (src/lib/site/terms.ts). Interactive parts become what they
+   (src/lib/site/about.ts), the brand page's files and rules (src/lib/site/brand.ts) and the terms (src/lib/site/terms.ts). Interactive parts become what they
    say (a modal's text, a button's link). Links are absolute and keep the page's language
    (localizeHref). /swaps is left out: its canonical page is the gateway's. Pure, so
    tests/unit/seoMarkdown.test.ts covers it. */
@@ -16,6 +16,26 @@ import { GITHUB_ORG, SDK_NPM, SDK_PACKAGE, chromeStoreListing } from "@/lib/seo/
 import { localizeHref, pageUrl } from "@/lib/seo/lang-urls";
 import { PAGE_LANGS, TOS_LAST_UPDATED, siteMeta, type SitePage } from "@/lib/seo/site-meta";
 import { ABOUT_REPOS, aboutLinks } from "@/lib/site/about";
+import {
+  ALL_POSES,
+  BRAND_COLOURS,
+  BRAND_LOGOS,
+  BRAND_POSES,
+  CHARACTER_MIN_PX,
+  FONT_FILES,
+  FONT_LICENCE,
+  ISOTYPE_MIN_PX,
+  KIT_ZIP,
+  LOGO_DONTS,
+  PALETTE,
+  PHONES,
+  POSE_STYLES,
+  RIBBON,
+  STROKES,
+  TYPEFACE,
+  rgbText,
+  type Download,
+} from "@/lib/site/brand";
 import { termsText } from "@/lib/site/terms";
 import { PLAN_META } from "@/components/cosmos/pricing/data";
 import {
@@ -48,6 +68,7 @@ export const SITE_MARKDOWN_PAGES: Readonly<Record<string, Exclude<SitePage, "swa
   "/": "home",
   "/pricing": "pricing",
   "/about": "about",
+  "/brand": "brand",
   "/tos": "tos",
 };
 
@@ -289,12 +310,118 @@ function about({ c, input, at }: Ctx): Block[] {
   ];
 }
 
+/* The brand page, section by section as src/pages/site/brand.astro draws it: every file it offers
+   (src/lib/site/brand.ts) at its absolute address, each named as the page names it. */
+function brand({ c, input, at }: Ctx): Block[] {
+  const t = c.brand;
+  const file = (href: string): string => `${input.site}${href}`;
+  const download = (name: string, d: Download): string => link(`${name} (${d.format.toUpperCase()})`, file(d.href));
+  const kit = link(`${t.download} (ZIP)`, file(KIT_ZIP));
+  const x = input.profiles.X;
+  return [
+    h(1, t.title),
+    p(t.lede),
+    p(kit),
+    ul([
+      term(t.facts.logos, fill(t.facts.logosValue, { n: BRAND_LOGOS.length })),
+      term(t.facts.colours, fill(t.facts.coloursValue, { n: BRAND_COLOURS.length })),
+      term(t.facts.typeface, TYPEFACE.family),
+      term(t.facts.illustrations, fill(t.facts.illustrationsValue, { n: BRAND_POSES.length, styles: POSE_STYLES.length })),
+    ]),
+    // The name: how it is written, the products that carry it and the handle. Press and
+    // directories copy from this page, so the About page's line on the Cosmos Network stays there.
+    h(2, t.name.title),
+    p(t.name.lede),
+    ul([
+      term("Cosmos Pay", t.name.items.company),
+      term("Cosmos Pay Payments", `${t.name.items.payments} ${link(new URL(input.payments).host, at(input.payments))}`),
+      term("Cosmos Pay Wallet", `${t.name.items.wallet} ${link(t.name.walletLink, at(`${input.site}/#wallet`))}`),
+      term("CosmosPay", `${t.name.items.handle} ${[link("GitHub", GITHUB_ORG), ...(x ? [link("X", x)] : [])].join(", ")}`),
+    ]),
+    // The logos, each colourway in SVG and PNG, then their rules.
+    h(2, t.logo.title),
+    p(t.logo.lede),
+    ...BRAND_LOGOS.flatMap((logo) => {
+      const item = t.logo.items[logo.key];
+      return [
+        h(3, item.t),
+        p(item.d),
+        ul(
+          logo.variants.flatMap(({ ink, svg, png }) => {
+            const name = fill(t.logo.fileName, { logo: item.t, ink: t.logo.inks[ink] });
+            return [download(name, svg), download(name, png)];
+          }),
+        ),
+      ];
+    }),
+    h(3, t.logo.space.t),
+    p(t.logo.space.d),
+    h(3, t.logo.minimum.t),
+    p(fill(t.logo.minimum.d, { n: ISOTYPE_MIN_PX })),
+    h(3, t.logo.donts.t),
+    ul(LOGO_DONTS.map((key) => t.logo.donts.items[key])),
+    // The palette.
+    h(2, t.colour.title),
+    p(t.colour.lede),
+    ul(BRAND_COLOURS.map((colour) => term(colour.name, `${t.colour.hex} ${colour.hex}, ${t.colour.rgb} ${rgbText(colour.hex)}. ${t.colour.roles[colour.key]}`))),
+    // Its label already names the format ("Download the palette (TXT)").
+    p(link(t.colour.palette, file(PALETTE.href))),
+    // The typeface, as its own files state it.
+    h(2, t.type.title),
+    p(fill(t.type.lede, { n: TYPEFACE.weights.length })),
+    ul([
+      term(t.type.designer, TYPEFACE.designer),
+      term(t.type.licence, link(TYPEFACE.licenceName, TYPEFACE.licence)),
+      term(t.type.weights, TYPEFACE.weights.map((w) => `${w.name} ${w.weight}`).join(", ")),
+    ]),
+    // Each weight's desktop file and the licence they travel with (its label names the format).
+    ul([
+      ...TYPEFACE.weights.map((w) => download(`${TYPEFACE.family} ${w.name}`, FONT_FILES.find((f) => f.href === w.desktop)!)),
+      link(t.type.licenceFile, file(FONT_LICENCE.href)),
+    ]),
+    p(link(t.type.source, TYPEFACE.source)),
+    // The astronaut: each pose in every file, then its rules.
+    h(2, t.illustrations.title),
+    p(fill(t.illustrations.lede, { n: BRAND_POSES.length })),
+    ...BRAND_POSES.flatMap((pose) => {
+      const name = t.illustrations.poses[pose.key];
+      return [
+        h(3, name),
+        ul([download(name, pose.svg), ...POSE_STYLES.map((style) => download(fill(t.illustrations.fileName, { pose: name, style: t.illustrations.styles[style] }), pose.png[style]))]),
+      ];
+    }),
+    p(download(t.illustrations.all.t, ALL_POSES)),
+    h(3, t.illustrations.rules.t),
+    ul([fill(t.illustrations.rules.size, { n: CHARACTER_MIN_PX }), t.illustrations.rules.one, t.illustrations.rules.colours]),
+    // The phone pose's four vector drawings, each in SVG and PNG.
+    h(3, t.illustrations.phones.t),
+    ul(
+      PHONES.flatMap((phone) => {
+        const name = fill(t.illustrations.fileName, { pose: t.illustrations.poses.phone, style: t.illustrations.phones.styles[phone.key] });
+        return [download(name, phone.svg), download(name, phone.png)];
+      }),
+    ),
+    // The ribbon and the strokes.
+    h(2, t.graphics.title),
+    p(t.graphics.lede),
+    h(3, t.graphics.ribbon),
+    p(download(t.graphics.ribbon, RIBBON.download)),
+    h(3, t.graphics.strokes),
+    ul(STROKES.map((stroke) => download(fill(t.graphics.stroke, { n: stroke.n }), stroke.download))),
+    // How the files may be used, and who to ask.
+    h(2, t.usage.title),
+    p(t.usage.lede),
+    p(t.usage.contact),
+    ul([link(CONTACT_ADDRESS, `mailto:${CONTACT_ADDRESS}`), kit]),
+  ];
+}
+
 function tos({ lang }: Ctx): Block[] {
   const t = termsText(lang);
   return [h(1, t.title), p(`${t.updated}: ${TOS_LAST_UPDATED}`), p(t.intro), ...t.sections.flatMap((s) => [h(2, s.h), ...s.ps.map(p)])];
 }
 
-const BUILDERS: Record<Exclude<SitePage, "swaps">, (ctx: Ctx) => Block[]> = { home, pricing, about, tos };
+const BUILDERS: Record<Exclude<SitePage, "swaps">, (ctx: Ctx) => Block[]> = { home, pricing, about, brand, tos };
 
 /**
  * The company-site page at `path` in `lang` as a document, or null when it has no Markdown

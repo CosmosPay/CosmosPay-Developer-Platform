@@ -20,6 +20,7 @@ import { pageUrl } from "@/lib/seo/lang-urls";
 import { markdownUrl } from "@/lib/seo/markdown-urls";
 import { GITHUB_ORG, SDK_NPM, SDK_PACKAGE, WALLET_RELEASES } from "@/lib/seo/schema";
 import { AGENT_SKILLS_INDEX_PATH, COSMOS_PAY_SKILL_REPO } from "@/lib/seo/agent-skills";
+import { KIT_ZIP } from "@/lib/site/brand";
 
 export interface LlmsInput {
   site: string;
@@ -163,6 +164,7 @@ ${authLine(site)}
 ## Company
 
 - [About Cosmos Pay](${pageUrl(site, "/about")}): what Cosmos Pay makes and on which networks, its public code on GitHub, the SDK on npm and how to reach the team
+- [Brand assets](${pageUrl(site, "/brand")}): how to write the name, the logo, isotype and app icon in SVG and PNG, the four brand colours, the Open Sauce One typeface and the astronaut illustrations; every file in [one brand kit](${site}${KIT_ZIP})
 - Contact: organization@cosmospay.lat
 
 ## Optional
@@ -238,7 +240,7 @@ ${authLine(payments)}
 
 ## Optional
 
-- [Cosmos Pay company site](${site}/), its [plans](${pageUrl(site, "/pricing")}) and [about page](${pageUrl(site, "/about")})
+- [Cosmos Pay company site](${site}/), its [plans](${pageUrl(site, "/pricing")}), [about page](${pageUrl(site, "/about")}) and [brand assets](${pageUrl(site, "/brand")})
 - [Terms and conditions](${site}/tos)
 `;
 }

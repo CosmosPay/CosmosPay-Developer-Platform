@@ -2,7 +2,7 @@
 // The company site's structured data (schema.org JSON-LD), one graph per page: the organisation
 // (src/lib/seo/org.ts, the same node the gateway's pages publish), the site, the page with its
 // breadcrumb trail, and what the page adds (the products on the home, the plans on /pricing; /about
-// is an AboutPage whose mainEntity is the organisation itself).
+// is an AboutPage whose mainEntity is the organisation itself; the home and /brand are about it).
 // CosmosLayout renders it with the page's own address in the language shown (the bare path in
 // English, ?lang= otherwise: src/lib/seo/lang-urls.ts), the address its canonical and hreflang
 // links name (/swaps, canonical on the gateway, still describes its own address), and when the
@@ -23,6 +23,8 @@ interface Props {
   image: { url: string; width: number; height: number };
   breadcrumb?: Crumb[];
   mainEntity?: string;
+  /** What the page is about (the home: the organisation, always). */
+  about?: string;
   /** The page's schema.org type when it is more specific than WebPage ("AboutPage"). */
   pageType?: string;
   schema?: JsonLdNode[];
@@ -30,8 +32,9 @@ interface Props {
   dateModified?: string | null;
 }
 
-const { url, title, description, lang, image, breadcrumb, mainEntity, pageType, schema = [], dateModified } = Astro.props;
+const { url, title, description, lang, image, breadcrumb, mainEntity, about, pageType, schema = [], dateModified } = Astro.props;
 const home = new URL(url).pathname === "/";
+const pageAbout = about ?? (home ? ORGANIZATION_ID : undefined);
 
 const graph: JsonLdNode[] = [
   ORGANIZATION_NODE,
@@ -46,7 +49,7 @@ const graph: JsonLdNode[] = [
     types: pageType ? [pageType] : undefined,
     breadcrumb,
     mainEntity,
-    ...(home && { about: ORGANIZATION_ID }),
+    ...(pageAbout && { about: pageAbout }),
     image: { url: image.url, width: image.width, height: image.height },
     dateModified,
   }),

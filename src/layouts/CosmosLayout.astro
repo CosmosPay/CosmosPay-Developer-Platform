@@ -44,6 +44,9 @@ interface Props {
   /** Company site: what the page is mainly about (the @id of a node in `schema`, or the shared
    *  Organization's). */
   mainEntity?: string;
+  /** Company site: what the page is about, when it is not its main entity (the @id of a node; the
+   *  home and /brand name the shared Organization). */
+  about?: string;
   /** Company site: the page's schema.org type when it is more specific than WebPage ("AboutPage"). */
   pageType?: string;
   /** Company site: nodes this page adds to its JSON-LD graph (src/lib/seo/schema.ts). */
@@ -76,6 +79,7 @@ const {
   langs = SITE_LANGS,
   breadcrumb,
   mainEntity,
+  about,
   pageType,
   schema = [],
 } = Astro.props;
@@ -209,6 +213,7 @@ const themeScript =
         image={share}
         breadcrumb={crumbs}
         mainEntity={mainEntity}
+        about={about}
         pageType={pageType}
         schema={schema}
         dateModified={dateModified}

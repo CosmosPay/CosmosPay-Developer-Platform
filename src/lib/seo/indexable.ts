@@ -17,7 +17,7 @@ export interface IndexablePage {
   langs: readonly string[];
 }
 
-const SITE_ORDER: readonly SitePage[] = ["home", "pricing", "swaps", "tos", "about"];
+const SITE_ORDER: readonly SitePage[] = ["home", "pricing", "swaps", "tos", "about", "brand"];
 
 /** The indexable pages of `area`, in sitemap order. */
 export function indexablePages(area: IndexableArea): IndexablePage[] {
