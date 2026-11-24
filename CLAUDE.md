@@ -1302,7 +1302,9 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   its alias and CVU to copy, rejected with the reason) and activates it in a three-step dialog
   (holder: person or company, name, CUIT/CUIL for that kind of holder, a person's date of birth;
   contact; address; phone, city and postal code optional, as on the server), `payments:create` only; pending and in review link the provider's hosted
-  verification form and refresh. Checks in `src/lib/transfer-account.ts`
+  verification form and refresh. A server without the rail or with it off (404, 501, 503), or a
+  failed read before any account was read, draws no card at all (`transferAccountReadFailure`):
+  never a standing error for a rail the organization cannot turn on. Checks in `src/lib/transfer-account.ts`
   (`tests/unit/transferAccount.test.ts`). One account per consumer and network (Sandbox and
   Production each have theirs); its routes are the API reference's "Bank transfers" page (the
   server's `bank-transfers` tag, in `TAGS` of `docs/scripts/transform-spec.mjs`).

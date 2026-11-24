@@ -9,8 +9,11 @@
    active, the alias and the CVU to copy. Activating is a dialog in three steps (the holder, how to
    reach them, where they are) and needs `payments:create`; everyone else sees the status. The
    account is read through the /api/onramp proxy (`transfer/account`), checked by
-   src/lib/transfer-account.ts, and read again every 30 s while the verification runs. */
-import { useCallback, useEffect, useState } from "react";
+   src/lib/transfer-account.ts, and read again every 30 s while the verification runs. A server
+   without bank transfers, or with them off (404, 501, 503), gets no card at all, and neither does
+   a failed read before any account was read here: a load error with a retry is said only once the
+   rail has answered (transferAccountReadFailure). */
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useT, fmt } from "@/lib/i18n/index";
 import { onramp } from "@/lib/api-client";
 import { DI } from "@/components/cosmos/dashboard/icons";
@@ -24,7 +27,7 @@ import { FormSteps, FormStep, FormStepsFooter, useFormSteps } from "@/components
 import { groupCvu } from "@/lib/payments/fiat-request";
 import {
   TRANSFER_ACCOUNT_TYPES, birthDateProblem, emailOk, emptyTransferAccountDraft, parseTransferAccount, phoneOk, postalCodeOk,
-  taxIdProblem, transferAccountBody, transferAccountCanStart, transferAccountStepOk, transferAccountWaiting,
+  taxIdProblem, transferAccountBody, transferAccountCanStart, transferAccountReadFailure, transferAccountStepOk, transferAccountWaiting,
   type TransferAccount, type TransferAccountDraft, type TransferAccountStatus,
 } from "@/lib/transfer-account";
 
@@ -45,24 +48,52 @@ export function TransferAccountCard({ canManage, orgId, env, onApproved }: {
 }) {
   const t = useT();
   const a = t.dash.charges.transfers;
-  // undefined while it loads, null when it could not be read.
+  // undefined while it loads, null when it could not be read (said, with a retry).
   const [account, setAccount] = useState<TransferAccount | null | undefined>(undefined);
+  // The server has no bank transfers, or has them off, or nothing was ever read here and the read
+  // failed: the card is not drawn (transferAccountReadFailure).
+  const [hidden, setHidden] = useState(false);
+  // Whether an account was read in this environment: only then is a failed read said.
+  const everRead = useRef(false);
+  // Bumped when the environment or organization changes: an answer for the one left is dropped.
+  const generation = useRef(0);
   const [refreshing, setRefreshing] = useState(false);
   const [activating, setActivating] = useState(false);
 
   const read = useCallback(async (quiet = false) => {
+    const asked = generation.current;
+    let parsed: TransferAccount | null = null;
+    let status: number | undefined;
     try {
-      const parsed = parseTransferAccount(await onramp.get(PATH, env, orgId));
-      setAccount((prev) => {
-        if (prev && prev.status !== "approved" && parsed?.status === "approved") onApproved?.();
-        return parsed ?? (quiet && prev ? prev : null);
-      });
-    } catch {
-      setAccount((prev) => (quiet && prev ? prev : null));
+      parsed = parseTransferAccount(await onramp.get(PATH, env, orgId));
+    } catch (err) {
+      status = typeof (err as { status?: unknown })?.status === "number" ? (err as { status: number }).status : undefined;
     }
+    if (asked !== generation.current) return;
+    if (parsed) {
+      const next = parsed;
+      everRead.current = true;
+      setHidden(false);
+      setAccount((prev) => {
+        if (prev && prev.status !== "approved" && next.status === "approved") onApproved?.();
+        return next;
+      });
+      return;
+    }
+    // A failed background read keeps what is on screen; any other says it failed, or hides the
+    // card for a rail that is not there.
+    if (transferAccountReadFailure(status, everRead.current) === "hide") {
+      setHidden(true);
+      setAccount(undefined);
+      return;
+    }
+    setAccount((prev) => (quiet && prev ? prev : null));
   }, [env, orgId, onApproved]);
 
   useEffect(() => {
+    generation.current += 1;
+    everRead.current = false;
+    setHidden(false);
     setAccount(undefined);
     void read();
   }, [read]);
@@ -80,6 +111,8 @@ export function TransferAccountCard({ canManage, orgId, env, onApproved }: {
     await read(true);
     setRefreshing(false);
   };
+
+  if (hidden) return null;
 
   return (
     <section className="panel tacc" aria-labelledby="tacc-title" aria-busy={account === undefined}>
