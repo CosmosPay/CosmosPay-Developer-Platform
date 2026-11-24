@@ -2,6 +2,16 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.37.0] - 2026-11-24
+
+### Features
+- A brand page at /brand with the logos, colours, typeface and kit (ba8723e)
+
+### Bug Fixes
+- Scopes fit in the gateway's label, so full-access keys can be created (982e985)
+- Pin effect to 3.22.5 for GHSA-7589-6fvf-x4pw (a5073f7)
+- Astro 7.4.12 and @astrojs/node 11.1.13 for GHSA-r3h5-4585-7x3w (8b8484e)
+
 ## [0.36.0] - 2026-11-11
 
 ### Features
