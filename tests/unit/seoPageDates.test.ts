@@ -210,7 +210,7 @@ test('every indexable page has its own sources, which exist, and none is a whole
     }
   };
   for (const lang of LANGS) {
-    for (const p of ['/', '/pricing', '/about', '/swaps', '/tos']) check(siteSources(p, lang), `site ${p} ${lang}`);
+    for (const p of ['/', '/pricing', '/about', '/brand', '/swaps', '/tos']) check(siteSources(p, lang), `site ${p} ${lang}`);
     for (const p of ['/', ...PAYMENTS_PAGE_PATHS]) check(paymentsSources(p, lang), `payments ${p} ${lang}`);
   }
   assert.equal(siteSources('/nope', 'en'), null);
@@ -218,6 +218,8 @@ test('every indexable page has its own sources, which exist, and none is a whole
   // Each language version follows its own copy, and only the page's blocks of it.
   assert.ok(siteSources('/about', 'es')?.includes('src/lib/i18n/messages/es.ts#default.about'));
   assert.ok(!siteSources('/about', 'es')?.some((s) => s.startsWith('src/lib/i18n/messages/en.ts')));
+  // /brand reads its own block only: nothing of the About block, its line on the Cosmos Network included.
+  assert.deepEqual(siteSources('/brand', 'pt')?.filter((s) => s.includes('#')), ['src/lib/i18n/messages/pt.ts#default.brand']);
   assert.deepEqual(
     paymentsSources('/faq', 'fr')?.filter((s) => s.includes('#')),
     [`${LANDING}#fr.pages.faq`, `${LANDING}#fr.faq`],
