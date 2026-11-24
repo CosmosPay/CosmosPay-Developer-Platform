@@ -82,6 +82,19 @@ export const CHECKOUT_CSS = `${BASE}
 .qr { display: block; width: 200px; max-width: 100%; height: auto; aspect-ratio: 1 / 1; padding: 8px; background: #FFFFFF; border: 1px solid var(--cp-line); border-radius: 12px; }
 .pay .btn { width: 100%; }
 .demo-run { width: 100%; margin-top: 16px; }
+.email { margin: 16px 0 0; padding: 16px 0 0; border-top: 1px solid var(--cp-line); display: grid; gap: 8px; }
+.email-label { font-size: 14px; font-weight: 600; }
+.email-row { display: flex; gap: 8px; min-width: 0; }
+.email-input {
+  flex: 1 1 auto; min-width: 0; box-sizing: border-box; padding: 10px 12px; font: inherit; font-size: 15px;
+  color: var(--cp-ink); background: var(--cp-surface); border: 1px solid var(--cp-line-2); border-radius: 12px;
+}
+.email-input:focus-visible { outline: 2px solid var(--cp-focus); outline-offset: 1px; }
+.email-input[aria-invalid="true"] { border-color: var(--cp-bad); }
+.email-given { margin: 12px 0 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; font-size: 13.5px; color: var(--cp-ink-2); }
+.link-btn { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.link-btn:focus-visible { outline: 2px solid var(--cp-focus); outline-offset: 2px; }
+@media (max-width: 360px) { .email-row { flex-direction: column; } }
 .facts { margin: 16px 0 0; padding: 2px 14px; background: var(--cp-surface-2); border-radius: 12px; }
 .row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--cp-line); font-size: 14px; }
 .row:last-child { border-bottom: 0; }

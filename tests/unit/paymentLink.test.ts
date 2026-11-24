@@ -318,6 +318,74 @@ test('reportCheckoutEvent posts the event to the link and never throws', async (
   // It leaves while the page hands the payer to a wallet app.
   assert.equal(called!.keepalive, true);
   assert.equal(await reportCheckoutEvent('https://api.example', 'x', 'sent', fakeFetch(429, {})), false);
+  const sent: RequestInit[] = [];
+  const keep = (async (_url: string, init?: RequestInit) => {
+    sent.push(init ?? {});
+    return new Response(null, { status: 204 });
+  }) as unknown as typeof fetch;
+  await reportCheckoutEvent('https://api.example', 'x', 'sent', keep, 'q8V0n3cJxZr2m1bWk7yTt4uP9aLs6dEf0gHiJkLmNoQ');
+  assert.deepEqual(JSON.parse(String(sent[0].body)), { event: 'sent', payerToken: 'q8V0n3cJxZr2m1bWk7yTt4uP9aLs6dEf0gHiJkLmNoQ' });
+  // The session's proof rides with its token, and never without one.
+  await reportCheckoutEvent('https://api.example', 'x', 'sent', keep, 'q8V0n3cJxZr2m1bWk7yTt4uP9aLs6dEf0gHiJkLmNoQ', { address: 'GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ', txHash: null });
+  assert.deepEqual(JSON.parse(String(sent[1].body)), { event: 'sent', payerToken: 'q8V0n3cJxZr2m1bWk7yTt4uP9aLs6dEf0gHiJkLmNoQ', address: 'GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ' });
+  await reportCheckoutEvent('https://api.example', 'x', 'sent', keep, null, { txHash: 'abc' });
+  assert.deepEqual(JSON.parse(String(sent[2].body)), { event: 'sent' });
   const thrown = (async () => { throw new TypeError('offline'); }) as typeof fetch;
   assert.equal(await reportCheckoutEvent('https://api.example', 'x', 'walletClosed', thrown), false);
+});
+
+/* A link on a network paid through a deposit address made for the payment (here Tron). */
+function tronBody(over: Record<string, unknown> = {}) {
+  return stellarBody({
+    chain: 'tron',
+    network: 'public',
+    payTo: null,
+    amount: '25',
+    asset: 'USDT',
+    assetIssuer: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t',
+    uri: 'https://payments.cosmospay.lat/cmh4x2k9a0001l70g8v5q3z2w',
+    crossChainPayment: true,
+    ...over,
+  });
+}
+
+test('parsePaymentLink reads a link on any network, paid through a deposit address', () => {
+  const link = parsePaymentLink(tronBody());
+  assert.ok(link);
+  assert.equal(link.chain, 'tron');
+  assert.equal(link.payTo, null);
+  assert.equal(link.crossChainPayment, true);
+  assert.equal(amountLabel(link), '25 USDT');
+});
+
+test('parsePaymentLink refuses a deposit-network link that would show something to pay directly', () => {
+  assert.equal(parsePaymentLink(tronBody({ payTo: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t' })), null);
+  assert.equal(parsePaymentLink(tronBody({ uri: 'tron:TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t' })), null);
+  assert.equal(parsePaymentLink(tronBody({ crossChainPayment: false })), null);
+  assert.equal(parsePaymentLink(tronBody({ crossChainPayment: undefined })), null);
+  assert.equal(parsePaymentLink(tronBody({ payerAccountRequired: true })), null);
+  assert.equal(parsePaymentLink(tronBody({ kind: 'TX' })), null);
+});
+
+test('parsePaymentLink reads the deposit-network links the server offers: test network, open amount, merchant fee', () => {
+  const testnet = parsePaymentLink(tronBody({ network: 'testnet' }));
+  assert.equal(testnet?.network, 'testnet');
+  assert.equal(testnet?.crossChainPayment, true);
+  const open = parsePaymentLink(tronBody({ amount: null }));
+  assert.equal(open?.amount, null);
+  assert.equal(open && amountLabel(open), null);
+  const fee = parsePaymentLink(
+    tronBody({ merchantFee: { bps: 100, fixed: '0', amount: '0.25', asset: 'USDT', wallet: '0x52908400098527886E0F7030069857D2E4169EE7', paidBy: 'payer' } }),
+  );
+  assert.equal(fee?.merchantFee?.bps, 100);
+  assert.equal(fee?.crossChainPayment, true);
+});
+
+test('a native link offers paying from another network only on mainnet and with no fee', () => {
+  assert.equal(parsePaymentLink(stellarBody({ network: 'public', crossChainPayment: true }))?.crossChainPayment, true);
+  assert.equal(parsePaymentLink(stellarBody({ network: 'testnet', crossChainPayment: true }))?.crossChainPayment, false);
+  // The payer types the amount, and the quote pays exactly that.
+  assert.equal(parsePaymentLink(stellarBody({ network: 'public', amount: null, crossChainPayment: true }))?.crossChainPayment, true);
+  // A server that predates the field offers nothing more.
+  assert.equal(parsePaymentLink(stellarBody({ network: 'public' }))?.crossChainPayment, false);
 });

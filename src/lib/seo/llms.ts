@@ -16,6 +16,7 @@ import { pageUrl } from "@/lib/seo/lang-urls";
 import { markdownUrl } from "@/lib/seo/markdown-urls";
 import { GITHUB_ORG, SDK_NPM, SDK_PACKAGE, WALLET_RELEASES } from "@/lib/seo/schema";
 import { AGENT_SKILLS_INDEX_PATH, COSMOS_PAY_SKILL_REPO } from "@/lib/seo/agent-skills";
+import { KIT_ZIP } from "@/lib/site/brand";
 
 export interface LlmsInput {
   site: string;
@@ -82,7 +83,7 @@ const PAGE_LABELS: Record<PaymentsPage, [string, string]> = {
   "learn/accept-usdc-payments": ["How to accept USDC payments online", "a payment link, the hosted checkout or the API; what the merchant and the payer need; testing on a test network first"],
   "learn/whatsapp-payment-links": ["Payment links on WhatsApp", "create a payment link in the dashboard, send it in a chat or as a printed QR code, and see when it is paid"],
   "learn/stablecoin-payment-gateway": ["What is a stablecoin payment gateway?", "stablecoins, settlement to the merchant's own address, network fees, custodial and non-custodial gateways"],
-  "learn/stellar-vs-solana-vs-monad": ["Stellar vs Solana vs Monad for accepting payments", "the three networks payments settle on, compared as Cosmos Pay supports them: link standard, matching, assets with a preset, test networks, fees"],
+  "learn/stellar-vs-solana-vs-monad": ["Stellar vs Solana vs Monad for accepting payments", "the three networks with a payment link standard of their own, compared as Cosmos Pay supports them: link standard, matching, assets with a preset, test networks, fees"],
   "learn/accept-usdc-with-solana-pay": ["How to accept USDC with Solana Pay links", "Solana Pay transfer requests matched by a reference key per link, testing on Devnet, the API request and confirming each payment"],
   "learn/confirm-stablecoin-payments": ["How to confirm a stablecoin payment on your server", "signed webhooks (X-Cosmos-Signature, HMAC-SHA256), retries and redelivery, handling each event once, and checking a payment yourself"],
   "learn/usdt0-from-stellar": ["How to send USDT0 from Stellar to EVM networks", "21 routes, fees in XLM, about 27 minutes to deliver, and each step from quote to delivery"],
@@ -113,7 +114,7 @@ Key facts:
 - Testing: API keys starting with dv_ run on testnet and prod_ keys on mainnet. The key decides the network, not the code.
 - Rates per payment: ${paymentRates()}. Protected payments add ${PROTECTED_PAYMENT_FEE_PCT}% per payment. Private payments (the amount hidden on-chain behind a zero-knowledge proof, on testnet for now) cost ${PRIVATE_PAYMENT_FEE_PCT}% per transaction. The payer's wallet pays the network fee.
 - Swap commission: ${swapRates()}; ${swapFeePct("community")} without an account.
-- Payer wallets: any wallet that opens standard payment links (SEP-7, Solana Pay, EIP-681), such as Freighter, xBull, Rabet, LOBSTR, Albedo, Cosmos Pay Wallet, Phantom, Solflare or any EVM wallet; a payer whose funds are on any of the ${NETWORK_IDS.length} networks swaps them in first.
+- Payer wallets: any wallet that opens standard payment links (SEP-7, Solana Pay, EIP-681), such as Freighter, xBull, Rabet, LOBSTR, Albedo, Cosmos Pay Wallet, Phantom, Solflare or any EVM wallet; a payer whose funds are on any other of the ${NETWORK_IDS.length} networks pays from there, through a deposit address made for the payment on the hosted checkout.
 
 ## Accept payments
 
@@ -158,6 +159,7 @@ ${authLine(site)}
 ## Company
 
 - [About Cosmos Pay](${pageUrl(site, "/about")}): what Cosmos Pay makes and on which networks, its public code on GitHub, the SDK on npm and how to reach the team
+- [Brand assets](${pageUrl(site, "/brand")}): how to write the name, the logo, isotype and app icon in SVG and PNG, the four brand colours, the Open Sauce One typeface and the astronaut illustrations; every file in [one brand kit](${site}${KIT_ZIP})
 - Contact: organization@cosmospay.lat
 
 ## Optional
@@ -233,7 +235,7 @@ ${authLine(payments)}
 
 ## Optional
 
-- [Cosmos Pay company site](${site}/), its [plans](${pageUrl(site, "/pricing")}) and [about page](${pageUrl(site, "/about")})
+- [Cosmos Pay company site](${site}/), its [plans](${pageUrl(site, "/pricing")}), [about page](${pageUrl(site, "/about")}) and [brand assets](${pageUrl(site, "/brand")})
 - [Terms and conditions](${site}/tos)
 `;
 }

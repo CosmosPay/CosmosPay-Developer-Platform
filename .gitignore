@@ -49,3 +49,8 @@ wallet-data-export*.json
 # share cards, drawn from the page registry by scripts/build-og-images.mjs (npm run og:build;
 # build, build:app and predev run it) and fingerprinted by Vite under /_astro/
 /src/assets/og/
+
+# the brand page's generated files and kit (black SVGs, PNGs, palette, ZIP), made from public/brand
+# by scripts/build-brand-kit.mjs (npm run brand:build; build, build:app, predev and dev:mock run it)
+/public/brand/kit/
+/src/assets/brand-kit.json

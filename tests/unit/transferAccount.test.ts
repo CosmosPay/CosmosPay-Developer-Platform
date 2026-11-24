@@ -11,7 +11,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import {
   TRANSFER_ACCOUNT_STATUSES, birthDateProblem, emailOk, emptyTransferAccountDraft, parseTransferAccount, phoneOk, postalCodeOk,
-  safeVerificationUrl, taxIdProblem, transferAccountBody, transferAccountCanStart, transferAccountStepOk, transferAccountWaiting,
+  safeVerificationUrl, taxIdProblem, transferAccountBody, transferAccountCanStart, transferAccountReadFailure, transferAccountStepOk, transferAccountWaiting,
   type TransferAccountDraft,
 } from '@/lib/transfer-account';
 import { cvuOk } from '@/lib/payments/fiat-request';
@@ -38,6 +38,17 @@ test('the server\'s account parses in every status, and an approved one carries 
     { alias: null }, { cvu: null }, { updatedAt: 'yesterday' }, { reason: 7 },
   ]) assert.equal(parseTransferAccount(account(bad)), null, JSON.stringify(bad));
   for (const junk of [null, 'x', [], 1]) assert.equal(parseTransferAccount(junk), null, JSON.stringify(junk));
+});
+
+test('a rail the server lacks or has off hides the card; an error shows only once an account was read', () => {
+  for (const status of [404, 501, 503]) {
+    assert.equal(transferAccountReadFailure(status, false), 'hide', String(status));
+    assert.equal(transferAccountReadFailure(status, true), 'hide', String(status));
+  }
+  for (const status of [400, 401, 403, 429, 500, 502, undefined, null]) {
+    assert.equal(transferAccountReadFailure(status, false), 'hide', String(status));
+    assert.equal(transferAccountReadFailure(status, true), 'error', String(status));
+  }
 });
 
 test('the verification form opens only over https (http only on a local host)', () => {

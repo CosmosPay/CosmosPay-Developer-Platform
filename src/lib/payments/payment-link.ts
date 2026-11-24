@@ -3,10 +3,10 @@
    and every decision the page makes from it. Pure, so it is unit-tested under plain
    node; the browser script only wires it to the DOM. */
 import { DEFAULT_CHECKOUT_THEME, isCheckoutTheme, type CheckoutTheme } from "@/lib/payments/checkout-themes";
-import { CHAINS, CHAIN_NAMES, NATIVE_CODES, explorerTxUrl as chainExplorerTx, type Chain, type Tier } from "@/lib/chains";
+import { CHAINS, NETWORK_NATIVE_CODES, explorerTxUrl as chainExplorerTx, isChain, isDepositNetwork, isNetwork, networkName, type Chain, type NetworkId, type Tier } from "@/lib/chains";
 
 // The chain vocabulary is src/lib/chains.ts's; re-exported for the checkout and the embed.
-export { CHAINS, type Chain, type Tier };
+export { CHAINS, isDepositNetwork, type Chain, type NetworkId, type Tier };
 export type LinkStatus = "PENDING" | "SUBMITTED" | "SUCCEEDED" | "FAILED" | "CANCELLED" | "EXPIRED";
 export const LINK_STATUSES: readonly LinkStatus[] = ["PENDING", "SUBMITTED", "SUCCEEDED", "FAILED", "CANCELLED", "EXPIRED"];
 
@@ -31,11 +31,16 @@ export interface MerchantFee {
 export interface PaymentLink {
   id: string;
   kind: "PAY" | "TX";
-  chain: Chain;
+  /** Where it settles: any network of NETWORK_IDS. Stellar, Solana and Monad have their own wallet links. */
+  chain: NetworkId;
   network: Tier;
   status: LinkStatus;
-  /** Where the payer sends: always the address inside `uri`. */
-  payTo: string;
+  /**
+   * Where the payer sends: always the address inside `uri`. Null on every network but Stellar,
+   * Solana and Monad: the payer pays a deposit address made for the payment
+   * (src/lib/payments/deposits.ts), never the merchant directly.
+   */
+  payTo: string | null;
   /** Decimal in the asset's units; null when the payer chooses. */
   amount: string | null;
   /** Asset code, or "native" for the chain's coin. */
@@ -59,6 +64,13 @@ export interface PaymentLink {
    * envelope with both payments (buildPayerTransaction). `uri` is this page then.
    */
   payerAccountRequired: boolean;
+  /**
+   * The payer may pay from another network, with any token listed there, through a deposit
+   * address made for the payment. Always so on a network with no wallet link of its own (the only
+   * way to pay it); on Stellar, Solana and Monad only for a mainnet link with an amount and no
+   * merchant fee.
+   */
+  crossChainPayment: boolean;
 }
 
 /* Prisma `cuid()` (v1): "c" + lowercase base36. Checked before any request so a mistyped
@@ -70,7 +82,7 @@ export function isPaymentLinkId(id: string | undefined | null): id is string {
 }
 
 /* The only schemes a payment URI may carry. Anything else (javascript:, data:, http:) is
-   refused before it can become an href. */
+   refused before it can become an href. A link on any other network carries the hosted checkout. */
 const URI_SCHEMES: Record<Chain, RegExp> = {
   stellar: /^web\+stellar:(pay|tx)\?/i,
   // A transfer request names the recipient; a transaction request (a link with a merchant fee)
@@ -109,22 +121,39 @@ export function parsePaymentLink(body: unknown): PaymentLink | null {
   const b = body as Record<string, unknown>;
   if (!str(b.id) || !isPaymentLinkId(b.id)) return null;
   if (b.kind !== "PAY" && b.kind !== "TX") return null;
-  if (!CHAINS.includes(b.chain as Chain)) return null;
+  if (!isNetwork(b.chain)) return null;
   if (b.network !== "public" && b.network !== "testnet") return null;
   if (!isLinkStatus(b.status)) return null;
-  if (!str(b.payTo) || !b.payTo || !str(b.asset) || !str(b.memo) || !str(b.uri) || !str(b.qr) || !str(b.createdAt)) return null;
+  if (!str(b.asset) || !str(b.memo) || !str(b.uri) || !str(b.qr) || !str(b.createdAt)) return null;
   if (!strOrNull(b.amount) || !strOrNull(b.assetIssuer) || !strOrNull(b.msg) || !strOrNull(b.txHash)) return null;
   if (!strOrNull(b.networkFee) || !strOrNull(b.expiresAt)) return null;
   // a deadline the page cannot read would break the countdown and the poll timing
   if (b.expiresAt !== null && !Number.isFinite(Date.parse(b.expiresAt))) return null;
-  const chain = b.chain as Chain;
+  const chain = b.chain;
   const merchantFee = parseMerchantFee(b.merchantFee);
   if (merchantFee === undefined) return null;
-  // Only a Stellar link with a fee builds its envelope for its payer; anything else claiming
-  // it would hide the wallet link the payment needs.
   const payerAccountRequired = b.payerAccountRequired === true;
-  if (payerAccountRequired && (chain !== "stellar" || !merchantFee || b.amount === null)) return null;
-  if (payerAccountRequired ? !CHECKOUT_URI.test(b.uri) : !URI_SCHEMES[chain].test(b.uri)) return null;
+  let crossChainPayment: boolean;
+  if (isChain(chain)) {
+    if (!str(b.payTo) || !b.payTo) return null;
+    // Only a Stellar link with a fee builds its envelope for its payer; anything else claiming
+    // it would hide the wallet link the payment needs.
+    if (payerAccountRequired && (chain !== "stellar" || !merchantFee || b.amount === null)) return null;
+    if (payerAccountRequired ? !CHECKOUT_URI.test(b.uri) : !URI_SCHEMES[chain].test(b.uri)) return null;
+    // Offered only where the server can take it: a mainnet link with no fee, with an amount or
+    // one the payer types (a fee goes to a wallet on the chain, which the route cannot pay beside
+    // the merchant; a server that predates the field says nothing, which is no).
+    crossChainPayment = b.crossChainPayment === true && b.network === "public" && !merchantFee;
+  } else {
+    // Every other network is paid through a deposit address made for the payment: `payTo` is
+    // none, the `uri` is this page. Which of those links can be paid is the server's call and it
+    // says so in `crossChainPayment`: mainnet or a test network it settles, a set amount or one
+    // the payer types, with or without a merchant fee (the route pays it). A body that says
+    // otherwise would show the payer an address to pay that is not one.
+    if (b.payTo !== null || payerAccountRequired) return null;
+    if (b.kind !== "PAY" || b.crossChainPayment !== true || !CHECKOUT_URI.test(b.uri)) return null;
+    crossChainPayment = true;
+  }
   if (!QR_DATA_URL.test(b.qr)) return null;
   return {
     id: b.id,
@@ -132,7 +161,7 @@ export function parsePaymentLink(body: unknown): PaymentLink | null {
     chain,
     network: b.network,
     status: b.status as LinkStatus,
-    payTo: b.payTo,
+    payTo: isChain(chain) ? (b.payTo as string) : null,
     amount: b.amount,
     asset: b.asset,
     assetIssuer: b.assetIssuer,
@@ -149,6 +178,7 @@ export function parsePaymentLink(body: unknown): PaymentLink | null {
     checkoutTheme: isCheckoutTheme(b.checkoutTheme) ? b.checkoutTheme : DEFAULT_CHECKOUT_THEME,
     merchantFee,
     payerAccountRequired,
+    crossChainPayment,
   };
 }
 
@@ -265,12 +295,23 @@ export async function reportCheckoutEvent(
   id: string,
   event: CheckoutEvent,
   fetchImpl: typeof fetch = fetch,
+  /** This checkout session's token, sent with every event of the session. */
+  payerToken?: string | null,
+  /** What the session's wallet said it pays from and the transaction it answered: the session's
+      proof, which decides who gets the receipt (a bare `sent` decides nothing). Only with a token. */
+  proof: { address?: string | null; txHash?: string | null } = {},
 ): Promise<boolean> {
+  const body: Record<string, string> = { event };
+  if (payerToken) {
+    body.payerToken = payerToken;
+    if (proof.address) body.address = proof.address;
+    if (proof.txHash) body.txHash = proof.txHash;
+  }
   try {
     const res = await fetchImpl(`${apiBase.replace(/\/+$/, "")}/v1/payment-links/${encodeURIComponent(id)}/events`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ event }),
+      body: JSON.stringify(body),
       cache: "no-store",
       keepalive: true,
     });
@@ -281,11 +322,16 @@ export async function reportCheckoutEvent(
 }
 
 export function assetSymbol(link: Pick<PaymentLink, "chain" | "asset">): string {
-  return !link.asset || link.asset === "native" ? NATIVE_CODES[link.chain] : link.asset;
+  return !link.asset || link.asset === "native" ? NETWORK_NATIVE_CODES[link.chain] : link.asset;
 }
 
-export function chainName(chain: Chain): string {
-  return CHAIN_NAMES[chain];
+export function chainName(chain: NetworkId): string {
+  return networkName(chain);
+}
+
+/** The link's `uri` is the hosted checkout (a Stellar link with a fee, or any network paid through a deposit address), not a wallet link. */
+export function opensCheckout(link: Pick<PaymentLink, "chain" | "payerAccountRequired">): boolean {
+  return link.payerAccountRequired || isDepositNetwork(link.chain);
 }
 
 /** "25.5 XLM", or null when the payer chooses the amount. */
@@ -339,7 +385,7 @@ export function canPayWithExtension(link: Pick<PaymentLink, "chain" | "kind" | "
   return link.chain === "stellar" && link.kind === "PAY" && /^web\+stellar:pay\?/i.test(link.uri);
 }
 
-/** The web wallet reads `?uri=web+stellar:…` itself; it has no Solana or Monad intake. */
+/** The web wallet reads `?uri=web+stellar:…` itself; it has no other network's intake. */
 export function webWalletUrl(base: string, link: Pick<PaymentLink, "chain" | "uri">): string | null {
   if (link.chain !== "stellar") return null;
   const url = new URL(base);

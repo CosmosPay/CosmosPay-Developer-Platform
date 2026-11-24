@@ -8,7 +8,7 @@ here is a bug; a rule that should change is changed here first.
 
 | Surface | Host | Skin | Stylesheets |
 |---|---|---|---|
-| Company site (landing, /pricing, /about, /swaps) | cosmospay.lat | Brand skin (BRAND.md: black and navy panels, white canvas) | `cosmos.css`, `views.css` |
+| Company site (landing, /pricing, /about, /brand, /swaps) | cosmospay.lat | Brand skin (BRAND.md: black and navy panels, white canvas) | `cosmos.css`, `views.css` |
 | Payments gateway (landing, content pages, guides, checkout) | payments.cosmospay.lat | Institutional skin (`body.inst`) | `cosmos.css`, `institutional.css`, `payments-landing.css` |
 | Dashboard and platform | dev.cosmospay.lat | Institutional skin | `cosmos.css`, `institutional.css`, `dashboard.css`, `views.css` |
 

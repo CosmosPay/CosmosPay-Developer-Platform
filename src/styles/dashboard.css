@@ -1253,6 +1253,16 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .zka-exists-head { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; line-height: 1.4; color: var(--ink); }
 .zka-exists-head svg { width: 18px; height: 18px; flex: 0 0 auto; margin-top: 1px; }
 .zka-exists-meta { margin: 0; font-size: 13px; line-height: 1.5; color: var(--ink-2); }
+/* A payment link's route check: the origins that cannot pay its amount (PaymentRecordView). */
+.pay-routes { margin: 0; }
+.pay-routes-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.pay-routes-list li { display: grid; gap: 2px; min-width: 0; font-size: 13.5px; }
+.pay-routes-why { font-size: 12.5px; line-height: 1.45; color: var(--ink-2); overflow-wrap: anywhere; }
+/* The create form's limits on payments from other networks, under "more options". */
+.paylink-limits { display: grid; gap: 8px; margin-top: 12px; }
+/* A customer's email a payer typed on the payment page: coloured text, never a chip. */
+.cust-email { display: inline-flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cust-email-payer { font-size: 12px; color: var(--ink-3); }
 .zka-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .zka-choice { display: flex; align-items: flex-start; gap: 10px; padding: 12px; border: 1.5px solid var(--line); border-radius: var(--radius); background: var(--surface); color: var(--ink); font: inherit; text-align: left; cursor: pointer; transition: border-color .15s ease; }
 .zka-choice:hover { border-color: var(--line-2); }
@@ -1348,6 +1358,12 @@ html:not([data-theme="dark"]) .inst .pill-st.fail { color: #B42F2F; }
 .fbar.liq-lookup .fbar-filters { align-items: flex-end; flex: 1 1 auto; }
 .fbar.liq-lookup .fbar-filters > .fld, .fbar.liq-lookup .fbar-filters > div { margin: 0; min-width: 220px; }
 .fbar.liq-lookup .paylink-actions { margin: 0; }
+
+/* The emails payers gave in a link's checkout (PaymentRecordView's PayerEmails). */
+.inst .pay-emails { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
+.inst .pay-emails li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-width: 0; }
+.inst .pay-emails-addr { overflow-wrap: anywhere; font-weight: 500; }
+.inst .pay-emails-meta { color: var(--ink-2); font-size: 13px; }
 
 /* ---- QR charges (views/QrChargesView.tsx): the list's description and network lines, the detail's
    QR beside its fields (stacked on a phone), the create dialog's estimate ---- */

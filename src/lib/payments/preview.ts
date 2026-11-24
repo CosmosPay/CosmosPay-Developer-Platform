@@ -30,5 +30,6 @@ export function previewLink(theme: CheckoutTheme, now: number = Date.now()): Pay
     checkoutTheme: theme,
     merchantFee: null,
     payerAccountRequired: false,
+    crossChainPayment: false,
   };
 }

@@ -118,6 +118,17 @@ export const transferAccountWaiting = (status: TransferAccountStatus) => status 
 /** A new account can be started: none yet, or the last one was rejected. */
 export const transferAccountCanStart = (status: TransferAccountStatus) => status === "none" || status === "rejected";
 
+/** What the card does when reading the account failed (`status` is the HTTP status, `undefined`
+    when no answer came back or the answer was not an account). Bank transfers are a rail a server
+    may not have yet (404) or may have off (501, 503): the card then is not drawn at all, never a
+    standing error for something the organization cannot turn on. Any other failure is said, with a
+    retry, only once an account was read here (the rail is there and the read broke); before that it
+    is not drawn either. */
+export function transferAccountReadFailure(status: number | null | undefined, everRead: boolean): "hide" | "error" {
+  if (status === 404 || status === 501 || status === 503) return "hide";
+  return everRead ? "error" : "hide";
+}
+
 /* ---- the activation form ---- */
 
 /* The first two digits of a CUIT or CUIL say who holds it: people 20, 23, 24 and 27, companies

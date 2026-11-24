@@ -34,7 +34,7 @@ import { AddressLink, shortAddress } from "@/components/cosmos/dashboard/compone
 import { FilterBar } from "@/components/cosmos/dashboard/components/FilterBar";
 import { Sk, ListSkeleton } from "@/components/cosmos/dashboard/components/Skeleton";
 import { explorerUrl, chainOf, assetLabel } from "@/components/cosmos/dashboard/components/PayLinkDetail";
-import { CHAINS, CHAIN_NAMES } from "@/lib/chains";
+import { NETWORK_IDS, NETWORKS_BY_NAME, networkName } from "@/lib/chains";
 import { countBy, matchesQuery } from "@/lib/dashboard-filters";
 
 const short = (a) => (a && a.length > 14 ? `${a.slice(0, 6)}…${a.slice(-4)}` : a || "-");
@@ -55,7 +55,7 @@ const FAILED = ["FAILED", "CANCELLED", "EXPIRED"];
 const groupOf = (status) => (status === SETTLED ? "settled" : FAILED.includes(status) ? "failed" : "open");
 const GROUPS = ["settled", "open", "failed"];
 const DEFAULTS = { q: "", status: "all", chain: "all" };
-const ALLOWED = { status: ["all", ...GROUPS], chain: ["all", ...CHAINS] };
+const ALLOWED = { status: ["all", ...GROUPS], chain: ["all", ...NETWORK_IDS] };
 
 /* The organization id, copyable: the merchant code of the reference. */
 function OrgIdField({ id, label }) {
@@ -191,7 +191,7 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
   const matches = (p, skip) =>
     (skip === "status" || filters.status === "all" || groupOf(p.status) === filters.status) &&
     (skip === "chain" || filters.chain === "all" || chainOf(p) === filters.chain) &&
-    matchesQuery([p.id, p.source, p.destination, p.amount, p.asset, p.memo, CHAIN_NAMES[chainOf(p)]], filters.q);
+    matchesQuery([p.id, p.source, p.destination, p.amount, p.asset, p.memo, networkName(chainOf(p))], filters.q);
   const shown = all.filter((p) => matches(p, null));
   const groupCounts = countBy(all.filter((p) => matches(p, "status")), (p) => groupOf(p.status));
   const chainCounts = countBy(all.filter((p) => matches(p, "chain")), (p) => chainOf(p));
@@ -329,7 +329,7 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
               ...GROUPS.map((g) => ({ key: g, label: h.groups[g], count: groupCounts[g] || 0, icon: <StatusIcon tone={g === "settled" ? "ok" : g === "failed" ? "fail" : "wait"} size={16} /> })),
             ],
           }}
-          selects={[{ key: "chain", label: fl.network, value: filters.chain, onChange: (v) => set("chain", v), options: [{ key: "all", label: fl.allNetworks }, ...CHAINS.map((c) => ({ key: c, label: CHAIN_NAMES[c], count: chainCounts[c] || 0, icon: <NetworkMark chain={c} size={18} /> }))] }]}
+          selects={[{ key: "chain", label: fl.network, value: filters.chain, onChange: (v) => set("chain", v), options: [{ key: "all", label: fl.allNetworks }, ...NETWORKS_BY_NAME.filter((c) => all.some((p) => chainOf(p) === c) || filters.chain === c).map((c) => ({ key: c, label: networkName(c), count: chainCounts[c] || 0, icon: <NetworkMark chain={c} size={18} /> }))] }]}
           active={active} onReset={reset}
           shown={shown.length} total={rows === null ? undefined : all.length} loading={rows === null}
         />
@@ -348,8 +348,8 @@ export function OverviewView({ org, orgs = [], onSwitchOrg = (id) => {}, onGo = 
                     <div><dt>{h.thId}</dt><dd><RecordLink href={recordHref("payment", p.id)} onOpen={() => openRecord("payment", p.id)} copy={p.id} preview={() => <PaymentPreview p={p} status={(h.status && h.status[p.status]) || p.status} />}><code>{short(p.id)}</code></RecordLink></dd></div>
                     <div><dt>{h.thStatus}</dt><dd className={`hub-st-t ${p.status === SETTLED ? "ok" : FAILED.includes(p.status) ? "fail" : "wait"}`}>{(h.status && h.status[p.status]) || p.status}</dd></div>
                     <div><dt>{h.thDate}</dt><dd>{fmtDateTime(p.createdAt)}</dd></div>
-                    <div><dt>{h.thAmount}</dt><dd><span className="cell-mark"><TokenMark symbol={assetLabel(p.asset, chainOf(p))} chain={chainOf(p)} chainName={CHAIN_NAMES[chainOf(p)]} size={18} /><span><b>{p.amount ? amount(p.amount) : "-"}</b> {assetLabel(p.asset, chainOf(p))}</span></span></dd></div>
-                    <div><dt>{h.thNetwork}</dt><dd><span className="cell-mark"><NetworkMark chain={chainOf(p)} size={18} /><span>{CHAIN_NAMES[chainOf(p)]}</span></span></dd></div>
+                    <div><dt>{h.thAmount}</dt><dd><span className="cell-mark"><TokenMark symbol={assetLabel(p.asset, chainOf(p))} chain={chainOf(p)} chainName={networkName(chainOf(p))} size={18} /><span><b>{p.amount ? amount(p.amount) : "-"}</b> {assetLabel(p.asset, chainOf(p))}</span></span></dd></div>
+                    <div><dt>{h.thNetwork}</dt><dd><span className="cell-mark"><NetworkMark chain={chainOf(p)} size={18} /><span>{networkName(chainOf(p))}</span></span></dd></div>
                     <div><dt>{h.thFrom}</dt><dd><AddressLink chain={chainOf(p)} network={p.network} address={p.source} label={h.thFrom} context={accountContext(p.source)} /></dd></div>
                     <div><dt>{h.thTo}</dt><dd><AddressLink chain={chainOf(p)} network={p.network} address={p.destination} label={h.thTo} context={accountContext(p.destination)} /></dd></div>
                   </dl>
