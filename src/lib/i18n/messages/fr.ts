@@ -648,7 +648,7 @@ export default {
       },
       company: {
         title: "Entreprise",
-        links: ["À propos", "Carrières", "Salle de presse", "Sécurité", "Confidentialité et conditions", "Conformité"]
+        links: ["À propos", "Carrières", "Salle de presse", "Sécurité", "Confidentialité et conditions", "Conformité", "Marque"]
       }
     }
   },
@@ -1066,6 +1066,122 @@ export default {
       lede: "Écrivez-nous par e-mail ou sur l’un de nos profils. Pour une question sur votre compte, ouvrez un ticket depuis l’assistance du tableau de bord.",
       support: "Ouvrir l’assistance",
       profiles: "Nos profils",
+    },
+  },
+
+  brand: {
+    title: "Ressources de marque Cosmos Pay",
+    lede: "Le logo, les couleurs, la police et les illustrations de Cosmos Pay, pour nommer et montrer la marque correctement dans les articles, les annuaires et les intégrations.",
+    download: "Télécharger le kit de marque",
+    kitSize: "ZIP, {size}",
+    downloadLabel: "Télécharger {name} ({format})",
+    facts: {
+      logos: "Logos",
+      logosValue: "{n} logos en SVG et PNG",
+      colours: "Couleurs",
+      coloursValue: "{n} couleurs",
+      typeface: "Police",
+      illustrations: "Illustrations",
+      illustrationsValue: "{n} poses en {styles} styles",
+    },
+    name: {
+      title: "Le nom",
+      lede: "Deux mots, chacun avec une majuscule : Cosmos Pay. Les minuscules du logo font partie de son dessin.",
+      items: {
+        company: "L’entreprise et ce site.",
+        payments: "La passerelle de paiement.",
+        wallet: "Le wallet non dépositaire.",
+        handle: "Notre identifiant sur GitHub et X.",
+      },
+      walletLink: "Obtenir le wallet",
+    },
+    logo: {
+      title: "Logo",
+      lede: "Noir sur fond clair, blanc sur fond sombre ou navy. Toujours l’un de ces fichiers, jamais le nom tapé dans une police.",
+      items: {
+        lockup: { t: "Logo Cosmos Pay", d: "Le logo principal, pour tout ce qui nomme Cosmos Pay." },
+        wallet: { t: "Logo Cosmos Pay Wallet", d: "Pour le wallet uniquement." },
+        isotype: { t: "Symbole", d: "Le C seul : favicon, icône d’application et avatar." },
+        icon: { t: "Icône d’application", d: "Le symbole dans un carré arrondi." },
+        iconMono: { t: "Icône d’application, une couleur", d: "Le carré arrondi d’une seule couleur, le C découpé : le fond apparaît à travers." },
+      },
+      inks: { black: "noir", white: "blanc", blue: "Cosmic Blue" },
+      fileName: "{logo}, {ink}",
+      space: { t: "Zone de protection", d: "Laissez libre la hauteur du c de « cosmos » de chaque côté." },
+      minimum: { t: "Taille minimale", d: "Le symbole ne descend jamais sous {n} px.", value: "{n} px" },
+      donts: {
+        t: "À éviter",
+        items: {
+          stretch: "L’étirer ou l’écraser",
+          recolour: "Changer ses couleurs",
+          rotate: "Le faire pivoter",
+          effects: "Ajouter des ombres ou des effets",
+          busy: "Le poser sur un fond chargé",
+        },
+      },
+    },
+    colour: {
+      title: "Couleur",
+      lede: "Quatre couleurs et aucune autre. Le noir et le blanc sont la base ; les deux bleus sont des surfaces et des accents, jamais le fond d’une page.",
+      roles: {
+        black: "Texte sur clair, fond en sombre.",
+        white: "Fond en clair, texte sur sombre.",
+        navy: "Surfaces de marque : panneaux et cartes.",
+        blue: "L’accent : boutons principaux, liens et le ruban.",
+      },
+      hex: "HEX",
+      rgb: "RVB",
+      copy: "Copier {value}",
+      copied: "{value} copié",
+      palette: "Télécharger la palette (TXT)",
+    },
+    type: {
+      title: "Police",
+      lede: "Open Sauce One compose chaque titre et chaque ligne de texte, en {n} graisses. Elle est libre d’utilisation sous la SIL Open Font License.",
+      designer: "Créateur",
+      licence: "Licence",
+      weights: "Graisses",
+      source: "Obtenir Open Sauce One",
+      readLicence: "Lire la licence",
+      licenceFile: "Télécharger la licence (TXT)",
+    },
+    illustrations: {
+      title: "L’astronaute",
+      lede: "Le personnage de la marque, en {n} poses. Chacune existe en trait noir, en trait Cosmic Blue et en sticker pour les fonds sombres et les photos.",
+      poses: {
+        phone: "Avec un téléphone",
+        floating: "En apesanteur",
+        working: "Devant un ordinateur",
+        thinking: "Pensif",
+        thumbsUp: "Pouce levé",
+        standing: "Debout",
+        relaxed: "Allongé",
+      },
+      styles: { black: "Trait noir", blue: "Trait Cosmic Blue", sticker: "Sticker" },
+      fileName: "{pose}, {style}",
+      all: { t: "Toutes les poses dans un fichier", a: "Télécharger toutes les poses (SVG)" },
+      phones: {
+        t: "Avec un téléphone, en quatre dessins vectoriels",
+        styles: { line: "Trait noir", sticker: "Sticker", blueSticker: "Sticker Cosmic Blue", cutout: "Blanc, traits découpés" },
+      },
+      rules: {
+        t: "Utiliser l’astronaute",
+        size: "Au moins {n} px de haut, jamais comme icône",
+        one: "Une pose par écran",
+        colours: "Uniquement dans les couleurs de la palette",
+      },
+    },
+    graphics: {
+      title: "Le ruban et les traits",
+      lede: "Une ligne courbe et continue, pour le mouvement et la connexion. Le ruban vit sur le noir ou le navy ; les traits en sont la version au trait, dans une couleur de la palette.",
+      ribbon: "Le ruban",
+      strokes: "Les traits",
+      stroke: "Trait {n}",
+    },
+    usage: {
+      title: "Utiliser ces fichiers",
+      lede: "Utilisez-les pour parler de Cosmos Pay dans des articles, des annuaires et des intégrations. Les utiliser ne signifie pas que Cosmos Pay est votre partenaire ni qu’il vous recommande.",
+      contact: "Pour toute autre question sur la marque, écrivez-nous.",
     },
   },
   swapsPage: {

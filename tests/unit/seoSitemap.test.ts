@@ -10,7 +10,7 @@ const ORIGINS = { site: 'https://cosmospay.lat', dev: 'https://dev.cosmospay.lat
 test('the company site lists every page once per language it is written in: English bare, the others ?lang=', () => {
   const entries = siteEntries(ORIGINS.site);
   const locs = entries.map((e) => e.loc);
-  for (const path of ['/', '/pricing', '/about']) {
+  for (const path of ['/', '/pricing', '/about', '/brand']) {
     const url = new URL(path, ORIGINS.site).href;
     assert.ok(locs.includes(url), `${path} English`);
     for (const lang of ['es', 'pt', 'fr', 'de', 'hi', 'zh']) assert.ok(locs.includes(`${url}?lang=${lang}`), `${path} ${lang}`);
@@ -21,7 +21,7 @@ test('the company site lists every page once per language it is written in: Engl
   // The terms exist in English and Spanish only.
   assert.deepEqual(locs.filter((l) => l.includes('/tos')), ['https://cosmospay.lat/tos', 'https://cosmospay.lat/tos?lang=es']);
   assert.equal(new Set(locs).size, locs.length, 'no URL twice');
-  assert.equal(entries.length, 3 * 7 + 2);
+  assert.equal(entries.length, 4 * 7 + 2);
 });
 
 test('each entry names all the versions of its page, itself included', () => {
@@ -86,6 +86,8 @@ test('the XML is a urlset with hreflang links, and the platform an index of the 
   assert.ok(site.includes('<xhtml:link rel="alternate" hreflang="en" href="https://cosmospay.lat/about"/>'));
   assert.ok(!site.includes('/swaps'), 'the company /swaps is canonical on the gateway');
   assert.ok(site.includes('<loc>https://cosmospay.lat/about?lang=zh</loc>'));
+  assert.ok(site.includes('<loc>https://cosmospay.lat/brand?lang=hi</loc>'));
+  assert.ok(site.includes('<xhtml:link rel="alternate" hreflang="x-default" href="https://cosmospay.lat/brand"/>'));
   assert.ok(site.includes('<xhtml:link rel="alternate" hreflang="es" href="https://cosmospay.lat/about?lang=es"/>'));
   assert.ok(site.includes(`<lastmod>${TOS_LAST_UPDATED}</lastmod>`));
   assert.ok(!site.includes('<changefreq>') && !site.includes('<priority>'));

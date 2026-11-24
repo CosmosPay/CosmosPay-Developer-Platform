@@ -2,7 +2,7 @@
  *
  * One deployment answers three domains (nginx sends all three to the same process):
  *
- *   cosmospay.lat           "site"      /, /pricing, /tos, /about  (pages under src/pages/site/)
+ *   cosmospay.lat           "site"      /, /pricing, /tos, /about, /brand  (pages under src/pages/site/)
  *   dev.cosmospay.lat       "dev"       /login, /dashboard, /api…  (the rest of src/pages/)
  *   payments.cosmospay.lat  "payments"  /, its content pages (/integrations, /use-cases, /security,
  *                                       /fees, /compare, /faq, /stellar, /solana, /monad: every
@@ -62,7 +62,11 @@ import { isKeyFilePath } from "@/lib/seo/indexnow";
 import { pageLanguages } from "@/lib/seo/lang-urls";
 import { markdownOwners, pageOfMarkdown } from "@/lib/seo/markdown-urls";
 
-const SITE_PATHS = new Set(["/pricing", "/tos", "/about"]);
+/* The company site's pages. /brand shares its name with the static folder public/brand/: the Node
+   adapter serves files first, and finding a directory with no index.html there it hands the request
+   on, so /brand renders here and /brand/ gets the one-address 301 (scripts/smoke-server.mjs checks
+   both on a production build, and that the files under /brand/ still answer on every domain). */
+const SITE_PATHS = new Set(["/pricing", "/tos", "/about", "/brand"]);
 /* The gateway's content pages (src/lib/payments/site-pages.ts). Its pricing page is /fees,
    because /pricing is the company site's. */
 const PAYMENTS_PATHS = new Set(PAYMENTS_PAGE_PATHS);
@@ -143,7 +147,7 @@ function underPrefix(path: string, prefix: string): boolean {
 
 /**
  * Whether a public path is one of the indexable pages of `area`: the company site's pages (the
- * home, /pricing, /tos, /about, /swaps) or the gateway's (its home and every page in
+ * home, /pricing, /tos, /about, /brand, /swaps) or the gateway's (its home and every page in
  * src/lib/payments/site-pages.ts). Each exists once per language: English at the bare path, the
  * others at `?lang=` (src/lib/seo/lang-urls.ts), so only these follow the visitor's language with
  * a redirect; payment links, /pay, /preview, /zk and /contact resolve it in place (noindex).

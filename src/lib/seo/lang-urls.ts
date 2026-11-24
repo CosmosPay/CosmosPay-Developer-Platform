@@ -36,6 +36,7 @@ const SITE_PAGE_LANGS: Readonly<Record<string, readonly string[] | null>> = {
   "/pricing": null,
   "/swaps": null,
   "/about": null,
+  "/brand": null,
   "/tos": TOS_LANGS,
 };
 

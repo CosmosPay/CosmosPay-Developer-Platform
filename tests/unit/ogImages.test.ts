@@ -114,6 +114,7 @@ test('a card renders as a 1200x630 PNG on either host, in Latin, Devanagari and 
     ['site', '/', 'en'],
     ['site', '/pricing', 'hi'],
     ['site', '/about', 'zh'],
+    ['site', '/brand', 'hi'],
   ] as const) {
     const card = ogCard(area, path, lang);
     assert.ok(card, `${area} ${path} ${lang}`);
