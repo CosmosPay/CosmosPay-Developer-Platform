@@ -23,13 +23,15 @@ const FOOT_GROUPS: { key: string; links: { i: number; href: string }[] }[] = [
     ],
   },
   {
-    // The gateway's page for each network a payment settles on (src/lib/payments/site-pages.ts).
+    // The gateway's page for each network a payment settles on (src/lib/payments/site-pages.ts),
+    // in alphabetical order: copy never leads with Stellar, Solana and Monad as if they were the
+    // only networks (see "Cosmos Pay works with every network" in CLAUDE.md).
     key: "networks",
     links: [
-      { i: 0, href: `${PAYMENTS}/stellar` }, // Stellar payments
-      { i: 1, href: `${PAYMENTS}/solana` }, // Solana payments
-      { i: 2, href: `${PAYMENTS}/monad` }, // Monad payments
       { i: 3, href: `${PAYMENTS}/arc` }, // Arc payments
+      { i: 2, href: `${PAYMENTS}/monad` }, // Monad payments
+      { i: 1, href: `${PAYMENTS}/solana` }, // Solana payments
+      { i: 0, href: `${PAYMENTS}/stellar` }, // Stellar payments
     ],
   },
   // Solutions: SaaS & subscriptions, Marketplaces, E-commerce, Platforms, Embedded finance,
