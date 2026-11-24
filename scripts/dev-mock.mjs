@@ -184,6 +184,8 @@ Object.assign(env, {
 if (!existsSync(path.join(root, 'generated', 'prisma', 'client.ts'))) run('npx prisma generate');
 run('node scripts/build-embed.mjs --mode development', env);
 if (!existsSync(path.join(root, 'src', 'assets', 'og', 'manifest.json'))) run('npm run og:build -- --mode development');
+// The brand page's generated files and kit (public/brand/kit): made every time, about a second.
+run('npm run brand:build');
 
 console.log(
   [

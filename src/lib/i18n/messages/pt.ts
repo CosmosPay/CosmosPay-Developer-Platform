@@ -648,7 +648,7 @@ export default {
       },
       company: {
         title: "Empresa",
-        links: ["Sobre", "Carreiras", "Imprensa", "Segurança", "Privacidade e termos", "Conformidade"]
+        links: ["Sobre", "Carreiras", "Imprensa", "Segurança", "Privacidade e termos", "Conformidade", "Marca"]
       }
     }
   },
@@ -1045,6 +1045,122 @@ export default {
       lede: "Escreva para nós por e-mail ou em qualquer um dos nossos perfis. Para uma dúvida sobre a sua conta, abra um ticket em Suporte no painel.",
       support: "Abrir Suporte",
       profiles: "Nossos perfis",
+    },
+  },
+
+  brand: {
+    title: "Recursos de marca da Cosmos Pay",
+    lede: "O logo, as cores, a tipografia e as ilustrações da Cosmos Pay, para nomear e mostrar a marca corretamente em artigos, diretórios e integrações.",
+    download: "Baixar o kit de marca",
+    kitSize: "ZIP, {size}",
+    downloadLabel: "Baixar {name} ({format})",
+    facts: {
+      logos: "Logos",
+      logosValue: "{n} logos em SVG e PNG",
+      colours: "Cores",
+      coloursValue: "{n} cores",
+      typeface: "Tipografia",
+      illustrations: "Ilustrações",
+      illustrationsValue: "{n} poses em {styles} estilos",
+    },
+    name: {
+      title: "O nome",
+      lede: "Duas palavras, cada uma com maiúscula: Cosmos Pay. As minúsculas do logo fazem parte do desenho dele.",
+      items: {
+        company: "A empresa e este site.",
+        payments: "O gateway de pagamentos.",
+        wallet: "A carteira sem custódia.",
+        handle: "Nosso usuário no GitHub e no X.",
+      },
+      walletLink: "Baixar a carteira",
+    },
+    logo: {
+      title: "Logo",
+      lede: "Preto sobre fundos claros, branco sobre fundos escuros e navy. Sempre um destes arquivos, nunca o nome digitado em uma fonte.",
+      items: {
+        lockup: { t: "Logo da Cosmos Pay", d: "O logo principal, para tudo o que nomeia a Cosmos Pay." },
+        wallet: { t: "Logo da Cosmos Pay Wallet", d: "Só para a carteira." },
+        isotype: { t: "Isotipo", d: "O C sozinho: favicon, ícone de app e avatar." },
+        icon: { t: "Ícone de app", d: "O isotipo em um quadrado arredondado." },
+        iconMono: { t: "Ícone de app, uma cor", d: "O quadrado arredondado em uma só cor, com o C vazado: o fundo aparece através dele." },
+      },
+      inks: { black: "preto", white: "branco", blue: "Cosmic Blue" },
+      fileName: "{logo}, {ink}",
+      space: { t: "Área de proteção", d: "Deixe livre a altura do c de “cosmos” em cada lado." },
+      minimum: { t: "Tamanho mínimo", d: "O isotipo nunca fica menor que {n} px.", value: "{n} px" },
+      donts: {
+        t: "O que não fazer",
+        items: {
+          stretch: "Esticar ou achatar",
+          recolour: "Mudar as cores",
+          rotate: "Girar",
+          effects: "Pôr sombras ou efeitos",
+          busy: "Colocar sobre um fundo carregado",
+        },
+      },
+    },
+    colour: {
+      title: "Cor",
+      lede: "Quatro cores e nenhuma outra. Preto e branco são a base; os dois azuis são superfícies e destaques, nunca o fundo de uma página.",
+      roles: {
+        black: "Texto no claro, fundo no escuro.",
+        white: "Fundo no claro, texto no escuro.",
+        navy: "Superfícies da marca: painéis e cartões.",
+        blue: "O destaque: botões principais, links e a fita.",
+      },
+      hex: "HEX",
+      rgb: "RGB",
+      copy: "Copiar {value}",
+      copied: "{value} copiado",
+      palette: "Baixar a paleta (TXT)",
+    },
+    type: {
+      title: "Tipografia",
+      lede: "A Open Sauce One compõe cada título e cada linha de texto, em {n} pesos. O uso é livre sob a SIL Open Font License.",
+      designer: "Design",
+      licence: "Licença",
+      weights: "Pesos",
+      source: "Baixar a Open Sauce One",
+      readLicence: "Ler a licença",
+      licenceFile: "Baixar a licença (TXT)",
+    },
+    illustrations: {
+      title: "O astronauta",
+      lede: "O personagem da marca, em {n} poses. Cada uma vem em linha preta, em linha Cosmic Blue e como adesivo para fundos escuros e fotos.",
+      poses: {
+        phone: "Com o celular",
+        floating: "Flutuando",
+        working: "No notebook",
+        thinking: "Pensando",
+        thumbsUp: "Joinha",
+        standing: "De pé",
+        relaxed: "Deitado",
+      },
+      styles: { black: "Linha preta", blue: "Linha Cosmic Blue", sticker: "Adesivo" },
+      fileName: "{pose}, {style}",
+      all: { t: "Todas as poses em um arquivo", a: "Baixar todas as poses (SVG)" },
+      phones: {
+        t: "Com o celular, em quatro desenhos vetoriais",
+        styles: { line: "Linha preta", sticker: "Adesivo", blueSticker: "Adesivo Cosmic Blue", cutout: "Branco, com as linhas vazadas" },
+      },
+      rules: {
+        t: "Como usar o astronauta",
+        size: "Pelo menos {n} px de altura, nunca como ícone",
+        one: "Uma pose por tela",
+        colours: "Só nas cores da paleta",
+      },
+    },
+    graphics: {
+      title: "A fita e os traços",
+      lede: "Uma linha curva e contínua que fala de movimento e conexão. A fita vive sobre preto ou navy; os traços são a versão em linha dela, em uma cor da paleta.",
+      ribbon: "A fita",
+      strokes: "Os traços",
+      stroke: "Traço {n}",
+    },
+    usage: {
+      title: "Como usar estes arquivos",
+      lede: "Use-os para se referir à Cosmos Pay em artigos, diretórios e integrações. Usá-los não significa que a Cosmos Pay seja sua parceira nem que endosse você.",
+      contact: "Para qualquer outra questão sobre a marca, escreva para nós.",
     },
   },
   swapsPage: {

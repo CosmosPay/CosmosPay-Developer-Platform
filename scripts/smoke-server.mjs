@@ -188,6 +188,69 @@ for (const host of trusted) {
 if (!servedOn) fail(`no trusted host (${trusted.join(', ')}) served /pricing: the company site is unreachable`);
 detail += `; host routing verified (${trusted.join(', ')}; /pricing on ${servedOn})`;
 
+// THE BRAND PAGE AND ITS FILES. /brand is a page of the company site and public/brand/ a static
+// folder, and the Node adapter serves files first: finding a directory without an index.html it
+// hands the request on, so /brand must render the page there (not a redirect to /brand/, not a
+// directory 404), /brand/ must be the one-address 301 every page's slash form is, and the files
+// under /brand/ must still answer on every domain. Every file the page offers to download answers
+// 200 with its type, the kit (built by brand:build before astro build) holds exactly those files
+// and its README, the payments robots.txt still allows /brand/ (its pages draw the brand's files)
+// and the footer on both sites links the page.
+const brandHost = servedOn;
+const brand = await getWithHost('/brand', brandHost).catch((e) => fail(`GET https://${brandHost}/brand never completed: ${e.message}`));
+if (brand.status !== 200 || !/^text\/html/.test(brand.type ?? '') || !brand.body.includes('id="brand-title"')) {
+  fail(`GET https://${brandHost}/brand returned ${brand.status} (${brand.type}${brand.location ? `, Location ${brand.location}` : ''}); expected the brand page`);
+}
+const brandSlash = await getWithHost('/brand/?lang=es', brandHost).catch((e) => fail(`GET https://${brandHost}/brand/ never completed: ${e.message}`));
+if (brandSlash.status !== 301 || brandSlash.location !== `https://${brandHost}/brand?lang=es`) {
+  fail(`GET https://${brandHost}/brand/?lang=es returned ${brandSlash.status} (${brandSlash.location}); expected a 301 to /brand?lang=es`);
+}
+for (const host of trusted.filter((h) => !h.startsWith('www.'))) {
+  const mark = await getBinaryWithHost('/brand/isotipo.svg', host).catch((e) => fail(`GET https://${host}/brand/isotipo.svg never completed: ${e.message}`));
+  if (mark.status !== 200 || !/^image\/svg\+xml/.test(mark.type ?? '') || !mark.body.toString('utf8').includes('<svg')) {
+    fail(`GET https://${host}/brand/isotipo.svg returned ${mark.status} (${mark.type}); expected the isotype on every domain`);
+  }
+  if (host !== brandHost) {
+    const moved = await getWithHost('/brand', host).catch((e) => fail(`GET https://${host}/brand never completed: ${e.message}`));
+    if (moved.status !== 301 || moved.location !== `https://${brandHost}/brand`) fail(`GET https://${host}/brand returned ${moved.status} (${moved.location}); expected a 301 to the company site`);
+  }
+}
+const BRAND_TYPES = { svg: /^image\/svg\+xml/, png: /^image\/png/, txt: /^text\/plain/, ttf: /^font\/ttf/, zip: /^application\/zip/ };
+const attr = (tag, name) => new RegExp(`\\s${name}="([^"]*)"`).exec(tag)?.[1];
+const offered = new Map();
+for (const [tag] of brand.body.matchAll(/<a\b[^>]*>/g)) {
+  const href = attr(tag, 'href');
+  const name = attr(tag, 'download');
+  if (href && name !== undefined) offered.set(href.replace(/&amp;/g, '&'), name);
+}
+const kitHref = [...offered.keys()].find((href) => href.endsWith('.zip'));
+if (!kitHref || offered.size < 20) fail(`the brand page offers ${offered.size} downloads${kitHref ? '' : ' and no kit'}; expected the kit and every file`);
+let kitNames = null;
+for (const [href, name] of offered) {
+  const ext = href.split('.').pop();
+  const file = await getBinaryWithHost(href, brandHost).catch((e) => fail(`GET https://${brandHost}${href} never completed: ${e.message}`));
+  if (file.status !== 200 || !BRAND_TYPES[ext]?.test(file.type ?? '') || file.body.length === 0) {
+    fail(`GET https://${brandHost}${href} returned ${file.status} (${file.type}, ${file.body.length} bytes); expected a ${ext} file. Did the build run brand:build before astro build?`);
+  }
+  if (!name || name.split('.').pop() !== ext) fail(`${href} downloads as "${name}"; expected a .${ext} name`);
+  if (href === kitHref) kitNames = zipNames(file.body);
+}
+const listed = new Set([...offered].filter(([href]) => href !== kitHref).map(([, name]) => name));
+const archived = kitNames.filter((n) => !n.endsWith('/README.txt')).map((n) => n.split('/').pop());
+if (archived.length !== listed.size || archived.some((n) => !listed.has(n))) {
+  fail(`the brand kit holds ${archived.length} files and the page offers ${listed.size}; they must be the same files`);
+}
+const paymentsRobots = trusted.find((h) => h.startsWith('payments.'));
+if (paymentsRobots) {
+  const robots = await getWithHost('/robots.txt', paymentsRobots).catch((e) => fail(`GET https://${paymentsRobots}/robots.txt never completed: ${e.message}`));
+  if (!/^Allow: \/brand\/$/m.test(robots.body)) fail(`https://${paymentsRobots}/robots.txt no longer allows /brand/: its pages would render without the brand's files`);
+  const home = await getWithHost('/', paymentsRobots).catch((e) => fail(`GET https://${paymentsRobots}/ never completed: ${e.message}`));
+  if (!home.body.includes(`href="https://${brandHost}/brand"`)) fail(`the gateway's footer does not link https://${brandHost}/brand`);
+}
+const siteHome = await getWithHost('/', brandHost).catch((e) => fail(`GET https://${brandHost}/ never completed: ${e.message}`));
+if (!siteHome.body.includes(`href="https://${brandHost}/brand"`)) fail(`the company site's footer does not link https://${brandHost}/brand`);
+detail += `; /brand renders (its slash form a 301, /brand/isotipo.svg on every domain), ${offered.size} downloads served, the kit holds the ${listed.size} files offered`;
+
 // INDEXNOW KEY FILE. Every domain must answer /<INDEXNOW_KEY>.txt with the key itself
 // (src/pages/[key].txt.ts, let through by src/lib/hosts.ts on every domain), or IndexNow refuses
 // that host's submissions (403). The key is read at runtime, so the env above reaches it. Any
@@ -439,6 +502,21 @@ function shareTags(html) {
     twitter: meta('name', 'twitter:image'),
     twitterAlt: meta('name', 'twitter:image:alt'),
   };
+}
+
+/** The entry names of a ZIP archive, read from its central directory (src/lib/zip.ts writes it). */
+function zipNames(bytes) {
+  const end = bytes.lastIndexOf(Buffer.from([0x50, 0x4b, 0x05, 0x06]));
+  if (bytes.readUInt32LE(0) !== 0x04034b50 || end < 0) fail('the brand kit is not a ZIP archive');
+  const names = [];
+  let at = bytes.readUInt32LE(end + 16);
+  for (let i = 0; i < bytes.readUInt16LE(end + 10); i++) {
+    if (bytes.readUInt32LE(at) !== 0x02014b50) fail('the brand kit has a broken central directory');
+    const nameLength = bytes.readUInt16LE(at + 28);
+    names.push(bytes.toString('utf8', at + 46, at + 46 + nameLength));
+    at += 46 + nameLength + bytes.readUInt16LE(at + 30) + bytes.readUInt16LE(at + 32);
+  }
+  return names;
 }
 
 /** A PNG's width and height from its IHDR chunk, or null when the bytes are not a PNG. */

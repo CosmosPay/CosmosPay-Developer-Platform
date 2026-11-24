@@ -1,0 +1,728 @@
+---
+/* /brand on cosmospay.lat: everything needed to name and show Cosmos Pay correctly (press,
+ * partners, integrators, directories). Only what the repository holds and states:
+ *   - the files: public/brand and public/fonts, listed in src/lib/site/brand.ts with every file
+ *     each one downloads as; the black SVGs, the PNGs of the logos and the brand kit are made from
+ *     them before the build (src/lib/site/brand-kit.ts, npm run brand:build);
+ *   - the rules: BRAND.md (the palette, section 3; the astronaut, section 5; the logo, section 6);
+ *   - the colours: the `--cosmos-*` tokens of src/styles/cosmos.css, which the swatches paint with;
+ *   - the typeface: the WOFF2 files' own name tables (designer, licence, project), and its desktop
+ *     files with their licence, the project's own at a pinned commit (public/brand/fonts);
+ *   - how the name is written: the catalogs and the Organization's JSON-LD ("Cosmos Pay", with
+ *     "CosmosPay" its handle on GitHub and X). Press and directories copy from this page, so it
+ *     never carries the About page's line about the Cosmos Network (about.disambiguation);
+ *   - the contact address: CONTACT_ADDRESS, as on /about.
+ * Server-rendered in the visitor's language (the `brand` block of the platform catalogs); a
+ * language picked in the nav reloads it. Its JSON-LD is a WebPage about the shared Organization,
+ * with its breadcrumb. Its Markdown version is src/lib/seo/site-markdown.ts (`brand`). */
+import CosmosLayout from "@/layouts/CosmosLayout.astro";
+import SiteFooter from "@/components/cosmos/layout/SiteFooter";
+import { messages } from "@/lib/i18n/messages/index";
+import { siteMeta } from "@/lib/seo/site-meta";
+import { ORGANIZATION_ID } from "@/lib/seo/org";
+import { GITHUB_ORG } from "@/lib/seo/schema";
+import { CONTACT_ADDRESS } from "@/lib/payments/contact";
+import { PAYMENTS, SITE, SOCIAL, langHref } from "@/components/cosmos/lib/constants";
+import {
+  ALL_POSES,
+  BRAND_COLOURS,
+  BRAND_LOGOS,
+  BRAND_POSES,
+  CHARACTER_MIN_PX,
+  CLEAR_SPACE,
+  FONT_FILES,
+  FONT_LICENCE,
+  ISOTYPE_MIN_PX,
+  KIT_ZIP,
+  LOGO_DONTS,
+  PALETTE,
+  PHONES,
+  POSE_STYLES,
+  RIBBON,
+  SPECIMEN,
+  STROKES,
+  TYPEFACE,
+  fileName,
+  logoVariant,
+  rgbText,
+  type Download,
+} from "@/lib/site/brand";
+
+const lang = Astro.locals.lang ?? "en";
+const catalog = (messages as Record<string, typeof messages.en>)[lang] ?? messages.en;
+const t = catalog.brand;
+const meta = siteMeta("brand", lang);
+
+/** `{name}` placeholders filled, as the catalogs write them. */
+const fill = (text: string, vars: Record<string, string | number>): string => text.replace(/\{(\w+)\}/g, (m, k: string) => (k in vars ? String(vars[k]) : m));
+/** A file's accessible name as a download: "Download Cosmos Pay logo, black (SVG)". */
+const downloadLabel = (name: string, d: Download): string => fill(t.downloadLabel, { name, format: d.format.toUpperCase() });
+
+// The kit's size, from the build's manifest (scripts/build-brand-kit.mjs); a dev server that never
+// built the kit shows the button without it.
+const KIT_META = import.meta.glob<{ zipBytes: number }>("/src/assets/brand-kit.json", { eager: true, import: "default" });
+const kitBytes = Object.values(KIT_META)[0]?.zipBytes;
+const kitSize = kitBytes
+  ? fill(t.kitSize, { size: new Intl.NumberFormat(lang, { style: "unit", unit: "megabyte", maximumFractionDigits: 1 }).format(kitBytes / 1e6) })
+  : null;
+const KIT_NAME = KIT_ZIP.slice(KIT_ZIP.lastIndexOf("/") + 1);
+
+const MAILTO = `mailto:${CONTACT_ADDRESS}`;
+const PAYMENTS_HOST = new URL(PAYMENTS).host;
+
+/* The clear-space drawing, in the logo file's own units (CLEAR_SPACE): the zone is the artwork's
+   box grown by the c on every side, and a c-sized square marks it on each side. */
+const { art, c, viewBox: vb } = CLEAR_SPACE;
+const ZONE = { x: art.x - c, y: art.y - c, w: art.w + 2 * c, h: art.h + 2 * c };
+const PAD = 6;
+const SPACE_VIEWBOX = [ZONE.x - PAD, ZONE.y - PAD, ZONE.w + 2 * PAD, ZONE.h + 2 * PAD].map((n) => n.toFixed(2)).join(" ");
+const UNITS = [
+  { x: art.x + art.w / 2 - c / 2, y: art.y - c },
+  { x: art.x + art.w / 2 - c / 2, y: art.y + art.h },
+  { x: art.x - c, y: art.y + art.h / 2 - c / 2 },
+  { x: art.x + art.w, y: art.y + art.h / 2 - c / 2 },
+];
+const MIN_STEPS = [ISOTYPE_MIN_PX * 4, ISOTYPE_MIN_PX * 2, ISOTYPE_MIN_PX];
+
+/* A download glyph (the arrow into a tray), 1.5px line as the brand's icons. */
+const DOWNLOAD_ICON = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 19h14"/></svg>`;
+---
+
+<CosmosLayout
+  title={meta.title}
+  description={meta.description}
+  lang={lang}
+  breadcrumb={["home", "brand"]}
+  about={ORGANIZATION_ID}
+  navOverPanel="black"
+  reloadOnLang
+>
+  <main id="main" class="brand-page">
+    <section class="lp-panel brand-hero" data-panel="black" aria-labelledby="brand-title">
+      <div class="wrap">
+        <div class="brand-hero-grid">
+          <div>
+            <h1 id="brand-title" data-num="/01">{t.title}</h1>
+            <p class="brand-lede">{t.lede}</p>
+            <div class="brand-row">
+              <a class="btn btn-white" href={KIT_ZIP} download={KIT_NAME}><Fragment set:html={DOWNLOAD_ICON} />{t.download}</a>
+              {kitSize && <span class="brand-meta">{kitSize}</span>}
+            </div>
+          </div>
+          <img class="brand-hero-mark" src="/brand/isotipo.svg" alt="" width="320" height="320" fetchpriority="high" />
+        </div>
+        <dl class="brand-facts">
+          <div><dt>{t.facts.logos}</dt><dd>{fill(t.facts.logosValue, { n: BRAND_LOGOS.length })}</dd></div>
+          <div><dt>{t.facts.colours}</dt><dd>{fill(t.facts.coloursValue, { n: BRAND_COLOURS.length })}</dd></div>
+          <div><dt>{t.facts.typeface}</dt><dd translate="no">{TYPEFACE.family}</dd></div>
+          <div><dt>{t.facts.illustrations}</dt><dd>{fill(t.facts.illustrationsValue, { n: BRAND_POSES.length, styles: POSE_STYLES.length })}</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section class="lp-panel brand-panel" data-panel="white" aria-labelledby="brand-name">
+      <div class="wrap">
+        <div class="section-head brand-head">
+          <h2 id="brand-name" data-num="/02">{t.name.title}</h2>
+          <p>{t.name.lede}</p>
+        </div>
+        <dl class="brand-names">
+          <div>
+            <dt translate="no">Cosmos Pay</dt>
+            <dd>{t.name.items.company}</dd>
+          </div>
+          <div>
+            <dt translate="no">Cosmos Pay Payments</dt>
+            <dd>{t.name.items.payments} <a class="brand-link" href={langHref(PAYMENTS, lang, "site")} translate="no">{PAYMENTS_HOST}</a></dd>
+          </div>
+          <div>
+            <dt translate="no">Cosmos Pay Wallet</dt>
+            <dd>{t.name.items.wallet} <a class="brand-link" href={langHref(`${SITE}/#wallet`, lang, "site")}>{t.name.walletLink}</a></dd>
+          </div>
+          <div class="brand-handle">
+            <dt translate="no">CosmosPay</dt>
+            <dd>{t.name.items.handle} <a class="brand-link" href={GITHUB_ORG} rel="noopener">GitHub</a> <a class="brand-link" href={SOCIAL.x} rel="noopener">X</a></dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+
+    <section class="lp-panel brand-panel" data-panel="black" aria-labelledby="brand-logo">
+      <div class="wrap">
+        <div class="section-head brand-head">
+          <h2 id="brand-logo" data-num="/03">{t.logo.title}</h2>
+          <p>{t.logo.lede}</p>
+        </div>
+        <ul class="brand-logos" role="list">
+          {BRAND_LOGOS.map((logo) => {
+            const item = t.logo.items[logo.key];
+            return (
+              <li class={`brand-logo is-${logo.key}`} style={`--variants: ${logo.variants.length}`}>
+                <h3>{item.t}</h3>
+                <p>{item.d}</p>
+                <div class="brand-variants">
+                  {logo.variants.map(({ ink, svg, png }) => {
+                    const name = fill(t.logo.fileName, { logo: item.t, ink: t.logo.inks[ink] });
+                    return (
+                      <div class="brand-variant">
+                        {/* White ink on navy, black and Cosmic Blue on white. */}
+                        <div class={`brand-tile ${ink === "white" ? "on-navy" : "on-white"} is-${logo.key}`}>
+                          <img src={svg.href} alt={name} loading="lazy" decoding="async" />
+                        </div>
+                        <div class="brand-dl">
+                          {[svg, png].map((d) => (
+                            <a class="btn btn-outline-w btn-sm" href={d.href} download={fileName(d)} aria-label={downloadLabel(name, d)}>
+                              <Fragment set:html={DOWNLOAD_ICON} />
+                              {d.format.toUpperCase()}
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+
+        <div class="brand-rules">
+          <div class="brand-rule brand-space">
+            <h3>{t.logo.space.t}</h3>
+            <p>{t.logo.space.d}</p>
+            <svg class="brand-space-art" viewBox={SPACE_VIEWBOX} role="img" aria-label={t.logo.space.d}>
+              <rect class="zone" x={ZONE.x} y={ZONE.y} width={ZONE.w} height={ZONE.h} />
+              <rect class="art" x={art.x} y={art.y} width={art.w} height={art.h} />
+              <image href="/brand/lockup-cosmos-pay.svg" x={vb.x} y={vb.y} width={vb.w} height={vb.h} />
+              {UNITS.map((u) => (
+                <g class="unit">
+                  <rect x={u.x} y={u.y} width={c} height={c} />
+                  <text x={u.x + c / 2} y={u.y + c / 2} dominant-baseline="central" text-anchor="middle">c</text>
+                </g>
+              ))}
+            </svg>
+          </div>
+          <div class="brand-rule brand-min">
+            <h3>{t.logo.minimum.t}</h3>
+            <p>{fill(t.logo.minimum.d, { n: ISOTYPE_MIN_PX })}</p>
+            <div class="brand-min-steps">
+              {MIN_STEPS.map((size, i) => (
+                <div class="brand-min-step">
+                  <img src="/brand/isotipo.svg" alt="" width={size} height={size} loading="lazy" />
+                  {i === MIN_STEPS.length - 1 && <span>{fill(t.logo.minimum.value, { n: ISOTYPE_MIN_PX })}</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <h3 class="brand-sub">{t.logo.donts.t}</h3>
+        <ul class="brand-donts" role="list">
+          {LOGO_DONTS.map((key) => (
+            <li class={`brand-dont is-${key}`}>
+              <div class="brand-dont-tile" aria-hidden="true">
+                {key === "recolour" ? <span class="brand-dont-mask" /> : <img src={key === "busy" ? "/brand/lockup-cosmos-pay.svg" : logoVariant(BRAND_LOGOS[0], "black").svg.href} alt="" loading="lazy" />}
+              </div>
+              <p>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="10" cy="10" r="9" /><path d="m6.5 6.5 7 7M13.5 6.5l-7 7" /></svg>
+                {t.logo.donts.items[key]}
+              </p>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+
+    <section class="lp-panel brand-panel" data-panel="white" aria-labelledby="brand-colour">
+      <div class="wrap">
+        <div class="section-head brand-head">
+          <h2 id="brand-colour" data-num="/04">{t.colour.title}</h2>
+          <p>{t.colour.lede}</p>
+        </div>
+        <ul class="brand-swatches" role="list">
+          {BRAND_COLOURS.map((colour) => {
+            const rgb = rgbText(colour.hex);
+            return (
+              <li class="brand-swatch">
+                <div class={`brand-chip is-${colour.key}`} aria-hidden="true" />
+                <h3 translate="no">{colour.name}</h3>
+                <p>{t.colour.roles[colour.key]}</p>
+                <dl class="brand-values">
+                  {[
+                    { label: t.colour.hex, value: colour.hex },
+                    { label: t.colour.rgb, value: rgb },
+                  ].map((v) => (
+                    <div>
+                      <dt>{v.label}</dt>
+                      <dd>
+                        <button type="button" class="brand-copy" data-copy={v.value} data-done={fill(t.colour.copied, { value: v.value })} aria-label={fill(t.colour.copy, { value: v.value })} translate="no">
+                          <span>{v.value}</span>
+                          <svg class="i-copy" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2.5" /><path d="M16 8V6.5A2.5 2.5 0 0 0 13.5 4h-7A2.5 2.5 0 0 0 4 6.5v7A2.5 2.5 0 0 0 6.5 16H8" /></svg>
+                          <svg class="i-done" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5" /></svg>
+                        </button>
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </li>
+            );
+          })}
+        </ul>
+        <div class="brand-row">
+          <a class="btn btn-ghost-pill" href={PALETTE.href} download={fileName(PALETTE)}><Fragment set:html={DOWNLOAD_ICON} />{t.colour.palette}</a>
+        </div>
+        <p class="brand-sr" id="brand-copied" role="status" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <section class="lp-panel brand-panel" data-panel="black" aria-labelledby="brand-type">
+      <div class="wrap">
+        <div class="section-head brand-head">
+          <h2 id="brand-type" data-num="/05">{t.type.title}</h2>
+          <p>{fill(t.type.lede, { n: TYPEFACE.weights.length })}</p>
+        </div>
+        <div class="brand-type">
+          <div class="brand-type-aa" aria-hidden="true" translate="no">Aa</div>
+          <div class="brand-type-side">
+            {/* Each weight with its desktop file (TTF), and the licence they travel with. */}
+            <ul class="brand-weights" role="list">
+              {TYPEFACE.weights.map((w) => {
+                const d = FONT_FILES.find((f) => f.href === w.desktop)!;
+                return (
+                  <li class={`w-${w.weight}`}>
+                    <span class="name" translate="no">{TYPEFACE.family} {w.name}</span>
+                    <span class="num">{w.weight}</span>
+                    <a class="btn btn-outline-w btn-sm" href={d.href} download={fileName(d)} aria-label={downloadLabel(`${TYPEFACE.family} ${w.name}`, d)}>
+                      <Fragment set:html={DOWNLOAD_ICON} />
+                      TTF
+                    </a>
+                  </li>
+                );
+              })}
+            </ul>
+            <div class="brand-dl brand-type-licence">
+              <a class="btn btn-outline-w btn-sm" href={FONT_LICENCE.href} download={fileName(FONT_LICENCE)}><Fragment set:html={DOWNLOAD_ICON} />{t.type.licenceFile}</a>
+            </div>
+            <p class="brand-specimen" translate="no">
+              {SPECIMEN.map((line) => <span>{line}</span>)}
+            </p>
+            <dl class="brand-type-facts">
+              <div><dt>{t.type.designer}</dt><dd translate="no">{TYPEFACE.designer}</dd></div>
+              <div><dt>{t.type.licence}</dt><dd translate="no">{TYPEFACE.licenceName}</dd></div>
+            </dl>
+            <div class="brand-row">
+              <a class="btn btn-white" href={TYPEFACE.source} rel="noopener">{t.type.source}</a>
+              <a class="btn btn-outline-w" href={TYPEFACE.licence} rel="noopener">{t.type.readLicence}</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="lp-panel brand-panel" data-panel="white" aria-labelledby="brand-astronaut">
+      <div class="wrap">
+        <div class="section-head brand-head">
+          <h2 id="brand-astronaut" data-num="/06">{t.illustrations.title}</h2>
+          <p>{fill(t.illustrations.lede, { n: BRAND_POSES.length })}</p>
+        </div>
+        <ul class="brand-legend" role="list">
+          {POSE_STYLES.map((style) => <li><span class={`dot is-${style}`} aria-hidden="true" />{t.illustrations.styles[style]}</li>)}
+        </ul>
+        <ul class="brand-poses" role="list">
+          {BRAND_POSES.map((pose) => {
+            const name = t.illustrations.poses[pose.key];
+            return (
+              <li class="brand-pose">
+                <h3>{name}</h3>
+                <div class="brand-pose-styles">
+                  {POSE_STYLES.map((style) => {
+                    const d = pose.png[style];
+                    return (
+                      <a class={`brand-pose-tile is-${style}`} href={d.href} download={fileName(d)} aria-label={downloadLabel(fill(t.illustrations.fileName, { pose: name, style: t.illustrations.styles[style] }), d)}>
+                        <img src={d.href} alt="" width="1081" height="1081" loading="lazy" decoding="async" />
+                        <span class="brand-pose-get" aria-hidden="true"><Fragment set:html={DOWNLOAD_ICON} /></span>
+                      </a>
+                    );
+                  })}
+                </div>
+                <a class="btn btn-ghost-pill btn-sm" href={pose.svg.href} download={fileName(pose.svg)} aria-label={downloadLabel(name, pose.svg)}><Fragment set:html={DOWNLOAD_ICON} />SVG</a>
+              </li>
+            );
+          })}
+          <li class="brand-pose brand-pose-all">
+            <h3>{t.illustrations.all.t}</h3>
+            <a class="btn btn-ghost-pill" href={ALL_POSES.href} download={fileName(ALL_POSES)}><Fragment set:html={DOWNLOAD_ICON} />{t.illustrations.all.a}</a>
+          </li>
+          <li class="brand-pose brand-pose-rules">
+            <h3>{t.illustrations.rules.t}</h3>
+            <ul role="list">
+              <li>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18M8 6l4-3 4 3M8 18l4 3 4-3" /></svg>
+                {fill(t.illustrations.rules.size, { n: CHARACTER_MIN_PX })}
+              </li>
+              <li>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2" /><path d="M8 21h8M12 17v4" /></svg>
+                {t.illustrations.rules.one}
+              </li>
+              <li>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="4" /><circle cx="16" cy="8" r="4" /><circle cx="8" cy="16" r="4" /><circle cx="16" cy="16" r="4" /></svg>
+                {t.illustrations.rules.colours}
+              </li>
+            </ul>
+          </li>
+        </ul>
+
+        <h3 class="brand-sub">{t.illustrations.phones.t}</h3>
+        <ul class="brand-phones" role="list">
+          {PHONES.map((phone) => {
+            const style = t.illustrations.phones.styles[phone.key];
+            const name = fill(t.illustrations.fileName, { pose: t.illustrations.poses.phone, style });
+            return (
+              <li class="brand-phone">
+                {/* A drawing with a white outline is shown on navy, where the outline reads. */}
+                <div class={`brand-phone-tile on-${phone.ground}`}>
+                  <img src={phone.svg.href} alt="" width="1080" height="1080" loading="lazy" decoding="async" />
+                </div>
+                <p>{style}</p>
+                <div class="brand-dl">
+                  {[phone.svg, phone.png].map((d) => (
+                    <a class="btn btn-ghost-pill btn-sm" href={d.href} download={fileName(d)} aria-label={downloadLabel(name, d)}>
+                      <Fragment set:html={DOWNLOAD_ICON} />
+                      {d.format.toUpperCase()}
+                    </a>
+                  ))}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </section>
+
+    <section class="lp-panel brand-panel" data-panel="black" aria-labelledby="brand-graphics">
+      <div class="wrap">
+        <div class="section-head brand-head">
+          <h2 id="brand-graphics" data-num="/07">{t.graphics.title}</h2>
+          <p>{t.graphics.lede}</p>
+        </div>
+        <div class="brand-graphics">
+          <div class="brand-ribbon">
+            <h3>{t.graphics.ribbon}</h3>
+            <div class="brand-ribbon-frame">
+              <img src={RIBBON.view} alt="" width={RIBBON.width} height={RIBBON.height} loading="lazy" decoding="async" />
+            </div>
+            <div class="brand-dl">
+              <a class="btn btn-outline-w btn-sm" href={RIBBON.download.href} download={fileName(RIBBON.download)} aria-label={downloadLabel(t.graphics.ribbon, RIBBON.download)}><Fragment set:html={DOWNLOAD_ICON} />PNG</a>
+            </div>
+          </div>
+          <div class="brand-strokes-wrap">
+            <h3>{t.graphics.strokes}</h3>
+            <ul class="brand-strokes" role="list">
+              {STROKES.map((stroke) => (
+                <li>
+                  <a class="brand-stroke" href={stroke.download.href} download={fileName(stroke.download)} aria-label={downloadLabel(fill(t.graphics.stroke, { n: stroke.n }), stroke.download)}>
+                    <span class={`brand-stroke-art s-${stroke.n}`} aria-hidden="true" />
+                    <span class="brand-pose-get" aria-hidden="true"><Fragment set:html={DOWNLOAD_ICON} /></span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="lp-panel cta" data-panel="navy" aria-labelledby="brand-usage">
+      <div class="wrap">
+        <div class="cta-panel">
+          <h2 id="brand-usage" data-num="/08">{t.usage.title}</h2>
+          <p>{t.usage.lede}</p>
+          <p>{t.usage.contact}</p>
+          <div class="row">
+            <a class="btn btn-white" href={KIT_ZIP} download={KIT_NAME}><Fragment set:html={DOWNLOAD_ICON} />{t.download}</a>
+            <a class="btn btn-outline-w" href={MAILTO} translate="no">{CONTACT_ADDRESS}</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <SiteFooter lang={lang} area="site" />
+</CosmosLayout>
+
+<script>
+  /* The swatches' values copy on a click: the clipboard (or, where it is refused, a selected
+     field and the copy command), the button's mark turns to a check for a moment, and the status
+     line says what was copied. */
+  const live = document.getElementById("brand-copied");
+  async function copy(text: string): Promise<boolean> {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      const field = document.createElement("textarea");
+      field.value = text;
+      field.setAttribute("readonly", "");
+      field.style.position = "fixed";
+      field.style.opacity = "0";
+      document.body.append(field);
+      field.select();
+      const done = document.execCommand("copy");
+      field.remove();
+      return done;
+    }
+  }
+  for (const button of document.querySelectorAll<HTMLButtonElement>("button[data-copy]")) {
+    let timer: number | undefined;
+    button.addEventListener("click", async () => {
+      if (!(await copy(button.dataset.copy ?? ""))) return;
+      button.dataset.state = "done";
+      if (live) live.textContent = button.dataset.done ?? "";
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => delete button.dataset.state, 1600);
+    });
+  }
+</script>
+
+<style>
+  /* The hero runs up under the nav, as /about's does. */
+  .brand-hero { margin-top: -72px; padding: 152px 0 96px; }
+  .brand-hero-grid { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 48px; }
+  .brand-hero h1 {
+    font-weight: 300; font-size: clamp(2.75rem, 6vw, 5rem); line-height: 1.0;
+    letter-spacing: -0.02em; margin: 0; text-wrap: balance; max-width: 13ch;
+  }
+  .brand-lede { font-size: 1.125rem; line-height: 1.55; color: var(--ink-2); margin: 32px 0 0; max-width: 52ch; }
+  /* The brand's isotype at the scale of a cover: the page's subject, drawn by its own file. */
+  .brand-hero-mark { display: block; width: clamp(180px, 21vw, 320px); height: auto; }
+  .brand-row { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 20px; margin-top: 40px; }
+  .brand-meta { font-size: .875rem; color: var(--ink-3); }
+  .brand-page :global(.btn svg) { flex: none; }
+
+  /* The kit in one line of label-over-value pairs, split by hairlines, as /about's facts. */
+  .brand-facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 72px 0 0; padding: 0; border-top: 1px solid var(--line); }
+  .brand-facts > div { padding: 20px 20px 0 0; min-width: 0; }
+  .brand-facts dt { font-size: .75rem; font-weight: 500; color: var(--ink-3); margin: 0 0 6px; }
+  .brand-facts dd { margin: 0; font-size: 1rem; color: var(--ink); }
+
+  .brand-panel { padding: 112px 0; }
+  .brand-head { margin-bottom: 64px; }
+  .brand-head p { max-width: 56ch; }
+  .brand-page h3 { margin: 0; font-size: 1.25rem; font-weight: 400; letter-spacing: -0.01em; line-height: 1.25; color: var(--ink); }
+  .brand-page h3.brand-sub { margin: 96px 0 24px; }
+  .brand-sr { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .brand-link { color: inherit; text-decoration: underline; text-decoration-color: var(--line-2); text-underline-offset: 3px; transition: text-decoration-color .25s; white-space: nowrap; }
+  .brand-link:hover, .brand-link:focus-visible { text-decoration-color: currentColor; }
+  .brand-link + .brand-link { margin-left: 12px; }
+
+  /* ---- the name: each name set large over a hairline, what it names beside it ---- */
+  .brand-names { margin: 0; border-bottom: 1px solid var(--line); }
+  .brand-names > div { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 4fr); gap: 8px 48px; align-items: baseline; padding: 28px 0; border-top: 1px solid var(--line); }
+  .brand-names dt { font-size: clamp(1.75rem, 3.4vw, 2.75rem); font-weight: 400; letter-spacing: -0.02em; line-height: 1.1; color: var(--ink); }
+  .brand-names dd { margin: 0; font-size: 1rem; line-height: 1.55; color: var(--ink-2); }
+  .brand-handle dt { color: var(--ink-3); }
+
+  /* ---- the logos: two per row, each on white and on navy, its files under each; the main
+     lockup takes the whole row for its three colourways ---- */
+  .brand-logos { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 72px 48px; }
+  /* Each logo's title, words and tiles share rows with its neighbour's, so a longer description
+     never pushes one pair of tiles below the other. */
+  .brand-logo { min-width: 0; display: grid; grid-row: span 3; grid-template-rows: subgrid; row-gap: 0; align-content: start; }
+  .brand-logo.is-lockup { grid-column: 1 / -1; }
+  .brand-logo > p { margin: 8px 0 20px; font-size: 1rem; line-height: 1.55; color: var(--ink-2); }
+  .brand-variants { display: grid; grid-template-columns: repeat(var(--variants, 2), minmax(0, 1fr)); gap: 16px; }
+  .brand-variant { min-width: 0; }
+  /* The tiles keep their own ground in both themes: white is the light background, navy the brand's
+     dark surface (BRAND.md: "Sobre navy: blanco"); the navy tile keeps a hairline on the black panel. */
+  .brand-tile { aspect-ratio: 16 / 10; border-radius: 16px; display: grid; place-items: center; overflow: hidden; }
+  .brand-tile.on-white { background: var(--cosmos-white); }
+  .brand-tile.on-navy { background: var(--cosmos-navy); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12); }
+  .brand-tile img { display: block; width: 66%; height: auto; }
+  .brand-tile:is(.is-isotype, .is-icon, .is-iconMono) img { width: auto; height: 46%; }
+  /* The lockup's tiles are wider than the others: its drawing keeps the others' size. */
+  .brand-tile.is-lockup { aspect-ratio: 16 / 9; }
+  .brand-tile.is-lockup img { width: 58%; }
+  .brand-dl { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .brand-dl :global(.btn) { gap: 6px; }
+
+  /* ---- clear space and minimum size ---- */
+  /* The page's splits share one line: seven parts and five, as the typeface and the ribbon. */
+  .brand-rules { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 48px; margin-top: 96px; }
+  .brand-rule { min-width: 0; border-top: 1px solid var(--line); padding-top: 28px; }
+  .brand-rule > p { margin: 8px 0 28px; font-size: 1rem; line-height: 1.55; color: var(--ink-2); max-width: 46ch; }
+  .brand-space-art { display: block; width: 100%; max-width: 720px; height: auto; color: var(--ink); overflow: visible; }
+  .brand-space-art .zone { fill: rgba(255, 255, 255, .07); stroke: currentColor; stroke-opacity: .5; stroke-width: .6; stroke-dasharray: 2.4 2; }
+  .brand-space-art .art { fill: var(--bg); stroke: currentColor; stroke-opacity: .28; stroke-width: .4; }
+  .brand-space-art .unit rect { fill: rgba(255, 255, 255, .14); stroke: currentColor; stroke-opacity: .6; stroke-width: .5; }
+  .brand-space-art .unit text { fill: currentColor; font-family: var(--ff-sans); font-size: 11px; font-weight: 500; }
+  .brand-min-steps { display: flex; align-items: flex-end; gap: 32px; }
+  .brand-min-step { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .brand-min-step img { display: block; }
+  .brand-min-step span { font-size: .8125rem; font-weight: 500; color: var(--ink-2); white-space: nowrap; }
+
+  /* ---- what not to do: the logo wronged five ways, each crossed out ---- */
+  .brand-donts { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; }
+  .brand-dont { min-width: 0; }
+  .brand-dont-tile { aspect-ratio: 4 / 3; border-radius: 16px; background: var(--cosmos-white); display: grid; place-items: center; overflow: hidden; }
+  .brand-dont-tile img, .brand-dont-mask { display: block; width: 70%; height: auto; }
+  .is-stretch img { transform: scale(1.32, .62); }
+  .is-rotate img { transform: rotate(-14deg); }
+  .is-effects img { filter: drop-shadow(4px 6px 3px rgba(0, 0, 0, .55)) drop-shadow(0 0 8px rgba(0, 0, 0, .35)); }
+  /* Cosmic Blue on black: the pairing BRAND.md forbids (1.7:1). The mask paints the logo's own
+     single-colour file in it. */
+  .is-recolour .brand-dont-tile { background: var(--cosmos-black); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12); }
+  .brand-dont-mask {
+    aspect-ratio: 235.27 / 66.17; background: var(--cosmos-blue);
+    -webkit-mask: url("/brand/lockup-cosmos-pay-mono.svg") center / contain no-repeat;
+    mask: url("/brand/lockup-cosmos-pay-mono.svg") center / contain no-repeat;
+  }
+  /* Over the ribbon with no plain panel under it (BRAND.md section 6). */
+  .is-busy .brand-dont-tile { background: var(--cosmos-black) url("/brand/cinta.webp") center / cover no-repeat; }
+  .brand-dont p { display: flex; gap: 10px; align-items: flex-start; margin: 14px 0 0; font-size: .9375rem; line-height: 1.4; color: var(--ink-2); }
+  .brand-dont p svg { flex: none; color: var(--ink); margin-top: 1px; }
+
+  /* ---- colour: four swatches, each value a copy button ---- */
+  .brand-swatches { list-style: none; margin: 0 0 40px; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 48px 24px; }
+  .brand-swatch { min-width: 0; }
+  .brand-chip { aspect-ratio: 4 / 5; border-radius: 16px; margin-bottom: 20px; }
+  .brand-chip.is-black { background: var(--cosmos-black); }
+  .brand-chip.is-white { background: var(--cosmos-white); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .12); }
+  /* In the dark theme the panel is black: both ends of the palette keep a hairline. */
+  :global([data-theme="dark"]) .brand-chip:is(.is-white, .is-black) { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .24); }
+  .brand-chip.is-navy { background: var(--cosmos-navy); }
+  .brand-chip.is-blue { background: var(--cosmos-blue); }
+  .brand-swatch > p { margin: 8px 0 16px; font-size: .9375rem; line-height: 1.5; color: var(--ink-2); min-height: 3em; }
+  .brand-values { margin: 0; display: grid; gap: 4px; }
+  .brand-values > div { display: flex; align-items: center; gap: 12px; }
+  .brand-values dt { width: 40px; flex: none; font-size: .75rem; font-weight: 500; color: var(--ink-3); }
+  .brand-values dd { margin: 0; min-width: 0; }
+  .brand-copy {
+    display: inline-flex; align-items: center; gap: 10px; min-height: 36px; padding: 0 12px; margin-left: -12px;
+    border: 0; border-radius: 999px; background: transparent; color: var(--ink);
+    font-size: 1rem; font-variant-numeric: tabular-nums; transition: background .2s ease;
+  }
+  .brand-copy:hover { background: var(--surface-2); }
+  .brand-copy svg { color: var(--ink-3); }
+  .brand-copy .i-done { display: none; }
+  .brand-copy[data-state="done"] .i-copy { display: none; }
+  .brand-copy[data-state="done"] .i-done { display: block; color: var(--ink); animation: brandPop .3s cubic-bezier(.2, .9, .3, 1.25) both; }
+  @keyframes brandPop { from { transform: scale(.4); opacity: 0; } to { transform: none; opacity: 1; } }
+
+  /* ---- the typeface: a cover-sized "Aa" in Light, the weights, the letters ---- */
+  .brand-type { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 48px; align-items: start; }
+  .brand-type-aa { font-weight: 300; font-size: clamp(9rem, 22vw, 20rem); line-height: .8; letter-spacing: -0.04em; color: var(--ink); }
+  .brand-type-side { min-width: 0; }
+  .brand-weights { list-style: none; margin: 0; padding: 0; border-bottom: 1px solid var(--line); }
+  .brand-weights li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 16px; padding: 12px 0; border-top: 1px solid var(--line); }
+  .brand-weights .name { font-size: clamp(1.125rem, 2vw, 1.75rem); letter-spacing: -0.01em; line-height: 1.2; color: var(--ink); overflow-wrap: anywhere; }
+  .brand-weights .num { font-size: .875rem; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+  .brand-weights :global(.btn) { gap: 6px; }
+  .brand-type-licence { margin-top: 16px; }
+  .w-300 .name { font-weight: 300; } .w-400 .name { font-weight: 400; } .w-500 .name { font-weight: 500; }
+  .w-600 .name { font-weight: 600; } .w-700 .name { font-weight: 700; }
+  .brand-specimen { display: grid; gap: 4px; margin: 32px 0 0; font-size: clamp(1rem, 1.6vw, 1.375rem); line-height: 1.4; color: var(--ink-2); overflow-wrap: anywhere; }
+  .brand-type-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 24px; margin: 32px 0 0; padding-top: 20px; border-top: 1px solid var(--line); }
+  .brand-type-facts dt { font-size: .75rem; font-weight: 500; color: var(--ink-3); margin: 0 0 6px; }
+  .brand-type-facts dd { margin: 0; font-size: 1rem; color: var(--ink); }
+
+  /* ---- the astronaut: every pose in its three drawings, each a download ---- */
+  .brand-legend { list-style: none; margin: -32px 0 40px; padding: 0; display: flex; flex-wrap: wrap; gap: 12px 28px; font-size: .9375rem; color: var(--ink-2); }
+  .brand-legend li { display: flex; align-items: center; gap: 10px; }
+  .brand-legend .dot { width: 18px; height: 18px; border-radius: 6px; box-shadow: inset 0 0 0 1px var(--line-2); }
+  .brand-legend .dot.is-black { background: var(--cosmos-white); box-shadow: inset 0 0 0 5px var(--cosmos-white), inset 0 0 0 9px var(--cosmos-black); }
+  .brand-legend .dot.is-blue { background: var(--cosmos-white); box-shadow: inset 0 0 0 5px var(--cosmos-white), inset 0 0 0 9px var(--cosmos-blue); }
+  .brand-legend .dot.is-sticker { background: var(--cosmos-navy); box-shadow: inset 0 0 0 4px var(--cosmos-navy), inset 0 0 0 6px var(--cosmos-white), inset 0 0 0 9px var(--cosmos-black); }
+  .brand-poses { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 48px 32px; }
+  .brand-pose { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 16px; padding-top: 24px; border-top: 1px solid var(--line); }
+  .brand-pose-styles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; width: 100%; }
+  /* Each drawing on the ground BRAND.md gives it: the lines on white, the sticker on navy. */
+  .brand-pose-tile { position: relative; display: block; aspect-ratio: 1; border-radius: 12px; overflow: hidden; background: var(--cosmos-white); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .1); }
+  .brand-pose-tile.is-sticker { background: var(--cosmos-navy); box-shadow: none; }
+  .brand-pose-tile img { display: block; width: 100%; height: 100%; object-fit: contain; transition: transform .3s cubic-bezier(.2, .7, .2, 1); }
+  .brand-pose-get {
+    position: absolute; right: 6px; bottom: 6px; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 999px;
+    background: var(--cosmos-black); color: var(--cosmos-white); opacity: 0; transform: translateY(4px); transition: opacity .2s ease, transform .2s ease;
+  }
+  .brand-pose-tile.is-sticker .brand-pose-get { background: var(--cosmos-white); color: var(--cosmos-navy); }
+  .brand-pose-get :global(svg) { width: 16px; height: 16px; }
+  .brand-pose-tile:is(:hover, :focus-visible) img { transform: scale(1.03); }
+  .brand-pose-tile:is(:hover, :focus-visible) .brand-pose-get, .brand-stroke:is(:hover, :focus-visible) .brand-pose-get { opacity: 1; transform: none; }
+  @media (hover: none) { .brand-pose-get { opacity: 1; transform: none; } }
+  .brand-pose-all { justify-content: flex-start; }
+  .brand-pose-rules ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+  .brand-pose-rules li { display: flex; gap: 12px; align-items: flex-start; font-size: 1rem; line-height: 1.45; color: var(--ink-2); }
+  .brand-pose-rules svg { flex: none; color: var(--ink); }
+  /* The phone pose's four vector drawings, each on its ground with its two files. */
+  .brand-phones { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 32px 16px; max-width: 880px; }
+  .brand-phone { min-width: 0; display: grid; grid-row: span 3; grid-template-rows: subgrid; row-gap: 0; align-content: start; }
+  .brand-phone-tile { aspect-ratio: 1; border-radius: 12px; overflow: hidden; }
+  .brand-phone-tile.on-white { background: var(--cosmos-white); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .1); }
+  .brand-phone-tile.on-navy { background: var(--cosmos-navy); }
+  .brand-phone-tile img { display: block; width: 100%; height: 100%; object-fit: contain; }
+  .brand-phone > p { margin: 14px 0 0; font-size: .9375rem; line-height: 1.4; color: var(--ink-2); }
+
+  /* ---- the ribbon and the strokes ---- */
+  .brand-graphics { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 48px; align-items: start; }
+  .brand-ribbon, .brand-strokes-wrap { min-width: 0; }
+  .brand-ribbon h3, .brand-strokes-wrap h3 { margin-bottom: 20px; }
+  .brand-ribbon-frame { border-radius: 16px; overflow: hidden; background: var(--cosmos-black); box-shadow: inset 0 0 0 1px var(--line); }
+  .brand-ribbon-frame img { display: block; width: 100%; height: auto; }
+  .brand-strokes { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .brand-stroke { position: relative; display: grid; place-items: center; aspect-ratio: 1; border-radius: 12px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line); transition: background .2s ease; }
+  .brand-stroke:hover { background: rgba(255, 255, 255, .1); }
+  .brand-stroke .brand-pose-get { background: var(--cosmos-white); color: var(--cosmos-black); }
+  /* Each stroke is its single-colour file painted in the panel's ink (white on black). */
+  .brand-stroke-art { display: block; width: 62%; height: 62%; background: var(--ink); -webkit-mask: var(--src) center / contain no-repeat; mask: var(--src) center / contain no-repeat; }
+  .s-1 { --src: url("/brand/trazo-1-mono.svg"); } .s-2 { --src: url("/brand/trazo-2-mono.svg"); } .s-3 { --src: url("/brand/trazo-3-mono.svg"); }
+  .s-4 { --src: url("/brand/trazo-4-mono.svg"); } .s-5 { --src: url("/brand/trazo-5-mono.svg"); } .s-6 { --src: url("/brand/trazo-6-mono.svg"); }
+
+  /* The closing panel's two paragraphs sit together. */
+  .cta-panel p + p { margin-top: 12px; }
+
+  /* Every control at least 44px on a touch screen (DESIGN.md, Touch). */
+  @media (pointer: coarse) {
+    .brand-page :global(.btn-sm), .brand-copy { min-height: 44px; }
+    .brand-pose-get { width: 36px; height: 36px; }
+  }
+
+  @media (max-width: 1100px) {
+    .brand-donts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .brand-swatches { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .brand-poses { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .brand-pose-rules { grid-column: 1 / -1; }
+  }
+  @media (max-width: 900px) {
+    .brand-logos { grid-template-columns: minmax(0, 1fr); }
+    .brand-phones { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .brand-rules, .brand-graphics, .brand-type { grid-template-columns: minmax(0, 1fr); }
+    .brand-type-aa { font-size: clamp(7rem, 30vw, 12rem); }
+  }
+  @media (max-width: 720px) {
+    .brand-hero { padding: 128px 0 72px; }
+    .brand-hero-grid { grid-template-columns: minmax(0, 1fr); gap: 40px; }
+    .brand-hero h1 { font-size: clamp(2.25rem, 10vw, 3rem); max-width: none; }
+    .brand-hero-mark { width: 120px; order: -1; }
+    .brand-lede { font-size: 1rem; }
+    .brand-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 48px; }
+    .brand-panel { padding: 80px 0; }
+    .brand-head { margin-bottom: 40px; }
+    .brand-names > div { grid-template-columns: minmax(0, 1fr); padding: 22px 0; }
+    /* Two tiles to a row at most: the lockup's third colourway starts the next one. */
+    .brand-variants { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .brand-tile.is-lockup { aspect-ratio: 16 / 10; }
+    .brand-tile.is-lockup img { width: 66%; }
+    .brand-weights li { gap: 12px; }
+    .brand-dl.brand-type-licence { grid-template-columns: minmax(0, 1fr); }
+    .brand-donts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .brand-swatches { gap: 40px 16px; }
+    .brand-poses { grid-template-columns: minmax(0, 1fr); }
+    .brand-page h3.brand-sub { margin-top: 72px; }
+    .brand-rules { margin-top: 72px; }
+    .brand-row > .btn, .cta-panel .row > .btn { flex: 1 1 100%; }
+    /* A tile's two files share its width, side by side, instead of wrapping one under the other. */
+    .brand-dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .brand-dl :global(.btn) { padding-inline: 8px; gap: 4px; }
+    /* A value under its label, so "255, 255, 255" never breaks inside its button. */
+    .brand-values > div { flex-direction: column; align-items: flex-start; gap: 0; }
+    .brand-values dd { width: 100%; }
+  }
+</style>

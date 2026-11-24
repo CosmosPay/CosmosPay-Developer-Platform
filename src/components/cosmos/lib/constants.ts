@@ -16,6 +16,7 @@ export const HOME = SITE;
 export const PRICING = `${SITE}/pricing`;
 export const TERMS = `${SITE}/tos`;
 export const ABOUT = `${SITE}/about`;
+export const BRAND = `${SITE}/brand`;
 export const DASH = `${DEV}/dashboard`;
 export const DOCS = docsRoot(DEV);
 export const LOGIN = loginUrl(DEV);
