@@ -14,6 +14,8 @@ async function request(url, options = {}) {
     const err = new Error(msg);
     err.status = res.status;
     err.code = json && json.code;
+    // The envelope's status string (`plan_limit`, `not_configured`...), for refusals a view acts on.
+    err.apiStatus = json && json.status;
     throw err;
   }
   return json ? json.data : null;
@@ -368,4 +370,9 @@ export const organizations = {
   walletChallenge: (id, body) => request(`/api/organizations/${encodeURIComponent(id)}/wallets/challenge`, { method: "POST", body: JSON.stringify(body) }),
   renameWallet: (id, walletId, label) => request(`/api/organizations/${encodeURIComponent(id)}/wallets/${encodeURIComponent(walletId)}`, { method: "PATCH", body: JSON.stringify({ label }) }),
   removeWallet: (id, walletId) => request(`/api/organizations/${encodeURIComponent(id)}/wallets/${encodeURIComponent(walletId)}`, { method: "DELETE" }),
+  // The Discord servers linked to the organization (Settings). Install answers { url } (Discord's
+  // authorize address) for the browser to open; the link itself is made by the callback.
+  discordLinks: (id) => request(`/api/organizations/${encodeURIComponent(id)}/discord`),
+  discordInstall: (id, body) => request(`/api/organizations/${encodeURIComponent(id)}/discord/install`, { method: "POST", body: JSON.stringify(body) }),
+  discordUnlink: (id, linkId) => request(`/api/organizations/${encodeURIComponent(id)}/discord/${encodeURIComponent(linkId)}`, { method: "DELETE" }),
 };
