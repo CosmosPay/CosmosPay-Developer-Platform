@@ -108,10 +108,23 @@ export async function postBotLink(config: BotConfig, payload: BotLinkPayload, fe
   return botLinkResult(answer.status, answer.json);
 }
 
-/** Tells the bot a server is no longer linked (`DELETE /links/{guildId}`); a 404 is fine. */
-export async function deleteBotLink(config: BotConfig, guildId: string, fetchImpl: FetchLike = fetch, now: () => Date = () => new Date()): Promise<{ ok: true } | { ok: false; log: string }> {
-  const answer = await botCall(config, "DELETE", botLinkPath(guildId), "", fetchImpl, now);
+/**
+ * Tells the bot a server is no longer linked (`DELETE /links/{guildId}`, its body naming the key the
+ * link was made with: `{"apiKeySha256": "<hex>"}`), so the bot unlinks only that link. A 404 (not
+ * linked) and a 409 (linked since with another key, not ours to remove) are fine. A link stored
+ * before the hash was kept has none: the bot cannot be told which link to drop, so this says so
+ * without asking (its key is revoked all the same).
+ */
+export async function deleteBotLink(
+  config: BotConfig,
+  guildId: string,
+  keySha256: string | null,
+  fetchImpl: FetchLike = fetch,
+  now: () => Date = () => new Date(),
+): Promise<{ ok: true } | { ok: false; log: string }> {
+  if (!keySha256 || !/^[0-9a-f]{64}$/.test(keySha256)) return { ok: false, log: "the link has no key hash to name it by" };
+  const answer = await botCall(config, "DELETE", botLinkPath(guildId), JSON.stringify({ apiKeySha256: keySha256 }), fetchImpl, now);
   if ("error" in answer) return { ok: false, log: `unreachable (${answer.error})` };
-  if ((answer.status >= 200 && answer.status < 300) || answer.status === 404) return { ok: true };
+  if ((answer.status >= 200 && answer.status < 300) || answer.status === 404 || answer.status === 409) return { ok: true };
   return { ok: false, log: `unexpected answer ${answer.status}` };
 }

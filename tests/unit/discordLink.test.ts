@@ -1,10 +1,11 @@
 /* discordLink.test.ts: linking a Discord server to an organization (src/lib/discord-link.ts,
    src/lib/discord-link-shared.ts, src/lib/discord-http.ts). The authorize address Discord gets,
    the install request's state and its single use, the signature the bot checks (over the method,
-   the path and the exact body), the key's scopes, what the bot's and Discord's answers mean, and
-   the outcome the callback hands back to Settings. */
+   the path and the exact body), the key's scopes, the bot's address, who may link a server already
+   linked, what the bot's and Discord's answers mean, the unlink naming the key's hash, and the
+   outcome the callback hands back to Settings. */
 import { strict as assert } from 'node:assert';
-import { createHmac } from 'node:crypto';
+import { createHash, createHmac } from 'node:crypto';
 import { test } from 'node:test';
 
 import {
@@ -14,9 +15,11 @@ import {
   DISCORD_TOKEN_URL,
   INSTALL_TTL_MS,
   LINK_SIGNATURE_HEADER,
+  apiKeySha256,
   authorizeUrl,
   botLinkPath,
   botLinkResult,
+  botLinkUrlProblem,
   discordCallbackUrl,
   discordConfigFrom,
   discordKeyName,
@@ -27,12 +30,14 @@ import {
   newInstallState,
   parseDiscordUser,
   parseTokenAnswer,
+  relinkRefusal,
   signLinkRequest,
 } from '@/lib/discord-link';
 import {
   BOT_REFUSAL_CODES,
   DEFAULT_LINK_ASSET,
   LINK_FAILURE_REASONS,
+  LINK_WARNINGS,
   normalizeLinkAsset,
   outcomeLocation,
   readLinkOutcome,
@@ -74,7 +79,41 @@ test('the configuration is off until the id, the client secret and a long enough
   assert.equal(discordConfigFrom({ ...base, linkSecret: 'short' }), null);
   assert.equal(discordConfigFrom({ ...base, linkSecret: null }), null);
   assert.equal(discordConfigFrom({ ...base, botUrl: 'ftp://bot' }), null);
-  assert.equal(discordConfigFrom({ ...base, botUrl: 'http://10.0.0.5:3800/' })?.botUrl, 'http://10.0.0.5:3800');
+  assert.equal(discordConfigFrom({ ...base, botUrl: 'https://bot.cosmospay.lat/' })?.botUrl, 'https://bot.cosmospay.lat');
+  assert.equal(discordConfigFrom({ ...base, botUrl: 'http://127.0.0.1:3800/' })?.botUrl, 'http://127.0.0.1:3800');
+  // The key travels to the bot: plain http only to this machine, and no path the signature would miss.
+  assert.equal(discordConfigFrom({ ...base, botUrl: 'http://10.0.0.5:3800/' }), null);
+  assert.equal(discordConfigFrom({ ...base, botUrl: 'https://bot.cosmospay.lat/discord' }), null);
+});
+
+test('the bot address is https, or http on a loopback host, with no path, credentials or query', () => {
+  for (const ok of ['https://bot.cosmospay.lat', 'https://bot.cosmospay.lat:8443', 'http://127.0.0.1:3800', 'http://127.1.2.3', 'http://localhost:3800', 'http://[::1]:3800']) {
+    assert.equal(botLinkUrlProblem(ok), null, ok);
+  }
+  assert.equal(botLinkUrlProblem('http://10.0.0.5:3800'), 'not_https');
+  assert.equal(botLinkUrlProblem('http://bot.cosmospay.lat'), 'not_https');
+  assert.equal(botLinkUrlProblem('http://127.0.0.1.evil.com'), 'not_https');
+  assert.equal(botLinkUrlProblem('https://bot.cosmospay.lat/prefix'), 'has_path');
+  assert.equal(botLinkUrlProblem('http://127.0.0.1:3800/links'), 'has_path');
+  assert.equal(botLinkUrlProblem('https://user:pass@bot.cosmospay.lat'), 'not_url');
+  assert.equal(botLinkUrlProblem('https://bot.cosmospay.lat?x=1'), 'not_url');
+  assert.equal(botLinkUrlProblem('ftp://bot'), 'not_url');
+  assert.equal(botLinkUrlProblem('not a url'), 'not_url');
+});
+
+test('a server linked to another organization is refused; replacing this one\'s needs its key\'s delete permission', () => {
+  const can = (envs: string[]) => (env: string) => envs.includes(env);
+  assert.equal(relinkRefusal(null, 'org_a', can([])), null);
+  assert.equal(relinkRefusal({ orgId: 'org_b', environment: 'dev' }, 'org_a', can(['dev', 'prod'])), 'linked_elsewhere');
+  assert.equal(relinkRefusal({ orgId: 'org_a', environment: 'prod' }, 'org_a', can(['dev'])), 'replace_forbidden');
+  assert.equal(relinkRefusal({ orgId: 'org_a', environment: 'prod' }, 'org_a', can(['prod'])), null);
+  assert.equal(relinkRefusal({ orgId: 'org_a', environment: 'dev' }, 'org_a', can(['dev'])), null);
+});
+
+test('the key is named to the bot by its SHA-256, never sent again', () => {
+  const key = 'prod_0123456789abcdef';
+  assert.equal(apiKeySha256(key), createHash('sha256').update(key, 'utf8').digest('hex'));
+  assert.match(apiKeySha256(key), /^[0-9a-f]{64}$/);
 });
 
 test('an install state is 32 random bytes in base64url, and a fresh one each time', () => {
@@ -126,11 +165,14 @@ test('a link request is signed over the time, the method, the path and the exact
   assert.throws(() => signLinkRequest(SECRET, 'GET', 'http://127.0.0.1:3800/links', '', now));
 });
 
-test('the bot key holds every scope but KYC, and fits in one gateway label', () => {
-  assert.deepEqual(DISCORD_KEY_SCOPES, COSMOS_SCOPES.filter((s) => !s.startsWith('kyc:')));
-  assert.ok(!DISCORD_KEY_SCOPES.some((s) => s.startsWith('kyc:')));
-  assert.ok(DISCORD_KEY_SCOPES.includes('payments:write'));
-  assert.equal(DISCORD_KEY_SCOPES.length, COSMOS_SCOPES.length - 2);
+test('the bot key holds only what its payments, webhooks, products and stats commands use, and fits in one gateway label', () => {
+  assert.deepEqual([...DISCORD_KEY_SCOPES].sort(), ['activity:read', 'payments:read', 'payments:write', 'products:read', 'webhooks:read', 'webhooks:write']);
+  for (const scope of DISCORD_KEY_SCOPES) assert.ok(COSMOS_SCOPES.includes(scope), scope);
+  // Nothing that moves funds by other routes or edits the organization's other records.
+  for (const resource of ['kyc', 'swaps', 'liquidity', 'onramp', 'offramp', 'plugins', 'customers']) {
+    assert.ok(!DISCORD_KEY_SCOPES.some((s) => s.startsWith(`${resource}:`)), resource);
+  }
+  assert.ok(!DISCORD_KEY_SCOPES.includes('products:write'));
   assert.deepEqual(parsePermissionsLabel(encodePermissionsLabel(DISCORD_KEY_SCOPES)).sort(), [...DISCORD_KEY_SCOPES].sort());
 });
 
@@ -190,6 +232,10 @@ test('the asset is native, a code or CODE:ISSUER', () => {
 
 test('the callback names its outcome in the address, and Settings reads back only known codes', () => {
   assert.equal(outcomeLocation({ linked: true }), '/dashboard?view=settings&discord=linked');
+  assert.equal(outcomeLocation({ linked: true, warning: null }), '/dashboard?view=settings&discord=linked');
+  assert.equal(outcomeLocation({ linked: true, warning: 'old_key_kept' }), '/dashboard?view=settings&discord=linked&warning=old_key_kept');
+  for (const warning of LINK_WARNINGS) assert.deepEqual(readLinkOutcome('linked', null, null, warning), { linked: true, warning });
+  assert.deepEqual(readLinkOutcome('linked', null, null, 'free text'), { linked: true, warning: null });
   assert.equal(outcomeLocation({ linked: false, reason: 'denied', detail: null }), '/dashboard?view=settings&discord=error&reason=denied');
   assert.equal(outcomeLocation({ linked: false, reason: 'bot_refused', detail: 'asset_unknown' }), '/dashboard?view=settings&discord=error&reason=bot_refused&detail=asset_unknown');
   // A detail belongs to a refusal only.
@@ -201,7 +247,7 @@ test('the callback names its outcome in the address, and Settings reads back onl
   for (const detail of BOT_REFUSAL_CODES) {
     assert.deepEqual(readLinkOutcome('error', 'bot_refused', detail), { linked: false, reason: 'bot_refused', detail });
   }
-  assert.deepEqual(readLinkOutcome('linked', null, null), { linked: true });
+  assert.deepEqual(readLinkOutcome('linked', null, null), { linked: true, warning: null });
   assert.equal(readLinkOutcome(null, 'denied', null), null);
   assert.equal(readLinkOutcome('maybe', null, null), null);
   assert.deepEqual(readLinkOutcome('error', '<img src=x>', 'free text'), { linked: false, reason: 'internal', detail: null });
@@ -271,22 +317,33 @@ test('the bot gets a signed POST /links with the exact body it can verify', asyn
   assert.ok(!down.ok && down.reason === 'bot_unreachable' && !down.log.includes(SECRET));
 });
 
-test('every attempt is signed again, and DELETE signs its path with an empty body', async () => {
+test('every attempt is signed again, and DELETE names the key by its hash in the signed body', async () => {
   const cfg = { botUrl: 'http://127.0.0.1:3800', linkSecret: SECRET };
+  const hash = apiKeySha256('dv_the-key-the-link-was-made-with');
   let second = 0;
   const clock = () => new Date(Date.UTC(2026, 10, 18, 12, 0, second++));
   const bot = stub(() => new Response(null, { status: 404 }));
-  assert.deepEqual(await deleteBotLink(cfg, '1180000000000000000', bot.fetch, clock), { ok: true });
-  assert.deepEqual(await deleteBotLink(cfg, '1180000000000000000', bot.fetch, clock), { ok: true });
+  assert.deepEqual(await deleteBotLink(cfg, '1180000000000000000', hash, bot.fetch, clock), { ok: true });
+  assert.deepEqual(await deleteBotLink(cfg, '1180000000000000000', hash, bot.fetch, clock), { ok: true });
   const [a, b] = bot.calls;
   assert.equal(a.url, 'http://127.0.0.1:3800/links/1180000000000000000');
   assert.equal(a.init.method, 'DELETE');
-  assert.equal(a.init.body, undefined);
+  const body = JSON.stringify({ apiKeySha256: hash });
+  assert.equal(a.init.body, body);
+  assert.equal(header(a.init, 'Content-Type'), 'application/json');
   const sig = header(a.init, LINK_SIGNATURE_HEADER);
   const t = Number(/^t=(\d+),/.exec(sig)?.[1]);
-  assert.equal(sig, `t=${t},v1=${hmac(`${t}.DELETE./links/1180000000000000000.`)}`);
+  assert.equal(sig, `t=${t},v1=${hmac(`${t}.DELETE./links/1180000000000000000.${body}`)}`);
   assert.notEqual(header(b.init, LINK_SIGNATURE_HEADER), sig);
-  const failed = await deleteBotLink(cfg, '1180000000000000000', stub(() => new Response(null, { status: 500 })).fetch);
+  // Linked since with another key (409): not ours to remove, so the unlink goes on.
+  assert.deepEqual(await deleteBotLink(cfg, '1180000000000000000', hash, stub(() => json(409, { error: 'key_mismatch' })).fetch), { ok: true });
+  assert.deepEqual(await deleteBotLink(cfg, '1180000000000000000', hash, stub(() => json(200, { unlinked: true })).fetch), { ok: true });
+  const failed = await deleteBotLink(cfg, '1180000000000000000', hash, stub(() => new Response(null, { status: 500 })).fetch);
   assert.ok(!failed.ok);
+  // A link stored without the hash cannot name its key: the bot is not asked.
+  const none = stub(() => new Response(null, { status: 200 }));
+  const noHash = await deleteBotLink(cfg, '1180000000000000000', null, none.fetch);
+  assert.ok(!noHash.ok);
+  assert.equal(none.calls.length, 0);
   assert.throws(() => botLinkPath('../admin'));
 });

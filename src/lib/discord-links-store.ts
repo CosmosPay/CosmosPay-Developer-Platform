@@ -5,11 +5,14 @@
      organization. Rows expired a day ago are cleared on the way.
    - takeInstallRequest: the request a callback names, used up in one statement only when it is
      this member's, unused and alive, so a replay (or two callbacks racing) finds it used.
-   - the links: listed per organization with who linked each, replaced per server. */
+   - the links: listed per organization with who linked each, replaced per server only within the
+     organization that holds it (another organization's link is refused, LinkedElsewhereError). */
 import { prisma } from "@/lib/prisma";
 import { INSTALL_TTL_MS, MAX_OPEN_INSTALLS, installRequestProblem, newInstallState, type LinkEnvironment } from "@/lib/discord-link";
 
 export class TooManyInstallsError extends Error {}
+/** The server is linked to another organization: it must be unlinked there first. */
+export class LinkedElsewhereError extends Error {}
 
 const CLEAR_AFTER_MS = 24 * 60 * 60_000;
 
@@ -64,6 +67,7 @@ type LinkRow = {
   guildName: string;
   environment: string;
   apiKeyId: string;
+  apiKeySha256: string | null;
   chain: string;
   address: string;
   asset: string;
@@ -125,9 +129,29 @@ export async function findDiscordLink(orgId: string, id: string): Promise<Stored
   return row ? stored(row) : null;
 }
 
+/** The link a server has, in any organization, or null. */
+export async function findDiscordLinkByGuild(guildId: string): Promise<StoredDiscordLink | null> {
+  const row = await prisma.discordLink.findUnique({ where: { guildId } });
+  return row ? stored(row) : null;
+}
+
+/** Every link of an organization, as stored (what deleting the organization unlinks). */
+export async function storedDiscordLinks(orgId: string): Promise<StoredDiscordLink[]> {
+  const rows = await prisma.discordLink.findMany({ where: { orgId } });
+  return rows.map(stored);
+}
+
+/** The organization's links that pay to one of its wallets (what removing the wallet unlinks). */
+export async function discordLinksToWallet(orgId: string, chain: string, address: string): Promise<StoredDiscordLink[]> {
+  const rows = await prisma.discordLink.findMany({ where: { orgId, chain, address } });
+  return rows.map(stored);
+}
+
 /**
- * Stores the server's link, replacing the one it had (in this organization or another) in the
- * same transaction. Answers the new row and the one it replaced, whose key the caller revokes.
+ * Stores the server's link, replacing the one it had in this organization in the same
+ * transaction; a link of another organization is never replaced (LinkedElsewhereError: the
+ * callback refuses that before minting a key, this holds it against a race). Answers the new row
+ * and the one it replaced, whose key the caller revokes.
  */
 export async function saveDiscordLink(input: {
   orgId: string;
@@ -135,6 +159,7 @@ export async function saveDiscordLink(input: {
   guildName: string;
   environment: LinkEnvironment;
   apiKeyId: string;
+  apiKeySha256: string;
   chain: string;
   address: string;
   asset: string;
@@ -144,6 +169,7 @@ export async function saveDiscordLink(input: {
 }): Promise<{ link: StoredDiscordLink; replaced: StoredDiscordLink | null }> {
   return prisma.$transaction(async (tx) => {
     const previous = await tx.discordLink.findUnique({ where: { guildId: input.guildId } });
+    if (previous && previous.orgId !== input.orgId) throw new LinkedElsewhereError("The Discord server is linked to another organization");
     const { guildId, ...fields } = input;
     const row = previous
       ? await tx.discordLink.update({ where: { guildId }, data: { ...fields, createdAt: new Date() } })

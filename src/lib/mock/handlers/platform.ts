@@ -12,7 +12,7 @@ import { TICKET_PRIORITIES, TICKET_STATUSES } from "@/lib/support-status";
 import { COSMOS_SCOPES } from "@/lib/cosmos-scopes";
 import { isNetwork, isNetworkAddress, type NetworkId } from "@/lib/chains";
 import { addedByAddress, CHALLENGE_TTL_MS, normalizeWalletAddress, walletProofMessage } from "@/lib/org-wallets";
-import { DISCORD_KEY_DESCRIPTION, DISCORD_KEY_SCOPES, INSTALL_TTL_MS, authorizeUrl, discordKeyName, isInstallState, newInstallState } from "@/lib/discord-link";
+import { DISCORD_KEY_DESCRIPTION, DISCORD_KEY_SCOPES, INSTALL_TTL_MS, apiKeySha256, authorizeUrl, discordKeyName, isInstallState, newInstallState, relinkRefusal } from "@/lib/discord-link";
 import { DEFAULT_LINK_ASSET, isBotRefusalCode, normalizeLinkAsset, outcomeLocation, type LinkOutcome } from "@/lib/discord-link-shared";
 import { deleteBotLink, exchangeDiscordCode, postBotLink, readDiscordUser } from "@/lib/discord-http";
 import { mockDiscordLive } from "@/lib/mock/discord-live";
@@ -600,6 +600,10 @@ const orgRoutes: MockRoute[] = [
     if (myMembership(org)?.role !== "owner") return forbidden("Only the owner can delete this organization");
     const s = state();
     if (s.orgs.filter(myMembership).length <= 1) return forbidden("You must keep at least one organization");
+    // As the real route: its Discord servers are unlinked (their keys revoked) first.
+    const gone = (s.discordLinks ?? []).filter((l) => l.orgId === org.id);
+    s.discordLinks = (s.discordLinks ?? []).filter((l) => l.orgId !== org.id);
+    s.apiKeys = s.apiKeys.filter((k) => !gone.some((l) => l.apiKeyId === k.id));
     s.orgs = s.orgs.filter((o) => o.id !== org.id);
     return ok(null, "Organization deleted");
   }),
@@ -746,10 +750,19 @@ const orgRoutes: MockRoute[] = [
     const org = findOrg(req.params.id);
     if (!org) return notFound("Organization not found");
     if (!hasPermission(org, "wallets:delete")) return forbidden("You don't have permission to remove this organization's wallets.");
-    const before = org.wallets.length;
-    org.wallets = org.wallets.filter((w) => w.id !== req.params.walletId);
-    if (org.wallets.length === before) return notFound("Wallet not found");
-    return ok(null, "Wallet removed");
+    const wallet = org.wallets.find((w) => w.id === req.params.walletId);
+    if (!wallet) return notFound("Wallet not found");
+    // As the real route: a Discord server paying into it is unlinked first, which takes the
+    // permission to revoke its key.
+    const s = state();
+    const links = (s.discordLinks ?? []).filter((l) => l.orgId === org.id && l.chain === wallet.chain && l.address === wallet.address);
+    if (links.some((l) => !hasPermission(org, `${l.environment === "prod" ? "apiKeysLive" : "apiKeysTest"}:delete`))) {
+      return jsonError({ message: "A linked Discord server pays into this wallet, and unlinking it needs permission to revoke its API key.", code: 409, status: ApiStatus.CONFLICT });
+    }
+    s.discordLinks = (s.discordLinks ?? []).filter((l) => !links.includes(l));
+    s.apiKeys = s.apiKeys.filter((k) => !links.some((l) => l.apiKeyId === k.id));
+    org.wallets = org.wallets.filter((w) => w.id !== wallet.id);
+    return ok({ id: wallet.id, discordUnlinked: links.map((l) => l.id) }, "Wallet removed");
   }),
 ];
 
@@ -835,7 +848,7 @@ const discordRoutes: MockRoute[] = [
     const live = mockDiscordLive();
     if (live && s.discordLiveGuilds?.includes(link.guildId)) {
       // The key is the environment's, not minted here: only the bot lets go of it.
-      const bot = await deleteBotLink(live.config, link.guildId);
+      const bot = await deleteBotLink(live.config, link.guildId, apiKeySha256(live.apiKey));
       if (!bot.ok) console.warn(`[mock] discord: the bot did not unlink server ${link.guildId}: ${bot.log}`);
       s.discordLiveGuilds = s.discordLiveGuilds.filter((g) => g !== link.guildId);
     }
@@ -871,6 +884,11 @@ const discordRoutes: MockRoute[] = [
       return outcome({ linked: false, reason: "discord_error", detail: null });
     }
     const guild = token.guild;
+    // As the real callback: another organization's link is never taken over, and replacing this
+    // organization's own takes the permission to revoke its key.
+    const existing = s.discordLinks.find((l) => l.guildId === guild.id);
+    const refusal = relinkRefusal(existing ?? null, org.id, (env) => hasPermission(org, `${env === "prod" ? "apiKeysLive" : "apiKeysTest"}:delete`));
+    if (refusal) return outcome({ linked: false, reason: refusal, detail: null });
     const discordUser = await readDiscordUser(token.accessToken);
     const bot = await postBotLink(live.config, {
       guildId: guild.id,

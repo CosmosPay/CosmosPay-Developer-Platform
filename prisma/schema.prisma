@@ -335,6 +335,9 @@ model DiscordLink {
   guildName       String
   environment     String // dev | prod
   apiKeyId        String
+  // Lowercase hex SHA-256 of the key (never the key): how the bot's DELETE /links names the link
+  // this platform made. Null on a link stored before it was kept.
+  apiKeySha256    String?
   chain           String
   address         String
   asset           String

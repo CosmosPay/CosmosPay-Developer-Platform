@@ -4,22 +4,26 @@ import { discordConfig } from "@/lib/discord-env";
 import {
   DISCORD_KEY_DESCRIPTION,
   DISCORD_KEY_SCOPES,
+  apiKeySha256,
   discordKeyName,
   isInstallState,
   isSnowflake,
+  relinkRefusal,
 } from "@/lib/discord-link";
 import { isBotRefusalCode, outcomeLocation, type BotRefusalCode, type LinkFailureReason } from "@/lib/discord-link-shared";
 import { exchangeDiscordCode, postBotLink, readDiscordUser } from "@/lib/discord-http";
 import { keyMintRefusal } from "@/lib/discord-link-guard";
-import { saveDiscordLink, takeInstallRequest } from "@/lib/discord-links-store";
-import { createApiKey, createConsumer, deleteApiKey } from "@/utils/apisix";
+import { LinkedElsewhereError, findDiscordLinkByGuild, saveDiscordLink, takeInstallRequest } from "@/lib/discord-links-store";
+import { getMembership } from "@/lib/organizations";
+import { hasOrgPermission } from "@/lib/org-permissions";
+import { apiKeyPresence, createApiKey, createConsumer, deleteApiKey } from "@/utils/apisix";
 import { safeNotify } from "@/lib/notifications";
 import { geoLocate } from "@/lib/geo";
 import type { APIRoute } from "astro";
 
 /* Where every answer goes: Settings, with the outcome in the address (a path on this origin;
    src/lib/discord-link-shared.ts lists the codes, and the page words each one). */
-const linked = () => redirect(outcomeLocation({ linked: true }));
+const linked = (oldKeyKept = false) => redirect(outcomeLocation({ linked: true, warning: oldKeyKept ? "old_key_kept" : null }));
 const failed = (reason: LinkFailureReason, detail: BotRefusalCode | null = null) => redirect(outcomeLocation({ linked: false, reason, detail }));
 
 function redirect(location: string): Response {
@@ -30,8 +34,12 @@ function redirect(location: string): Response {
    Discord sends the browser once the bot was added to a server. The state names the member's
    install request (src/lib/discord-links-store.ts), used up here whatever happens next, so a replay
    finds it used. The server is the one Discord's token answer names, never the `guild_id`
-   parameter. The key minted for the organization goes to the bot alone; a link that fails after
-   the key was minted revokes it. Errors are logged with their cause and never a secret. */
+   parameter. A server linked to another organization is refused until it is unlinked there, and
+   replacing this organization's own link takes the permission to revoke its key (`relinkRefusal`),
+   both before any key is minted. The key minted for the organization goes to the bot alone; a link
+   that fails after the key was minted revokes it. The previous key of a replaced link is revoked,
+   and when that fails the member is told (a warning on Settings and a notification) instead of the
+   failure staying in the log. Errors are logged with their cause and never a secret. */
 export const GET: APIRoute = async (ctx) => {
   const config = discordConfig();
   if (!config) return failed("not_configured");
@@ -84,6 +92,21 @@ export const GET: APIRoute = async (ctx) => {
   if (hinted && isSnowflake(hinted) && hinted !== guild.id) {
     console.warn(`[discord] org ${request.orgId}: the callback named server ${hinted}, Discord's token names ${guild.id}; using Discord's`);
   }
+  // A server already linked: another organization's link is never taken over, and replacing this
+  // organization's own takes what revoking its key takes.
+  const existing = await findDiscordLinkByGuild(guild.id).catch(() => undefined);
+  if (existing === undefined) return failed("internal");
+  if (existing) {
+    const membership = await getMembership(request.orgId, userId).catch(() => null);
+    if (!membership) return failed("forbidden");
+    const refusal = relinkRefusal(existing, request.orgId, (env) =>
+      hasOrgPermission(membership.role, membership.permissions, `${env === "prod" ? "apiKeysLive" : "apiKeysTest"}:delete`),
+    );
+    if (refusal) {
+      console.warn(`[discord] org ${request.orgId}: server ${guild.id} not linked (${refusal}; linked to org ${existing.orgId})`);
+      return failed(refusal);
+    }
+  }
   const discordUser = await readDiscordUser(token.accessToken);
 
   // The key the bot will hold: the organization's, in the request's environment, on this member's
@@ -123,6 +146,7 @@ export const GET: APIRoute = async (ctx) => {
     guildName: guild.name,
     environment: request.environment,
     apiKeyId: key.id,
+    apiKeySha256: apiKeySha256(key.apiKey),
     chain: wallet.chain,
     address: wallet.address,
     asset: request.asset,
@@ -130,28 +154,53 @@ export const GET: APIRoute = async (ctx) => {
     discordUsername: discordUser.name,
     createdById: userId,
   }).catch((err: unknown) => {
+    if (err instanceof LinkedElsewhereError) return "elsewhere" as const;
     console.error(`[discord] org ${request.orgId}, server ${guild.id}: saving the link failed: ${(err as Error)?.message ?? err}`);
     return null;
   });
+  if (saved === "elsewhere") {
+    // Another organization linked the server between the check above and here. The bot already
+    // took the new key, which is revoked now: that server needs linking again by its organization.
+    console.error(`[discord] org ${request.orgId}: server ${guild.id} was linked to another organization meanwhile; the bot holds a revoked key until it is linked again`);
+    await revokeMinted();
+    return failed("linked_elsewhere");
+  }
   if (!saved) {
     // The bot holds the new key: revoking it leaves that link unable to act until it is linked again.
     await revokeMinted();
     return failed("internal");
   }
-  // Linked before (here or to another organization): its key is no longer the bot's. Only an admin
-  // of the Discord server can add the bot (Discord requires Manage Server), so moving a server is
-  // that server's decision; the member who had linked it hears about it all the same.
+  // This organization's link replaced: its key is no longer the bot's. A key the gateway still
+  // holds after a failed revoke is never left silent: the member is told on Settings and in a
+  // notification, and so is whoever made the old link, to revoke it in API keys.
+  let oldKeyKept = false;
   if (saved.replaced && saved.replaced.apiKeyId !== key.id) {
     const old = saved.replaced;
-    if (!(await deleteApiKey(old.apiKeyId, old.createdById).catch(() => null))) {
-      console.warn(`[discord] could not revoke the previous key of server ${guild.id} (${old.apiKeyId})`);
+    const revoked = await deleteApiKey(old.apiKeyId, old.createdById).catch(() => null);
+    if (!revoked && (await apiKeyPresence(old.apiKeyId, old.createdById).catch(() => "unknown")) !== "absent") {
+      oldKeyKept = true;
+      console.error(`[discord] org ${request.orgId}: could not revoke the previous key of server ${guild.id} (${old.apiKeyId}); it is still live`);
     }
-    if (old.orgId !== request.orgId || old.createdById !== userId) {
+    const keptNote = `The key it held (“${discordKeyName(old.guildName)}”) could not be revoked: revoke it in API keys.`;
+    if (oldKeyKept) {
+      safeNotify({
+        userId,
+        type: "apikey.deleted",
+        title: "Previous Discord key still active",
+        message: `Linked the Discord server “${guild.name}” again. ${keptNote}`,
+        origin: null,
+        country: null,
+        region: null,
+        ipAddress: null,
+        metadata: { id: old.apiKeyId, environment: old.environment, discordGuildId: guild.id },
+      });
+    }
+    if (old.createdById !== userId) {
       safeNotify({
         userId: old.createdById,
         type: "apikey.deleted",
         title: "Discord server linked again",
-        message: `An admin of the Discord server “${old.guildName}” linked it again${old.orgId !== request.orgId ? " to another organization" : ""}; the key it held was revoked.`,
+        message: `The Discord server “${old.guildName}” was linked again in your organization. ${oldKeyKept ? keptNote : "The key it held was revoked."}`,
         origin: null,
         country: null,
         region: null,
@@ -173,5 +222,5 @@ export const GET: APIRoute = async (ctx) => {
     ipAddress: loc?.ip ?? null,
     metadata: { id: key.id, environment: request.environment, role: "user", discordGuildId: guild.id, city: loc?.city ?? null, publicIp: loc?.publicIp ?? null, userAgent: loc?.userAgent ?? null, local: loc?.isLocal ?? false },
   });
-  return linked();
+  return linked(oldKeyKept);
 };

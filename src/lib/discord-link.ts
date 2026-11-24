@@ -13,10 +13,8 @@
 
    The bot's requests are signed like Cosmos Pay's webhooks, over the method and the path too, so a
    signed request cannot be replayed as another one: `X-Cosmos-Link-Signature: t=<unix seconds>,
-   v1=<hex HMAC-SHA256(secret, "<t>.<METHOD>.<path>.<raw body>")>`, the body empty for DELETE and
-   GET. The bot refuses a signature it has seen, so every attempt is signed again. */
-import { createHmac, randomBytes } from "node:crypto";
-import { COSMOS_SCOPES } from "@/lib/cosmos-scopes";
+   v1=<hex HMAC-SHA256(secret, "<t>.<METHOD>.<path>.<raw body>")>`, the body empty for GET. The bot refuses a signature it has seen, so every attempt is signed again. */
+import { createHash, createHmac, randomBytes } from "node:crypto";
 
 export const DISCORD_AUTHORIZE_URL = "https://discord.com/oauth2/authorize";
 export const DISCORD_TOKEN_URL = "https://discord.com/api/oauth2/token";
@@ -36,9 +34,29 @@ export const MAX_OPEN_INSTALLS = 10;
 export const LINK_SECRET_MIN = 32;
 export const LINK_SIGNATURE_HEADER = "X-Cosmos-Link-Signature";
 
-/* The key handed to the bot: everything the organization's own resources allow, but KYC (the bot
-   never onboards anyone). Its role is `user`, as every key minted here (src/lib/api-key-role.ts). */
-export const DISCORD_KEY_SCOPES: string[] = COSMOS_SCOPES.filter((scope) => !scope.startsWith("kyc:"));
+/* The key handed to the bot, least privilege: what its payments flow and the commands around it
+   use (CosmosPay-Discord-Bot: src/links, src/discord/commands, src/tools/groups, src/tracking),
+   nothing that moves funds by other routes or changes the organization's records beyond payments:
+   - payments:read / payments:write  checking the key on link, the networks a link settles on,
+     /charge and role purchases (POST /payment-intents/pay), following and cancelling them, a
+     payer's transaction hash; /payment, /protected, /private and /alias, which are payments too;
+   - webhooks:read / webhooks:write  the bot's own webhook endpoint for those payments (POST and
+     DELETE /webhooks), /webhook, and /stats' webhook log;
+   - products:read                   /charge from a product (GET /products/{id});
+   - activity:read                   /stats' client activity (read only).
+   Commands that need more answer 403 `insufficient_scope` with this key, and the bot says which
+   scope is missing: /swap, /cross-swap and /usdt0 (swaps), /liquidity and /vault (liquidity),
+   /plugin, /fiat (on-ramp, off-ramp and QR charges), /customer, and creating, editing or deleting
+   with /product. Granting them is the organization's call: a key of its own from API keys, linked
+   with the bot's /setup. Its role is `user`, as every key minted here (src/lib/api-key-role.ts). */
+export const DISCORD_KEY_SCOPES: string[] = [
+  "payments:read",
+  "payments:write",
+  "webhooks:read",
+  "webhooks:write",
+  "products:read",
+  "activity:read",
+];
 export const DISCORD_KEY_DESCRIPTION = "Linked from the dashboard";
 /* The API keys form takes names up to 80 characters: a longer one could not be edited there. */
 export const DISCORD_KEY_NAME_MAX = 80;
@@ -56,8 +74,9 @@ export interface DiscordConfig {
 }
 
 /**
- * The deployment's Discord settings, or null when linking is off: no application id or secret, or
- * no bot secret of at least LINK_SECRET_MIN characters, or an address that is not http(s).
+ * The deployment's Discord settings, or null when linking is off: no application id or secret, no
+ * bot secret of at least LINK_SECRET_MIN characters, a platform address that is not http(s), or a
+ * bot address `botLinkUrlProblem` refuses.
  */
 export function discordConfigFrom(env: {
   clientId?: string | null;
@@ -71,8 +90,30 @@ export function discordConfigFrom(env: {
   const linkSecret = (env.linkSecret ?? "").trim();
   const botUrl = ((env.botUrl ?? "").trim() || DEFAULT_BOT_LINK_URL).replace(/\/+$/, "");
   if (!clientId || !clientSecret || linkSecret.length < LINK_SECRET_MIN) return null;
-  if (!isHttpUrl(botUrl) || !isHttpUrl(env.platformUrl)) return null;
+  if (botLinkUrlProblem(botUrl) || !isHttpUrl(env.platformUrl)) return null;
   return { clientId, clientSecret, botUrl, linkSecret, redirectUri: discordCallbackUrl(env.platformUrl) };
+}
+
+const isLoopbackHost = (host: string) => host === "localhost" || host === "[::1]" || /^127(\.\d{1,3}){3}$/.test(host);
+
+/**
+ * Why the bot's address (DISCORD_BOT_LINK_URL, trailing slashes dropped) cannot carry the key, or
+ * null when it can: it must be https, or http on a loopback host only (the bot beside the
+ * platform), with no credentials, query or fragment, and no path: the bot checks the signature
+ * over its own path (`/links...`), so a prefix would break every request.
+ */
+export function botLinkUrlProblem(value: string): "not_url" | "not_https" | "has_path" | null {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return "not_url";
+  }
+  if (url.protocol !== "https:" && url.protocol !== "http:") return "not_url";
+  if (url.username || url.password || url.search || url.hash) return "not_url";
+  if (url.protocol === "http:" && !isLoopbackHost(url.hostname)) return "not_https";
+  if (url.pathname !== "/" && url.pathname !== "") return "has_path";
+  return null;
 }
 
 function isHttpUrl(value: string): boolean {
@@ -146,7 +187,7 @@ export function linkSignaturePayload(t: number, method: string, path: string, bo
 /**
  * The `X-Cosmos-Link-Signature` value for one request: `t=<unix seconds>,v1=<hex HMAC-SHA256>`.
  * `path` is the request's path alone (no host, no query); `body` the exact JSON sent, or "" for
- * DELETE and GET. Sign again for every attempt: the bot refuses a signature it has seen.
+ * GET. Sign again for every attempt: the bot refuses a signature it has seen.
  */
 export function signLinkRequest(secret: string, method: string, path: string, body: string, now: Date = new Date()): string {
   if (!path.startsWith("/") || path.includes("?") || path.includes("#")) throw new Error("A link request is signed over its path alone");
@@ -202,6 +243,29 @@ export function parseDiscordUser(json: unknown): { id: string | null; name: stri
     id: isSnowflake(user.id) ? user.id : null,
     name: cleanName(user.global_name, 64) ?? cleanName(user.username, 64),
   };
+}
+
+/** Lowercase hex SHA-256 of an API key: how the bot's `DELETE /links/{guildId}` names the key the
+    link was made with, so it unlinks only the link this platform made. Kept beside the link (the key
+    itself is never stored). */
+export function apiKeySha256(apiKey: string): string {
+  return createHash("sha256").update(apiKey, "utf8").digest("hex");
+}
+
+/**
+ * Whether a member may link a server that `existing` already links (null: it links none). A server
+ * linked to another organization is refused until that one unlinks it there; replacing this
+ * organization's own link revokes its key, so it takes what revoking that key takes: the delete
+ * permission of the old link's environment.
+ */
+export function relinkRefusal(
+  existing: { orgId: string; environment: LinkEnvironment } | null,
+  orgId: string,
+  canDeleteKeys: (environment: LinkEnvironment) => boolean,
+): "linked_elsewhere" | "replace_forbidden" | null {
+  if (!existing) return null;
+  if (existing.orgId !== orgId) return "linked_elsewhere";
+  return canDeleteKeys(existing.environment) ? null : "replace_forbidden";
 }
 
 /** The key's name in the API keys list: `Discord: <server>`, within what that form accepts. */

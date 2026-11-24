@@ -34,7 +34,7 @@ import { PreviewCard, shortAddress } from "@/components/cosmos/dashboard/compone
 import { AddressLink } from "@/components/cosmos/dashboard/components/AddressLink";
 import { StatusIcon } from "@/components/cosmos/dashboard/components/StatusIcon";
 import { BulkActions, SelectCell, SelectHead, useBulkDelete, useSelection } from "@/components/cosmos/dashboard/components/BulkSelect";
-import { NetworkMark, WalletSelect, useOrgWallets } from "@/components/cosmos/dashboard/components/OrgWallets";
+import { NetworkMark, ORG_WALLETS_EVENT, WalletSelect, useOrgWallets } from "@/components/cosmos/dashboard/components/OrgWallets";
 import { usePaged, useListFilters, useUrlRequest } from "@/components/cosmos/dashboard/hooks";
 import { fmtDateTime } from "@/components/cosmos/dashboard/helpers";
 import { DATE_RANGES, countBy, inRange, matchesQuery, type DateRange } from "@/lib/dashboard-filters";
@@ -69,6 +69,12 @@ function useDiscordLinks(orgId: string) {
       .catch((err) => { if (current) setLinks(err && err.status === 503 ? "off" : null); });
     return () => { current = false; };
   }, [orgId, tick]);
+  // Removing a wallet unlinks the servers that pay into it: read the list again.
+  useEffect(() => {
+    const again = () => setTick((n) => n + 1);
+    window.addEventListener(ORG_WALLETS_EVENT, again);
+    return () => window.removeEventListener(ORG_WALLETS_EVENT, again);
+  }, []);
   return { links, reload: () => setTick((n) => n + 1) };
 }
 
@@ -110,8 +116,9 @@ export function DiscordSection({ orgId, env, perms, keyLimitReached, liveLocked,
   const [discordReq, clearDiscord] = useUrlRequest("discord");
   const [reasonReq, clearReason] = useUrlRequest("reason");
   const [detailReq, clearDetail] = useUrlRequest("detail");
-  const outcome: LinkOutcome | null = readLinkOutcome(discordReq, reasonReq, detailReq);
-  const dismiss = () => { clearDiscord(); clearReason(); clearDetail(); };
+  const [warningReq, clearWarning] = useUrlRequest("warning");
+  const outcome: LinkOutcome | null = readLinkOutcome(discordReq, reasonReq, detailReq, warningReq);
+  const dismiss = () => { clearDiscord(); clearReason(); clearDetail(); clearWarning(); };
   const ready = state !== undefined && state !== "off";
   useEffect(() => {
     if (outcome && ready) sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -294,14 +301,16 @@ export function DiscordSection({ orgId, env, perms, keyLimitReached, liveLocked,
 function OutcomeNotice({ outcome, onUpgrade, onDismiss }: { outcome: LinkOutcome; onUpgrade: (() => void) | null; onDismiss: () => void }) {
   const t = useT();
   const dc = t.dash.discord;
+  // A link that went through but left something for the member (its old key still live) warns.
+  const warning = outcome.linked && outcome.warning ? dc.warnings[outcome.warning] : null;
   const text = outcome.linked
-    ? dc.linked
+    ? (warning ? `${dc.linked} ${warning}` : dc.linked)
     : outcome.reason === "bot_refused" && outcome.detail
       ? `${dc.reasons.bot_refused} ${dc.refusals[outcome.detail]}`
       : dc.reasons[outcome.reason];
   return (
-    <div className="note-bar arrive" role={outcome.linked ? "status" : "alert"}>
-      <StatusIcon tone={outcome.linked ? "ok" : "fail"} size={20} />
+    <div className="note-bar arrive" role={outcome.linked && !warning ? "status" : "alert"}>
+      <StatusIcon tone={outcome.linked ? (warning ? "wait" : "ok") : "fail"} size={20} />
       <span>{text}</span>
       {!outcome.linked && outcome.reason === "key_limit" && onUpgrade && <button type="button" className="btn btn-dark btn-sm note-bar-act" onClick={onUpgrade}>{t.dash.common.viewPlans}</button>}
       <button type="button" className={`icon-mini${!outcome.linked && outcome.reason === "key_limit" && onUpgrade ? "" : " note-bar-act"}`} title={dc.dismiss} aria-label={dc.dismiss} onClick={onDismiss}>

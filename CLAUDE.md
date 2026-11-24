@@ -1105,6 +1105,31 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   not one of the organization's wallets (`orgHasWallet`), failing closed if the table cannot be
   read. Requests made with an API key straight to the Payments API are not affected.
 
+### Linking a Discord server
+
+- **Settings > Discord links a server to the organization** (`components/DiscordLinks.tsx`, routes
+  under `src/pages/api/organizations/[id]/discord/` and `src/pages/api/integrations/discord/callback.ts`,
+  the pure rules in `src/lib/discord-link.ts`, tested in `tests/unit/discordLink.test.ts`). The
+  callback mints an API key for the organization and hands it to the bot over a signed request; the
+  key never reaches a browser and is never stored here, only its id and its SHA-256.
+- **Least privilege** (`DISCORD_KEY_SCOPES`): `payments:read/write`, `webhooks:read/write`,
+  `products:read`, `activity:read`. The bot's commands that need more (swaps, liquidity and vaults,
+  plugins, fiat, customers, editing products) answer 403 with the missing scope; an organization that
+  wants them links a key of its own with the bot's `/setup`.
+- **No takeover**: a server linked to another organization is refused (`linked_elsewhere`) until it
+  is unlinked there, checked before any key is minted and again in the save's transaction; replacing
+  this organization's own link takes the delete permission of the old key's environment
+  (`replace_forbidden`). An old key that cannot be revoked is said on Settings (`warning=old_key_kept`)
+  and in a notification, never left in the log.
+- **`DISCORD_BOT_LINK_URL` is https, or http on a loopback host, with no path** (the bot verifies
+  the signature over its own `/links` path): anything else turns linking off (503 `not_configured`)
+  and logs why once.
+- **Every unlink goes through `src/lib/discord-unlink.ts`**: the bot is told with
+  `DELETE /links/{guildId}` and `{"apiKeySha256"}` in the signed body (a 404 or a 409, linked since
+  with another key, is fine), then the key is revoked, then the row goes, failing closed. Settings'
+  unlink, deleting the organization and removing the wallet a link pays into all use it; the wallet
+  removal needs the key's delete permission too (409 without it).
+
 ### Public swaps (no account)
 
 - **Product owner: Cosmos Pay offers public swaps and a public swap API without an account.**

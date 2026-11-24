@@ -2,8 +2,9 @@
    asset a merchant names for a linked server, and the outcome the callback hands back to Settings.
 
    The callback (src/pages/api/integrations/discord/callback.ts) ends with a redirect to
-   `/dashboard?view=settings&discord=linked`, or `...&discord=error&reason=<code>` with, for a link
-   the bot refused, `&detail=<the bot's code>`. Settings reads it back with `readLinkOutcome`, which
+   `/dashboard?view=settings&discord=linked` (with `&warning=<code>` when the link went through but
+   something needs the member's hand), or `...&discord=error&reason=<code>` with, for a link the bot
+   refused, `&detail=<the bot's code>`. Settings reads it back with `readLinkOutcome`, which
    accepts only the codes listed here: no text from the address ever reaches the screen, each code
    is a sentence in the viewer's language (dash.discord.reasons / refusals). */
 
@@ -42,6 +43,8 @@ export const LINK_FAILURE_REASONS = [
   "bot_unreachable", // the bot did not answer, or refused our signature
   "bot_refused", // the bot refused the link (detail says why)
   "key_limit", // the plan's API key limit, or no production keys on the plan
+  "linked_elsewhere", // the server is linked to another organization: unlink it there first
+  "replace_forbidden", // replacing this organization's link needs the delete permission of its key
   "internal", // anything else on our side
 ] as const;
 export type LinkFailureReason = (typeof LINK_FAILURE_REASONS)[number];
@@ -58,8 +61,14 @@ export const BOT_REFUSAL_CODES = [
 ] as const;
 export type BotRefusalCode = (typeof BOT_REFUSAL_CODES)[number];
 
+/** What a link that went through still needs from the member. */
+export const LINK_WARNINGS = [
+  "old_key_kept", // the server's previous key could not be revoked: revoke it in API keys
+] as const;
+export type LinkWarning = (typeof LINK_WARNINGS)[number];
+
 export type LinkOutcome =
-  | { linked: true }
+  | { linked: true; warning?: LinkWarning | null }
   | { linked: false; reason: LinkFailureReason; detail: BotRefusalCode | null };
 
 export const isLinkFailureReason = (v: unknown): v is LinkFailureReason =>
@@ -68,19 +77,22 @@ export const isLinkFailureReason = (v: unknown): v is LinkFailureReason =>
 export const isBotRefusalCode = (v: unknown): v is BotRefusalCode =>
   typeof v === "string" && (BOT_REFUSAL_CODES as readonly string[]).includes(v);
 
+export const isLinkWarning = (v: unknown): v is LinkWarning =>
+  typeof v === "string" && (LINK_WARNINGS as readonly string[]).includes(v);
+
 /** Settings, where the callback always lands. */
 export const LINK_OUTCOME_BASE = "/dashboard?view=settings";
 
 /** The address the callback redirects to (same origin, a path). */
 export function outcomeLocation(outcome: LinkOutcome): string {
-  if (outcome.linked) return `${LINK_OUTCOME_BASE}&discord=linked`;
+  if (outcome.linked) return `${LINK_OUTCOME_BASE}&discord=linked${outcome.warning ? `&warning=${outcome.warning}` : ""}`;
   const detail = outcome.reason === "bot_refused" && outcome.detail ? `&detail=${outcome.detail}` : "";
   return `${LINK_OUTCOME_BASE}&discord=error&reason=${outcome.reason}${detail}`;
 }
 
 /** The outcome the address names, or null when it names none (or something unknown). */
-export function readLinkOutcome(discord: string | null, reason: string | null, detail: string | null): LinkOutcome | null {
-  if (discord === "linked") return { linked: true };
+export function readLinkOutcome(discord: string | null, reason: string | null, detail: string | null, warning: string | null = null): LinkOutcome | null {
+  if (discord === "linked") return { linked: true, warning: isLinkWarning(warning) ? warning : null };
   if (discord !== "error") return null;
   const why = isLinkFailureReason(reason) ? reason : "internal";
   return { linked: false, reason: why, detail: why === "bot_refused" && isBotRefusalCode(detail) ? detail : null };

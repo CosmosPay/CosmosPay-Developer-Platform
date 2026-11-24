@@ -658,7 +658,10 @@ export function OrgWalletsSection({ orgId, wallets, perms, network }: { orgId: s
 
   const copy = (address: string) => navigator.clipboard?.writeText(address).then(() => showToast(t.toasts.copied)).catch(() => {});
   const remove = (wallet: OrgWallet) =>
-    orgsApi.removeWallet(orgId, wallet.id).then(() => { announce(); setOpen(null); showToast(w.removed); }).catch(() => showToast(w.actionError, "error"));
+    orgsApi.removeWallet(orgId, wallet.id)
+      .then(() => { announce(); setOpen(null); showToast(w.removed); })
+      // 409: a linked Discord server pays into it, and unlinking that needs a permission this member lacks.
+      .catch((err) => showToast(err && err.status === 409 ? w.removeDiscordLinked : w.actionError, "error"));
 
   const all = wallets || [];
   const matches = (x: OrgWallet, skip: string | null) =>
