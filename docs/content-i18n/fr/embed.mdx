@@ -51,6 +51,8 @@ une. Il lit le lien depuis le navigateur du payeur et le tient à jour (toutes l
 attente du paiement, toutes les 3 pendant que le réseau le confirme, toutes les 30 une fois expiré)
 et s'arrête quand le paiement est payé, échoué ou annulé.
 
+- Avant le code QR, il demande un e-mail au payeur, comme le checkout hébergé : le reçu y est envoyé
+  une fois le paiement confirmé, et vous le recevez avec le paiement.
 - Par défaut, il fait au plus 420px de large. Changez-le en CSS sur l'élément :
   `cosmos-pay-checkout { max-width: none; }`.
 - Ce n'est pas un iframe : les pages de paiement refusent d'être affichées dans un cadre, à dessein.

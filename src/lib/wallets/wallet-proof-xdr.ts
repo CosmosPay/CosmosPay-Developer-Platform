@@ -1,6 +1,7 @@
 /* A Stellar wallet proven with a signed XDR instead of a connected wallet (product owner,
    2026-10-27: people hand over a signed XDR, not their wallet). The proof transaction carries the
-   same proof message as a wallet's message signature (src/lib/org-wallets.ts), hashed into a
+   same proof message as a wallet's message signature (src/lib/org-wallets.ts: the challenge's
+   organization, address, nonce and life), hashed into a
    manageData entry, and can never apply (sequence 1 is behind every existing account). Any Stellar
    wallet signs it; the server rebuilds it from the request and checks the signature
    (src/lib/wallets/signed-xdr.ts). A wallet signs for the network it is set to, so a signature for
@@ -14,9 +15,18 @@ export const WALLET_PROOF_PASSPHRASE = Networks.PUBLIC;
 const SIGNED_FOR = [Networks.PUBLIC, Networks.TESTNET];
 const PROOF_MEMO = "Cosmos Pay wallet proof";
 
-/** The transaction `address` signs to be added to organization `orgId`, issued at `issuedAt`. */
-export function walletProofTransactionXdr({ orgId, address, issuedAt }: { orgId: string; address: string; issuedAt: string }): string {
-  const message = walletProofMessage({ orgId, chain: "stellar", address, issuedAt });
+/** A challenge for a Stellar address (src/lib/org-wallets.ts). */
+export interface StellarProofChallenge {
+  orgId: string;
+  address: string;
+  nonce: string;
+  issuedAt: string;
+  expiresAt: string;
+}
+
+/** The transaction `address` signs to be added to organization `orgId`, for that challenge. */
+export function walletProofTransactionXdr({ orgId, address, nonce, issuedAt, expiresAt }: StellarProofChallenge): string {
+  const message = walletProofMessage({ orgId, chain: "stellar", address, nonce, issuedAt, expiresAt });
   return new TransactionBuilder(new Account(address, "0"), { fee: "100", networkPassphrase: WALLET_PROOF_PASSPHRASE })
     .addOperation(Operation.manageData({ name: WALLET_PROOF_DATA_NAME, value: hash(new TextEncoder().encode(message) as never) as never }))
     .addMemo(Memo.text(PROOF_MEMO))
@@ -26,7 +36,7 @@ export function walletProofTransactionXdr({ orgId, address, issuedAt }: { orgId:
 }
 
 /** Whether `signedXdr` is that proof transaction signed by `address`, for either network; why not. */
-export function checkWalletProofXdr(proof: { orgId: string; address: string; issuedAt: string }, signedXdr: string): { ok: true } | { ok: false; problem: SignedXdrProblem } {
+export function checkWalletProofXdr(proof: StellarProofChallenge, signedXdr: string): { ok: true } | { ok: false; problem: SignedXdrProblem } {
   // An address that is not a valid key (a bad checksum) cannot have signed anything.
   let unsigned: string;
   try {

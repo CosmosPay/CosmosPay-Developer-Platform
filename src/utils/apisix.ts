@@ -8,6 +8,7 @@ import {
 } from "astro:env/server";
 import { randomBytes, randomUUID } from "node:crypto";
 import { forwardedKeyAuth, isMintableKeyRole, type ForwardedKeyRole } from "@/lib/api-key-role";
+import { encodePermissionsLabel, parsePermissionsLabel } from "@/lib/api-key-labels";
 import { orgSwapContext } from "@/lib/organizations";
 import { prisma } from "@/lib/prisma";
 import { corsOrigins, rewriteLeavesPath, routeHost, upstreamNodes } from "@/lib/apisix-upstream";
@@ -28,26 +29,9 @@ export { callbackRouteUris, p2pWebhookRouteUris, paymentLinksRouteUris, zkChecko
 
 export const keyPrefix = 'cosmos_';
 
-export function parsePermissionsLabel(raw: unknown): string[] {
-  if (typeof raw !== 'string' || raw.length === 0) {
-    return [];
-  }
-
-  try {
-    const parsed: unknown = JSON.parse(raw);
-
-    if (
-      !Array.isArray(parsed) ||
-      !parsed.every((item) => typeof item === 'string')
-    ) {
-      return [];
-    }
-
-    return parsed;
-  } catch {
-    return [];
-  }
-}
+// The label's format and APISIX's 256-character limit live in src/lib/api-key-labels.ts
+// (pure, tested); re-exported here for the routes that already import it from this module.
+export { parsePermissionsLabel };
 
 export type ApiKeyRole = 'admin' | 'user' | 'public';
 
@@ -922,7 +906,7 @@ export async function createApiKey(
       },
     },
     labels: {
-      permissions: JSON.stringify(permissions),
+      permissions: encodePermissionsLabel(permissions),
       role: role,
       env: environment,
       ...(orgId ? { org: orgId } : {}),
@@ -934,7 +918,12 @@ export async function createApiKey(
   // The credential only holds key-auth + labels. Scope/role/env forwarding is done by a
   // consumer-level plugin (APISIX credentials reject non-auth plugins) refreshed below.
   const url = `/consumers/${username}/credentials/${randomId}`;
-  const response = await apisix.put(url, base).catch(() => null);
+  // APISIX's refusal says why (a label over its limit, a schema error): log it, or the
+  // dashboard's only trace is a bare 500.
+  const response = await apisix.put(url, base).catch((err: unknown) => {
+    console.error(`[apisix] Failed to write API key credential: ${apisixErrorReason(err)}`);
+    return null;
+  });
 
   if (!response) {
     return null;
@@ -1101,7 +1090,7 @@ export async function setApiKeyPermissions(
   const username = userId.includes(keyPrefix) ? userId : `${keyPrefix}${userId}`;
   const body: Record<string, unknown> = {
     plugins: apiKey.value.plugins ?? {},
-    labels: { ...(apiKey.value.labels ?? {}), permissions: JSON.stringify(permissions) },
+    labels: { ...(apiKey.value.labels ?? {}), permissions: encodePermissionsLabel(permissions) },
   };
   if (apiKey.value.name) body.name = apiKey.value.name;
   if (apiKey.value.desc) body.desc = apiKey.value.desc;
@@ -1152,7 +1141,7 @@ export async function rotateApiKey(
         },
       },
       labels: permissions
-        ? { ...(apiKey.value.labels ?? {}), permissions: JSON.stringify(permissions) }
+        ? { ...(apiKey.value.labels ?? {}), permissions: encodePermissionsLabel(permissions) }
         : apiKey.value.labels,
     },
   );
@@ -1224,7 +1213,7 @@ export async function updateApiKey(
       ...(existing.value.plugins ?? {}),
     },
     labels: {
-      permissions: JSON.stringify(permissions),
+      permissions: encodePermissionsLabel(permissions),
       role: role,
       env: existingEnv,
       ...(existingOrg ? { org: existingOrg } : {}),

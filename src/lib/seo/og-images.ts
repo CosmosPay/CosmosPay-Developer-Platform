@@ -79,6 +79,7 @@ function heading(area: OgArea, path: string, lang: string): { title: string; mar
     if (path === "/") return { title: c.landing.wallet.title };
     if (path === "/pricing") return { title: c.pricing.title };
     if (path === "/about") return { title: c.about.title };
+    if (path === "/brand") return { title: c.brand.title };
     if (path === "/tos") return { title: termsText(lang).title };
     return null;
   }

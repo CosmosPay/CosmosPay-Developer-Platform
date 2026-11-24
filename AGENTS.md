@@ -80,7 +80,7 @@ Payments API. The pages that read the database on the server (`dashboard.astro`,
   organization behind the sample account the gateway charges the public consumer's rate, so in
   mock mode `/swaps` does not swap as the visitor's organization (`accountSwaps`) and the
   dashboard's form waits for the quote to name the rate (`publicSwaps`).
-- Wallet proofs are not checked in mock mode, and nothing else reaches a chain: QR codes are PNG
+- Wallet proofs are not checked in mock mode (a challenge is issued, any proof over it is taken), and nothing else reaches a chain: QR codes are PNG
   drawings that encode nothing, and the other transactions and XDRs (payment links, liquidity,
   private payments) are sample strings.
 
@@ -779,18 +779,37 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
     phones. To see it locally, sign in through local Authentik with the `.env` test account
     (`DEV_TEST_*`).
 
-### Payment links on every chain
+### Payment links on every network
 
-- **A payment link settles on Stellar, Solana or Monad**, on the environment's network (Solana
-  devnet and Monad testnet in the sandbox). The form is composed, not a stack of fields: the network
-  as three choice cards, the amount with its asset dropdown in one well (as the swap widget), the
-  destination, and memo / message under "more options"; transaction intents
-  (a known payer) are Stellar's only, Monad needs an amount and takes no wallet message. The schema
-  (`src/schemas/payment-intents.ts`, tested) checks each chain's address shape and decimals; the
-  Payments API checks the rest.
-- **`src/lib/chains.ts` is the chain vocabulary** for every screen and route: names, native coins,
-  test-network names, address shapes, explorers (transactions and accounts, per network) and the
-  token presets. Presets are only addresses we verified: Solana USDC (mainnet `EPjF…Dt1v`, devnet
+- **A payment link settles on any network of `NETWORK_IDS`** (35, the swap platform's; the
+  community server's `CROSS_CHAIN_NETWORK_IDS`). Stellar, Solana and Monad have their own wallet
+  links (SEP-7, Solana Pay, EIP-681) and test networks (Solana devnet and Monad testnet in the
+  sandbox); every other network is paid through a **deposit address made for each payment**, on
+  mainnet only (the sandbox lists them, off, saying why), for an amount in one of the tokens the
+  Payments API lists there, with no merchant fee (default taken 2026-11-16, open for the owner). The payer pays from
+  any network and token; the merchant receives exactly the amount on the link's network. A mainnet
+  Stellar, Solana or Monad link with an amount and no fee can be paid that way too
+  (`crossChainPayment` on the public read). The form is composed, not a stack of fields: the network
+  as a `Select` of every network by name (none first for being ours), the amount with its asset
+  dropdown in one well (as the swap widget; on the other networks the real cross-chain asset list,
+  never sampled), the destination, and memo / message under "more options"; transaction intents
+  (a known payer) are Stellar's only, Monad and the other networks need an amount, Monad takes no
+  wallet message. The schema (`src/schemas/payment-intents.ts`, tested) checks each network's
+  address shape and decimals; the Payments API checks the rest.
+- **The hosted checkout pays from another network** (`CrossChainStep.astro` in every design,
+  `src/lib/payments/deposits.ts`, keyless `/v1/payment-links/{id}/deposit-assets`, `/quote`,
+  `/deposits`, `/deposits/{depositId}`): network and token, the payer's refund address there, the
+  quote, then the deposit address with its QR, wallet link where the network has one, memo and
+  deadline, followed until paid (the open deposit's id is kept in sessionStorage so a reload shows
+  the same address). Every answer goes through its parser: the deposit address must be one of its
+  origin network, the wallet link one of the known standards, the QR a PNG, explorer links https. A
+  route's refusal (a minimum, a token it cannot take now) is shown in the server's words, which name
+  no provider. Mock mode never fakes it: the token list is the real one, a quote or a deposit answers
+  that mock mode cannot make one.
+- **`src/lib/chains.ts` is the network vocabulary** for every screen and route: names, native coins,
+  test-network names (the three), address shapes for all 35 (mirroring the server's rules),
+  explorers (transactions and accounts, per network; mainnet only off the three) and the token
+  presets. Presets are only addresses we verified: Solana USDC (mainnet `EPjF…Dt1v`, devnet
   Circle's `4zMM…ncDU`) and Monad mainnet USDC (`0x7547…b603`, from NEAR Intents' list); Monad's
   test network has none. Other tokens go by ticker and mint / contract (`TokenSelect`).
   `payment-link.ts` re-exports its chain list and explorer from there.
@@ -810,23 +829,60 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
 - **The organization's receiving wallets live in Settings** (product owner, 2026-10-25: asking people
   to connect a wallet from the payments views is impractical, and members without the permission
   must not be able to remove one or pick an address outside the list). Model `OrganizationWallet`
-  (chain, address, optional name, the wallet that proved it); routes
-  `/api/organizations/{id}/wallets` (list: any member; connect: `wallets:create`) and
+  (chain, address, optional name, what proved it); routes
+  `/api/organizations/{id}/wallets` (list: any member; connect: `wallets:create`),
+  `/api/organizations/{id}/wallets/challenge` (`wallets:create`) and
   `/api/organizations/{id}/wallets/{walletId}` (rename: `wallets:edit`; remove:
   `wallets:delete`). `wallets` is a permission resource like the others (owners and admins hold
   it implicitly). UI: `components/OrgWallets.tsx` (`OrgWalletsSection` in Settings,
   `ConnectWalletDialog`, `WalletSelect`, `useOrgWallets`).
-- **Connecting proves the wallet**: it signs `walletProofMessage` (`src/lib/org-wallets.ts`: the
-  organization, the network, the address and `issuedAt`), and the route checks the signature
-  against the address (`src/lib/org-wallets-verify.ts`): SEP-53 on Stellar (Freighter), Ed25519 on
-  Solana (Phantom, Solflare), EIP-191 `personal_sign` on Monad (any injected EVM wallet; the
-  signer is recovered with `@noble/curves` + `@noble/hashes`, pinned). A proof is accepted for 10
-  minutes; replaying one only connects the same wallet again. Tested against SEP-53's own vectors
-  and web3.js's documented `personal_sign` example (`tests/unit/orgWallets.test.ts`). The browser
-  side is `src/lib/wallets/prove.ts`.
+- **Every wallet is proven by a signature over a server challenge** (2026-11-16). The member asks
+  for a challenge (`POST .../wallets/challenge`: 32 random bytes, for that member, organization,
+  network and address, valid ten minutes, at most 20 open per member and organization; model
+  `WalletProofChallenge`, `src/lib/org-wallet-challenges.ts`), the wallet signs it, and the connect
+  route checks the signature against the address, then uses the challenge up in one statement
+  (`usedAt`, so a replay or a race finds it used) before it stores the wallet. The text signed is
+  `walletProofMessage` (`src/lib/org-wallets.ts`: the organization, the network, the address, the
+  nonce, issued and expires). Verification is server-side only (`verifyOwnershipProof` in
+  `src/lib/org-wallets-verify.ts`, one verifier per scheme in `src/lib/wallet-proofs/`).
+- **One scheme per network, the one its wallets implement** (`WALLET_PROVIDERS`; `provider` stores
+  what proved the wallet, and "Proven with" shows it):
+
+  | Network | Proof | Browser wallets (one click) | Pasted |
+  | :--- | :--- | :--- | :--- |
+  | Stellar | SEP-53, or the proof transaction signed as an XDR | Freighter | the signed XDR, any wallet |
+  | Solana, Fogo | Ed25519 over the message | Phantom, Solflare | no |
+  | Monad and every EVM network | EIP-191 `personal_sign`, signer recovered | any injected EVM wallet | no |
+  | Tron | TIP-191 `signMessageV2` (`tip191`) | TronLink | the signature |
+  | TON | TON Connect `ton_proof` over the nonce, for this host (`tonproof`): the state init must hash to the address and hold the key | any TON Connect JS bridge (Tonkeeper, MyTonWallet...) | no |
+  | NEAR | NEP-413 with the nonce and this host as recipient, and the key must be a full-access key of the account (`view_access_key`; an implicit account not on chain yet is its key's) (`nep413`) | MyNearWallet's sign-message page in a popup | public key and signature |
+  | Sui | personal message, Ed25519 / Secp256k1 / Secp256r1 (`sui`); zkLogin and multisig refused | Wallet Standard `sui:signPersonalMessage` | the signature |
+  | Aptos, Movement | AIP-62 `signMessage` with the nonce, and the key must be the account's authentication key (legacy or single-key; an account not on chain is its address) (`aip62`) | Wallet Standard `aptos:signMessage` | public key, signature, full message |
+  | Starknet | SNIP-12 revision 1 typed data (domain Cosmos Pay / SN_MAIN; the organization, the nonce cut to 31 bytes, the expiry), validated by the account itself (`is_valid_signature`, Cairo 0's `isValidSignature`) (`snip12`) | injected `window.starknet_*` (Argent X, Braavos) | no |
+  | Cardano | CIP-30 `signData` (CIP-8 COSE_Sign1): EdDSA, the protected header names the address, the key hashes to its payment credential (`cip30`) | CIP-30 `window.cardano.*` | signature and key |
+  | XRP Ledger | keypairs signature of the message's hex, the master key of the address (`xrpl`) | none (no browser standard) | public key and signature |
+  | Aleo | the wallet's `signMessage`, verified by snarkVM (`@provablehq/wasm`, loaded on the first Aleo proof) (`aleo`) | Leo Wallet | the signature |
+  | Bitcoin | BIP-322 simple (P2WPKH, P2TR, P2SH-P2WPKH) or BIP-137 (`bip322`, `signmessage`) | Unisat, OKX, Xverse, Leather | the signature |
+  | Litecoin, Dogecoin, Dash, Zcash (transparent), Bitcoin Cash | the wallet's legacy signmessage with the coin's own magic (`signmessage`) | none | the signature |
+
+  The chain reads (NEAR, Aptos, Movement, Starknet) go to `WALLET_PROOF_*_RPC_URL`
+  (`src/lib/wallet-proof-env.ts`, public mainnet endpoints by default); a node that cannot be reached
+  answers 503, never "wrong signature". TON's proof domain and NEAR's recipient are the platform's
+  host; TON wallets read `/api/wallet-proofs/tonconnect-manifest.json`. The browser side is
+  `src/lib/wallets/prove.ts` (Freighter, Solana, EVM) and `src/lib/wallets/prove-networks.ts` (the
+  rest, with `src/lib/wallets/standard.ts` for the Wallet Standard), in this app rather than the
+  SDK's `@cosmosapp/pay_sdk/wallets`, since an SDK change reaches this repository only once it is
+  published. Tested against signatures made by each network's own libraries
+  (`tests/unit/fixtures/wallet-proof-vectors.json`, `walletProofs.test.ts`, and every network through
+  the dispatcher in `orgWallets.test.ts`), SEP-53's vectors and web3.js's `personal_sign` example.
+- **Only an address that cannot sign a message is added by its address, typed twice**
+  (`addedByAddress`: a Bitcoin or Litecoin P2WSH address, a P2SH address on Dogecoin, Dash, Bitcoin
+  Cash or Zcash, and a Zcash unified address), by members holding `wallets:create`, stored as
+  `provider: "address"` and listed as added by address. Rows stored as `address` before 2026-11-16
+  stay as they are.
 - **A Stellar wallet is added with a signed XDR, not a connected wallet** (product owner,
   2026-10-27: people hand over a signed XDR). `ConnectWalletForm`'s Stellar branch takes the address
-  and a name, then the proof transaction (`src/lib/wallets/wallet-proof-xdr.ts`: the same proof
+  and a name, then the proof transaction (`src/lib/wallets/wallet-proof-xdr.ts`: the challenge's
   message hashed into a manageData entry, sequence 1, never valid) signed with Freighter in one
   click or in any wallet and pasted back (`signedXdr` on the connect route, no `provider`); either
   network's signature counts, since it applies on neither. `src/lib/wallets/signed-xdr.ts` checks a

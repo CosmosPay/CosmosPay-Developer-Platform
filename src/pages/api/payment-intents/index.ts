@@ -1,5 +1,5 @@
 import { requestSession } from "@/lib/request-session";
-import { isChain } from "@/lib/chains";
+import { isDepositNetwork, isNetwork } from "@/lib/chains";
 import {
   ApiStatus,
   jsonCreated,
@@ -12,7 +12,7 @@ import {
 } from "@/lib/http";
 import { getMembership } from "@/lib/organizations";
 import { hasOrgPermission } from "@/lib/org-permissions";
-import { orgHasWallet } from "@/lib/org-wallets-store";
+import { orgHasRouteFeeAccount, orgHasWallet } from "@/lib/org-wallets-store";
 import { cosmos, CosmosApiError, type CosmosEnv } from "@/lib/cosmos";
 import { createPaymentIntentBodySchema } from "@/schemas/payment-intents";
 import { safeNotify } from "@/lib/notifications";
@@ -47,7 +47,7 @@ export const GET: APIRoute = async (ctx) => {
   const env = envFromQuery(ctx.url);
   const status = ctx.url.searchParams.get("status") || undefined;
   const chainParam = ctx.url.searchParams.get("chain");
-  const chain = isChain(chainParam) ? chainParam : undefined;
+  const chain = isNetwork(chainParam) ? chainParam : undefined;
   const take = Number(ctx.url.searchParams.get("take")) || undefined;
   const skip = Number(ctx.url.searchParams.get("skip")) || undefined;
   // Only a parseable instant is forwarded, normalised to ISO; anything else is ignored.
@@ -84,9 +84,15 @@ export const POST: APIRoute = async (ctx) => {
   if (!(await orgHasWallet(org, rest.chain, rest.destination).catch(() => false))) {
     return jsonBadRequest("The receiving address must be one of the organization's wallets. Connect it in Settings first.");
   }
-  // The merchant fee is paid to the organization too, never to an address someone typed.
-  if (rest.merchantFee && !(await orgHasWallet(org, rest.chain, rest.merchantFee.wallet).catch(() => false))) {
-    return jsonBadRequest("The merchant fee must go to one of the organization's wallets. Connect it in Settings first.");
+  // The merchant fee is paid to the organization too, never to an address someone typed. On a
+  // network paid through a deposit address it is credited inside the cross-chain route, to one of
+  // the organization's NEAR wallets or EVM addresses.
+  if (rest.merchantFee) {
+    const fee = rest.merchantFee.wallet;
+    const owned = isDepositNetwork(rest.chain) ? orgHasRouteFeeAccount(org, fee) : orgHasWallet(org, rest.chain, fee);
+    if (!(await owned.catch(() => false))) {
+      return jsonBadRequest("The merchant fee must go to one of the organization's wallets. Connect it in Settings first.");
+    }
   }
 
   try {
@@ -115,6 +121,7 @@ export const POST: APIRoute = async (ctx) => {
             callback: rest.callback,
             checkoutTheme: rest.checkoutTheme,
             merchantFee: rest.merchantFee,
+            depositLimits: rest.depositLimits,
           });
 
     // Activity notification (best-effort): records origin + date of the action.

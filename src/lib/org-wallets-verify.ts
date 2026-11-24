@@ -1,17 +1,39 @@
-/* Checks a wallet's proof (src/lib/org-wallets.ts): the signature over the proof message must
-   come from the address being connected. Server-only. One scheme per network, each the one its
-   wallets implement:
-   - Stellar: SEP-53 (Freighter's signMessage), Ed25519 over SHA-256("Stellar Signed Message:\n" + text).
-   - Solana: Ed25519 over the text's UTF-8 bytes (Phantom's and Solflare's signMessage).
-   - Monad (EVM): EIP-191 personal_sign, secp256k1 over keccak-256 of the prefixed text; the
-     signer's address is recovered from the signature and compared.
-   Signatures arrive as base64 (Stellar, Solana) or 0x-hex (EVM). Anything malformed is a
-   failed proof, never an exception. */
+/* Checks a wallet's proof (src/lib/org-wallets.ts): the signature over the challenge must come
+   from the address being connected. Server-only. One scheme per network, each the one its wallets
+   implement (the newer ones live in src/lib/wallet-proofs, tested against each network's own
+   libraries in tests/unit/walletProofs.test.ts):
+   - Stellar: SEP-53 (Freighter's signMessage), Ed25519 over SHA-256("Stellar Signed Message:\n" + text),
+     or the proof transaction signed in any wallet (src/lib/wallets/wallet-proof-xdr.ts).
+   - Solana and Fogo: Ed25519 over the text's UTF-8 bytes (Phantom's and Solflare's signMessage).
+   - Monad and every other EVM network (EIP-191 personal_sign), secp256k1 over keccak-256 of the
+     prefixed text; the signer's address is recovered from the signature and compared.
+   - Tron TIP-191, TON ton_proof, NEAR NEP-413 (and the account's full-access keys), Sui personal
+     message, Aptos and Movement AIP-62 (and the account's authentication key), Starknet SNIP-12
+     (the account contract's own check), Cardano CIP-30 / CIP-8, XRP Ledger keypairs,
+     Bitcoin BIP-322 and BIP-137, and the Bitcoin family's legacy signmessage.
+   An address that cannot sign (`addedByAddress`) has no signature to check: the route takes it
+   typed twice instead. Signatures arrive as base64 (Stellar, Solana, Sui, the Bitcoin family),
+   0x-hex (EVM, Tron); the rest as a `proof` object. Anything
+   malformed is a failed proof, never an exception; a chain read that cannot be made throws
+   ProofNetworkError (src/lib/wallet-proofs/rpc.ts). */
 import { createHash, createPublicKey, verify } from "node:crypto";
 import { Keypair } from "@stellar/stellar-sdk";
 import { secp256k1 } from "@noble/curves/secp256k1";
 import { keccak_256 } from "@noble/hashes/sha3.js";
-import type { Chain } from "@/lib/chains";
+import type { NetworkId } from "@/lib/chains";
+import { PROOF_MAX_SKEW_MS, WALLET_PROVIDERS, walletProofMessage, type WalletChallenge, type WalletProvider } from "@/lib/org-wallets";
+import { checkWalletProofXdr } from "@/lib/wallets/wallet-proof-xdr";
+import { verifyTron } from "@/lib/wallet-proofs/tron";
+import { readTonProof, verifyTon } from "@/lib/wallet-proofs/ton";
+import { readNearProof, verifyNear, type NearRpc } from "@/lib/wallet-proofs/near";
+import { verifySui } from "@/lib/wallet-proofs/sui";
+import { readAptosProof, verifyAptos, type AptosAuthKeyReader } from "@/lib/wallet-proofs/aptos";
+import { readStarknetSignature, starknetProofMessage, verifyStarknet, type StarknetCall } from "@/lib/wallet-proofs/starknet";
+import { readCardanoProof, verifyCardano } from "@/lib/wallet-proofs/cardano";
+import { verifyXrpl } from "@/lib/wallet-proofs/xrpl";
+import { verifyBip322Simple, verifyCompactSignature, type BitcoinFamily } from "@/lib/wallet-proofs/bitcoin";
+import { str } from "@/lib/wallet-proofs/bytes";
+import { ProofNetworkError } from "@/lib/wallet-proofs/rpc";
 
 const SEP53_PREFIX = "Stellar Signed Message:\n";
 const BASE58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
@@ -81,13 +103,94 @@ export function recoverEvmSigner(message: string, signature: string): string | n
   }
 }
 
-/** Whether `signature` over `message` was made by `address` on `chain`. */
-export function verifyWalletProof(chain: Chain, address: string, message: string, signature: string): boolean {
+/** Whether `signature` over `message` was made by `address` on `chain` (Stellar's SEP-53, Solana's and Fogo's Ed25519, EIP-191). */
+export function verifyWalletProof(chain: NetworkId, address: string, message: string, signature: string): boolean {
   try {
+    const providers = WALLET_PROVIDERS[chain];
+    if (!providers) return false;
     if (chain === "stellar") return verifyStellar(address, message, signature);
-    if (chain === "solana") return verifySolana(address, message, signature);
+    if (providers.includes("phantom")) return verifySolana(address, message, signature);
+    if (!providers.includes("evm")) return false;
     return recoverEvmSigner(message, signature) === address.trim().toLowerCase();
   } catch {
+    return false;
+  }
+}
+
+/** What the client sends as the proof: a signature, a signed Stellar XDR, or a network's proof object. */
+export interface OwnershipProof {
+  provider?: WalletProvider;
+  signature?: string;
+  signedXdr?: string;
+  proof?: Record<string, unknown>;
+}
+
+/** The chain reads and the host some proofs need (src/lib/wallet-proofs/rpc.ts in the route). */
+export interface ProofContext {
+  /** The dashboard's host: TON Connect's proof domain and NEAR's recipient. */
+  host: string;
+  near: NearRpc;
+  aptos: AptosAuthKeyReader;
+  movement: AptosAuthKeyReader;
+  starknet: StarknetCall;
+}
+
+const BITCOIN_FAMILY = new Set<NetworkId>(["btc", "ltc", "doge", "bch", "dash", "zec"]);
+const seconds = (iso: string) => Math.floor(Date.parse(iso) / 1000);
+
+/** Whether `input` proves that `address`, on the challenge's network, signed that challenge. */
+export async function verifyOwnershipProof(challenge: WalletChallenge, address: string, input: OwnershipProof, ctx: ProofContext): Promise<boolean> {
+  const { chain, orgId, nonce, issuedAt, expiresAt } = challenge;
+  const message = walletProofMessage({ orgId, chain, address, nonce, issuedAt, expiresAt });
+  if (input.signedXdr) return chain === "stellar" && checkWalletProofXdr({ orgId, address, nonce, issuedAt, expiresAt }, input.signedXdr).ok;
+  const provider = input.provider;
+  if (!provider || !WALLET_PROVIDERS[chain]?.includes(provider)) return false;
+  const signature = input.signature ?? "";
+  const proof = input.proof ?? {};
+  try {
+    switch (provider) {
+      case "freighter":
+      case "phantom":
+      case "solflare":
+      case "evm":
+        return verifyWalletProof(chain, address, message, signature);
+      case "tip191":
+        return verifyTron(address, message, signature);
+      case "tonproof": {
+        const p = readTonProof(proof);
+        return !!p && verifyTon(address, p, { payload: nonce, domain: ctx.host, notBefore: seconds(issuedAt) - PROOF_MAX_SKEW_MS / 1000, notAfter: seconds(expiresAt) });
+      }
+      case "nep413": {
+        const p = readNearProof(proof);
+        return !!p && (await verifyNear(address, p, { message, nonce, recipient: ctx.host }, ctx.near));
+      }
+      case "sui":
+        return verifySui(address, message, signature);
+      case "aip62": {
+        const p = readAptosProof(proof);
+        return !!p && (await verifyAptos(address, message, nonce, p, chain === "movement" ? ctx.movement : ctx.aptos));
+      }
+      case "snip12": {
+        const sig = readStarknetSignature(proof.signature);
+        return !!sig && (await verifyStarknet(address, starknetProofMessage(challenge), sig, ctx.starknet));
+      }
+      case "cip30": {
+        const p = readCardanoProof(proof);
+        return !!p && verifyCardano(address, message, p);
+      }
+      case "xrpl": {
+        const publicKey = str(proof.publicKey);
+        return !!publicKey && verifyXrpl(address, message, publicKey, str(proof.signature) ?? signature);
+      }
+      case "bip322":
+        return chain === "btc" && verifyBip322Simple(address, message, signature);
+      case "signmessage":
+        return BITCOIN_FAMILY.has(chain) && verifyCompactSignature(chain as BitcoinFamily, address, message, signature);
+      default:
+        return false;
+    }
+  } catch (err) {
+    if (err instanceof ProofNetworkError) throw err;
     return false;
   }
 }
