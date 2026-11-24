@@ -241,6 +241,7 @@ All variables are validated via Astro's typed env (`astro.config.mjs`). See
 | `npm run dev:mock` | Dev server on sample data: no database, Authentik or Payments API (`src/lib/mock`; options after `--`, see Getting started) |
 | `npm run build` | `prisma generate` + docs + embed bundle + share cards + production build → `dist/` |
 | `npm run embed:build` | Bundle `src/embed/` into `public/embed/cosmos-pay.js` with the env's origins inlined (`build` and `predev` run it; `-- --mode development` reads `.env.development`) |
+| `npm run brand:build` | Make the brand page's logo SVGs and PNGs, phone-drawing PNGs, palette and kit ZIP from `public/brand` into `public/brand/kit/` (`build`, `build:app`, `predev` and `dev:mock` run it) |
 | `npm run og:build` | Draw the share card (1200x630 PNG) of every indexable page of the company site and the gateway in each of its languages into `src/assets/og/` (`build`, `build:app` and `predev` run it; only changed cards are redrawn) |
 | `npm run start` | Run the built server (`node ./dist/server/entry.mjs`) |
 | `npm run preview` | Preview the build locally |
