@@ -1,0 +1,26 @@
+---
+/* /fiat/{id}: the payer's page for a charge in local money ("charge with QR").
+ *
+ * A seller shows a QR for an amount in local money; the buyer scans it and lands here, picks a
+ * payment method and pays in the P2P marketplace's secure window, which delivers the crypto to the
+ * seller's own wallet. The HTML is a shell: the charge is read by the browser from the gateway
+ * (GET /v1/payment-links/fiat/{id}) and polled until it settles, for the same reason as the
+ * checkout (src/pages/payments/[id].astro): the gateway budgets that public read per address, and
+ * reading it here would put every payer behind this server's one.
+ */
+import PaymentsLayout from "@/layouts/PaymentsLayout.astro";
+import FiatCharge from "@/components/payments/FiatCharge.astro";
+import { MESSAGES } from "@/lib/payments/i18n";
+import { isFiatRequestId } from "@/lib/payments/fiat-request";
+
+const { id } = Astro.params;
+if (!isFiatRequestId(id)) {
+  return Astro.rewrite("/404");
+}
+
+const t = MESSAGES[Astro.locals.lang ?? "en"].fiat;
+---
+
+<PaymentsLayout title={t.title} description={t.description}>
+  <FiatCharge id={id} />
+</PaymentsLayout>

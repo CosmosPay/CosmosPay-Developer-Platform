@@ -104,6 +104,27 @@ export const ZK_CHECKOUT_CORS = {
   max_age: 86400,
 } as const;
 
+/* The P2P marketplace's order webhook (`POST /v1/onramp/p2p/webhooks`, `@Public()` on the
+   community server, its `eldorado` plugin): the marketplace calls it server to server when an
+   order changes status, and a completed purchase marks the charge in local money it paid as paid
+   (the payer page at payments.cosmospay.lat/fiat/{id} waits on that). The caller holds no API key
+   of ours; what authenticates it is its own signature, which the server checks against the raw
+   body (`x-webhook-hash` = SHA-256 of the body, `x-webhook-signature` = RSA over that hash, the
+   marketplace's published keys), so the route must pass the body and those headers untouched,
+   which the shared plugin stack does (it strips only our own credentials and markers).
+
+   Exactly this path and this method: every other route under `/v1/onramp` (sessions, quotes,
+   payment requests) belongs to a consumer and stays on the key-auth route, so the URI is exact,
+   never a prefix. No CORS plugin: no browser calls it, and a preflight has nothing to reach. */
+export const P2P_WEBHOOK_PATH = '/v1/onramp/p2p/webhooks';
+
+/* The gateway URI of the marketplace's webhook: one exact path. */
+export function p2pWebhookRouteUris(entry: string): string[] {
+  return [`${entryPrefix(entry)}${P2P_WEBHOOK_PATH}`];
+}
+
+export const P2P_WEBHOOK_METHODS = ['POST'];
+
 export const PAYMENT_LINKS_CORS = {
   allow_origins: '*',
   allow_methods: PAYMENT_LINKS_METHODS.join(','),
