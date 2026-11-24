@@ -9,14 +9,15 @@ import {
 import { Nav } from "@/components/cosmos/layout/Nav";
 import { SegThumb } from "@/components/cosmos/dashboard/components/SegThumb";
 import { useT, fmt, initLang } from "@/lib/i18n/index";
-import { apiKeys as apiKeysApi, notifications as notificationsApi, account as accountApi, organizations as orgsApi, invites as invitesApi, support as supportApi } from "@/lib/api-client";
+import { apiKeys as apiKeysApi, notifications as notificationsApi, account as accountApi, organizations as orgsApi, invites as invitesApi, support as supportApi, onramp as onrampApi } from "@/lib/api-client";
+import { chargesAvailable } from "@/lib/qr-charges";
 import { planLimits, planSwapFeeBps, PLAN_IDS, ALL_PLAN_IDS, DEFAULT_PLAN_ID } from "@/lib/plans.ts";
 import { effectivePermissions } from "@/lib/org-permissions.ts";
 import { DI } from "@/components/cosmos/dashboard/icons";
 import { STAFF_ROLES, MANAGER_ROLES, STAFF_ONLY, MANAGER_ONLY, OWNER_ONLY, DISABLED_VIEWS, RECORD_VIEWS } from "@/components/cosmos/dashboard/data";
 import { OPEN_RECORD_EVENT, FILTERS_EVENT } from "@/components/cosmos/dashboard/hooks";
 import {
-  OverviewView, PaymentsView, PaymentRecordView, ZkPaymentsView, ZkAccountsView, BalancesView, CustomersView, ProductsView, SwapsView, LiquidityView, BlindPayView, P2pRampView,
+  OverviewView, PaymentsView, PaymentRecordView, ZkPaymentsView, ZkAccountsView, BalancesView, CustomersView, ProductsView, SwapsView, LiquidityView, BlindPayView, P2pRampView, QrChargesView,
   ApiKeysView, WebhooksView, LogsView, ActivityLogView, NotificationsView, SupportView, SupportInboxView, UsersView, SettingsView, AccountView,
   AdminOverviewView, AdminPaymentsView, AdminSwapsView, AdminFiatView, AdminCustomersView, AdminProductsView, AdminConsumersView,
 } from "@/components/cosmos/dashboard/views/index";
@@ -280,6 +281,33 @@ export default function Dashboard({ user: initialUser, lang, features, env = "de
   const org = usableOrgs.find((o) => o.id === curOrg) || usableOrgs[0] || orgs[0] || { id: "", name: "…", role: "member", plan: DEFAULT_PLAN_ID, permissions: [] };
   const ownedOrgCount = orgs.filter((o) => o.role === "owner").length;
 
+  // QR charges ship with a release of the Payments API, so the server behind an environment may
+  // not have them yet (404) or may have the rail off (501/503). One read of the list per
+  // environment, kept for the session, decides whether "QR charges" is in the sidebar
+  // (chargesAvailable in src/lib/qr-charges.ts); until it answers, the entry stays out.
+  const chargesEnv = live ? "prod" : "dev";
+  const [chargesOn, setChargesOn] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    if (!org.id || chargesEnv in chargesOn) return;
+    let current = true;
+    onrampApi.get("p2p/payment-requests", chargesEnv, org.id, { take: 1 })
+      .then(() => true, (err) => chargesAvailable(err && err.status))
+      .then((on) => { if (current) setChargesOn((m) => ({ ...m, [chargesEnv]: on })); });
+    return () => { current = false; };
+  }, [chargesEnv, org.id]);
+  const chargesHidden = chargesOn[chargesEnv] !== true;
+  // A link to the view on a server without charges opens the overview, as a disabled view does.
+  useEffect(() => {
+    if (view !== "charges" || chargesOn[chargesEnv] !== false) return;
+    setView("overview");
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("view");
+      url.searchParams.delete("open");
+      window.history.replaceState(window.history.state, "", url);
+    } catch (e) {}
+  }, [view, chargesEnv, chargesOn]);
+
   // The active org's keys/seats are governed by the OWNER's plan (the org's subscription),
   // and what I personally can do here is governed by my role + per-action permissions.
   const orgLimits = planLimits(org.plan);
@@ -428,6 +456,7 @@ export default function Dashboard({ user: initialUser, lang, features, env = "de
       case "blindpay": return <BlindPayView canManage={can("payments:create")} orgId={org.id} orgRole={org.role} env={live ? "prod" : "dev"} />;
       case "onramp": return <P2pRampView key="buy" side="buy" canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "offramp": return <P2pRampView key="sell" side="sell" canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
+      case "charges": return <QrChargesView canManage={can("payments:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "developers": return <ApiKeysView keys={keys} env={live ? "prod" : "dev"} loading={keysLoading} error={keysError} limit={orgLimits.maxApiKeys} lockedIds={lockedKeyIds} canCreate={canCreateKeys} canEdit={canEditKeys} canDelete={canDeleteKeys} liveLocked={liveKeysLocked} onUpgrade={keyUpgrade} onCreate={() => setModal("key")} onRevoke={requestRevoke} onEdit={setEditing} />;
       case "webhook": return <WebhooksView canManage={can("webhooks:create")} orgId={org.id} env={live ? "prod" : "dev"} />;
       case "logs": return <LogsView kind="api" env={live ? "prod" : "dev"} />;
@@ -451,7 +480,7 @@ export default function Dashboard({ user: initialUser, lang, features, env = "de
   };
 
   // What this viewer's role may see in the sidebar.
-  const visibleView = (k) => !DISABLED_VIEWS.includes(k) && (isStaff || !STAFF_ONLY.includes(k)) && (isManager || !MANAGER_ONLY.includes(k)) && (isManager || !OWNER_ONLY.includes(k));
+  const visibleView = (k) => !DISABLED_VIEWS.includes(k) && !(k === "charges" && chargesHidden) && (isStaff || !STAFF_ONLY.includes(k)) && (isManager || !MANAGER_ONLY.includes(k)) && (isManager || !OWNER_ONLY.includes(k));
 
   return (
     <div className={`dash${navOpen ? " nav-open" : ""}`}>

@@ -42,6 +42,13 @@ export const rampExplorer = (chainId: number, address: string) => {
   return base ? `${base}/address/${address}` : null;
 };
 
+/** A transaction's page on its network's explorer (a charge's delivery), or null for a network
+    without one here or a hash that is not one. */
+export const rampTxExplorer = (chainId: number, hash: string | null | undefined) => {
+  const base = RAMP_CHAINS[chainId]?.explorer;
+  return base && hash && /^0x[0-9a-fA-F]{64}$/.test(hash) ? `${base}/tx/${hash}` : null;
+};
+
 /** A currency's name in the reader's language (the market's English one when the runtime has none). */
 export function currencyName(id: string, lang: string, fallback?: string): string {
   try {

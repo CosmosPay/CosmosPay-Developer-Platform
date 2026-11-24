@@ -28,7 +28,7 @@ import { Select } from "@/components/cosmos/dashboard/components/Select";
 import { Sk } from "@/components/cosmos/dashboard/components/Skeleton";
 import { TokenMark } from "@/components/cosmos/dashboard/components/TokenMark";
 import { NetworkMark } from "@/components/cosmos/dashboard/components/OrgWallets";
-import { currencyName, methodName, rampChainMark, rampChainName, rampExplorer } from "@/lib/ramp-format";
+import { currencyName, methodName, rampChainMark, rampChainName, rampExplorer, rampTxExplorer } from "@/lib/ramp-format";
 
 export type RampSide = "buy" | "sell";
 export interface RampToken { chainId: number; address: string; symbol: string; decimals: number; priceUsd?: string | null; logoUrl?: string | null; main?: boolean }
@@ -42,7 +42,7 @@ export const rampApi = (side: RampSide) => (side === "buy" ? onramp : offramp);
 
 /* The ramps' names for networks, currencies and payment methods live in src/lib/ramp-format.ts,
    shared with the payments domain's payer page (vanilla TS); re-exported for the views. */
-export { currencyName, methodName, rampChainMark, rampChainName, rampExplorer };
+export { currencyName, methodName, rampChainMark, rampChainName, rampExplorer, rampTxExplorer };
 
 const EVM_ADDRESS = /^0x[a-fA-F0-9]{40}$/;
 const FIAT_AMOUNT = /^(0|[1-9]\d{0,14})(\.\d{1,2})?$/;
@@ -388,8 +388,9 @@ export function RampWidget({ side, market, env, orgId, onCreated }: {
 
 /* The token sheet: every network the marketplace offers (a filter with their marks and how many
    tokens each lists) and each network's tokens, searched on the Payments API by symbol or by a
-   pasted address. The swap's token picker's look (`.tpick`), arrow keys between the rows. */
-function RampTokenSheet({ side, env, orgId, networks, selected, onPick, onClose }: {
+   pasted address. The swap's token picker's look (`.tpick`), arrow keys between the rows. Also the
+   QR charge dialog's token picker (views/QrChargesView.tsx). */
+export function RampTokenSheet({ side, env, orgId, networks, selected, onPick, onClose }: {
   side: RampSide; env: string; orgId: string; networks: RampNetwork[]; selected: RampToken;
   onPick: (token: RampToken) => void; onClose: () => void;
 }) {
@@ -461,8 +462,8 @@ function RampTokenSheet({ side, env, orgId, networks, selected, onPick, onClose 
 }
 
 /* The currency sheet: the swap's token picker's look (`.tpick`), a search when the list is long,
-   arrow keys between the rows. */
-function RampPicker({ title, items, selected, onPick, onClose, searchable = false }: {
+   arrow keys between the rows. Also the QR charge dialog's currency picker. */
+export function RampPicker({ title, items, selected, onPick, onClose, searchable = false }: {
   title: string;
   items: { key: string; mark: ReactNode; title: string; sub: string; aside?: string; search: string }[];
   selected: string;
