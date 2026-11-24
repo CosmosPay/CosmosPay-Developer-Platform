@@ -76,10 +76,13 @@ test('the company file points developers at the docs, the OpenAPI document and t
     'https://www.npmjs.com/package/@cosmosapp/pay_sdk',
     'https://cosmospay.lat/.well-known/api-catalog',
     'https://cosmospay.lat/about',
+    'https://cosmospay.lat/brand',
+    'https://cosmospay.lat/brand/kit/cosmos-pay-brand-kit.zip',
   ]) {
     assert.ok(files.site.includes(url), url);
   }
   assert.ok(files.payments.includes('https://cosmospay.lat/about)'));
+  assert.ok(files.payments.includes('https://cosmospay.lat/brand)'));
 });
 
 test('each file links the auth.md of its host, and the company file the agent skill and its index', () => {

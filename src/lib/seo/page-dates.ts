@@ -180,6 +180,8 @@ export function siteSources(path: string, lang: string): string[] | null {
       return ["src/pages/site/pricing.astro", "src/components/cosmos/Pricing.tsx", "src/components/cosmos/pricing/", ...platformCopy(lang, "pricing"), PLANS];
     case "/about":
       return ["src/pages/site/about.astro", "src/lib/site/about.ts", ...platformCopy(lang, "about")];
+    case "/brand":
+      return ["src/pages/site/brand.astro", "src/lib/site/brand.ts", ...platformCopy(lang, "brand")];
     case "/swaps":
       return ["src/pages/site/swaps.astro", ...PUBLIC_SWAPS, ...platformCopy(lang, "swapsPage"), PLANS];
     case "/tos":

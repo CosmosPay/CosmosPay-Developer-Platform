@@ -19,6 +19,10 @@ test('ownerOf assigns every public path to one domain', () => {
   assert.equal(ownerOf('/pricing'), 'site');
   assert.equal(ownerOf('/tos'), 'site');
   assert.equal(ownerOf('/about'), 'site');
+  assert.equal(ownerOf('/brand'), 'site');
+  // The brand files under public/brand/ are static (served before the middleware): no route owns them.
+  assert.equal(ownerOf('/brand/isotipo.svg'), null);
+  assert.equal(ownerOf('/brand/kit/cosmos-pay-brand-kit.zip'), null);
   assert.equal(ownerOf('/pay'), 'payments');
   assert.equal(ownerOf('/contact'), 'payments');
   assert.equal(ownerOf(LINK), 'payments');
@@ -37,7 +41,7 @@ test('ownerOf assigns every public path to one domain', () => {
 });
 
 test('only the indexable pages have a version per language (and follow the visitor with a redirect)', () => {
-  for (const p of ['/', '/pricing', '/tos', '/about', '/swaps', '/Pricing', '/about/']) assert.ok(isLanguagePage('site', p), `site ${p}`);
+  for (const p of ['/', '/pricing', '/tos', '/about', '/brand', '/swaps', '/Pricing', '/about/', '/brand/']) assert.ok(isLanguagePage('site', p), `site ${p}`);
   for (const p of ['/', '/faq', '/fees', '/compare', '/swaps', '/stellar', '/learn', '/learn/accept-usdc-payments']) assert.ok(isLanguagePage('payments', p), `payments ${p}`);
   for (const p of ['/pay', '/contact', LINK, '/preview/classic', '/zk/cm1x2y3z4a5b6c7d8e9f0g1h2', '/nope', '/%zz']) assert.ok(!isLanguagePage('payments', p), `payments ${p}`);
   for (const p of ['/faq', '/robots.txt', '/sitemap.xml', '/llms.txt']) assert.ok(!isLanguagePage('site', p), `site ${p}`);
@@ -56,6 +60,9 @@ test('cosmospay.lat renders only the company site', () => {
   assert.deepEqual(route('cosmospay.lat', '/about', '?lang=es'), { kind: 'rewrite', area: 'site', path: '/site/about' });
   assert.deepEqual(route('dev.cosmospay.lat', '/about'), { kind: 'redirect', location: 'https://cosmospay.lat/about', status: 301 });
   assert.deepEqual(route('payments.cosmospay.lat', '/about'), { kind: 'redirect', location: 'https://cosmospay.lat/about', status: 301 });
+  assert.deepEqual(route('cosmospay.lat', '/brand', '?lang=zh'), { kind: 'rewrite', area: 'site', path: '/site/brand' });
+  assert.deepEqual(route('dev.cosmospay.lat', '/brand'), { kind: 'redirect', location: 'https://cosmospay.lat/brand', status: 301 });
+  assert.deepEqual(route('payments.cosmospay.lat', '/brand', '?lang=fr'), { kind: 'redirect', location: 'https://cosmospay.lat/brand?lang=fr', status: 301 });
   assert.deepEqual(route('cosmospay.lat', '/dashboard', '?view=settings'), {
     kind: 'redirect', location: 'https://dev.cosmospay.lat/dashboard?view=settings', status: 301,
   });
@@ -234,6 +241,9 @@ test('the IndexNow key file answers on every domain, as that domain, whatever th
 
 test('a page of the site or the gateway asked with a trailing slash is a 301 to its one address', () => {
   assert.deepEqual(route('cosmospay.lat', '/pricing/'), { kind: 'redirect', location: 'https://cosmospay.lat/pricing', status: 301 });
+  // /brand/ is also the static folder public/brand/; with no index.html there the Node adapter hands
+  // it on, and it is the page's slash form like any other (the smoke test checks the built server).
+  assert.deepEqual(route('cosmospay.lat', '/brand/', '?lang=es'), { kind: 'redirect', location: 'https://cosmospay.lat/brand?lang=es', status: 301 });
   assert.deepEqual(route('cosmospay.lat', '/tos/', '?lang=es'), { kind: 'redirect', location: 'https://cosmospay.lat/tos?lang=es', status: 301 });
   assert.deepEqual(route('cosmospay.lat', '/swaps//'), { kind: 'redirect', location: 'https://cosmospay.lat/swaps', status: 301 });
   assert.deepEqual(route('payments.cosmospay.lat', '/faq/'), { kind: 'redirect', location: 'https://payments.cosmospay.lat/faq', status: 301 });
@@ -284,6 +294,8 @@ test('the Markdown version of a page is served by the host whose page it is, and
   assert.deepEqual(route('cosmospay.lat', '/faq.md', '?lang=fr'), { kind: 'redirect', location: 'https://payments.cosmospay.lat/faq.md?lang=fr', status: 301 });
   assert.deepEqual(route('payments.cosmospay.lat', '/pricing.md'), { kind: 'redirect', location: 'https://cosmospay.lat/pricing.md', status: 301 });
   assert.deepEqual(route('dev.cosmospay.lat', '/about.md'), { kind: 'redirect', location: 'https://cosmospay.lat/about.md', status: 301 });
+  assert.deepEqual(route('payments.cosmospay.lat', '/brand.md', '?lang=hi'), { kind: 'redirect', location: 'https://cosmospay.lat/brand.md?lang=hi', status: 301 });
+  assert.deepEqual(route('cosmospay.lat', '/brand.md'), { kind: 'pass', area: 'site' });
   assert.deepEqual(route('dev.cosmospay.lat', '/learn/accept-usdc-payments.md'), {
     kind: 'redirect', location: 'https://payments.cosmospay.lat/learn/accept-usdc-payments.md', status: 301,
   });
