@@ -2,6 +2,11 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.37.1] - 2026-11-24
+
+### Bug Fixes
+- Pin Astro's compiler to 0.5.2, the last that runs without AVX2 (e73a6da)
+
 ## [0.37.0] - 2026-11-24
 
 ### Features
