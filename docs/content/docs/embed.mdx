@@ -49,6 +49,8 @@ reads the link from the payer's browser and keeps it current (every 5 seconds wh
 payment, every 3 while the network confirms it, every 30 once it has expired), and stops when the
 payment is paid, failed or cancelled.
 
+- Before the QR code it asks the payer for an email, as the hosted checkout does: the receipt goes
+  there once the payment is confirmed, and you receive it with the payment.
 - It is up to 420px wide by default. Override that with CSS on the element:
   `cosmos-pay-checkout { max-width: none; }`.
 - It is not an iframe: the payment pages refuse to be framed, on purpose. The element draws its own

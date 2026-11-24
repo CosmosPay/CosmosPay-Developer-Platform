@@ -12,7 +12,8 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import {
   CHARGE_STATUSES, DEFAULT_EXPIRY, DESCRIPTION_MAX, EXPIRY_PRESETS,
-  chargeAmountProblem, chargeBody, chargeEstimate, chargeIsLive, chargeIsPayable, chargeMethods, chargePaidMethod, chargePhase, descriptionProblem,
+  chargeAmountProblem, chargeBody, chargeEstimate, chargeIsLive, chargeIsPayable, chargeMethods, chargePaidMethod, chargePhase, chargesAvailable,
+  descriptionProblem,
   evmAddressProblem, expiryOk, isExpiryPreset, normalizeEvmAddress, safeChargeUrl, safeQrDataUrl, sameEvmAccount, toChecksumAddress,
 } from '@/lib/qr-charges';
 import { matchPath, type MockRequest } from '@/lib/mock/http';
@@ -171,6 +172,13 @@ test('the ways to pay and how it was paid read from the charge, from a server wi
   assert.equal(chargePaidMethod({ status: 'paid', paidMethod: null }), null);
   assert.equal(chargePaidMethod({ status: 'paid' }), null);
   assert.equal(chargePaidMethod({ status: 'processing', paidMethod: 'transfer' }), null);
+});
+
+test('the view is offered only once the server proves it has the charges route', () => {
+  // The read went through, or the route itself refused it: the server has charges.
+  for (const status of [200, 201, 204, 400, 401, 403, 409, 422, 429]) assert.equal(chargesAvailable(status), true, String(status));
+  // No such route, the rail off, a failing server or no answer: the view stays out of the sidebar.
+  for (const status of [404, 500, 501, 502, 503, 504, 0, 302, undefined, null, Number.NaN]) assert.equal(chargesAvailable(status), false, String(status));
 });
 
 test('a delivery transaction opens on its network\'s explorer', () => {

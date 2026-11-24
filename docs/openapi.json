@@ -303,7 +303,7 @@
     },
     "/v1/payment-intents/pay": {
       "post": {
-        "description": "Answers a link any wallet can pay and its QR: SEP-7 `web+stellar:pay` on Stellar (the default `chain`), Solana Pay on Solana, EIP-681 on Monad, on the key's network (a `prod` key gets mainnet, a `dev` key the test networks). Omit `amount` for an open amount, except on Monad when this deployment has no deposit addresses; with a `merchantFee`, `uri` is the hosted checkout on Stellar and a Solana Pay transaction request on Solana. `memo` (numeric, generated when omitted) is the idempotency key: the same memo and terms return the stored intent, other terms are `409 idempotency_conflict`. Emits `PAYMENT_INTENT_CREATED`; the on-chain observer settles the intent when it finds the payment (a native MON payment without a deposit address needs `validate`).\n\nRequires the `payments:write` scope. The shared public key may call it.",
+        "description": "Answers a link and its QR on `chain`, any network payment links settle on: SEP-7 `web+stellar:pay` on Stellar (the default), Solana Pay on Solana and EIP-681 on Monad, on the key's network (a `prod` key gets mainnet, a `dev` key the test networks); on every other network the hosted checkout, where the payer pays a deposit address made for the payment from any network (`amount` required, no `merchantFee` or `callback`; with a `dev` key, only where the sandbox settles, in the network's test stablecoin: `GET /v1/payment-intents/networks`). A mainnet link with an amount and no merchant fee can also be paid from another network on Stellar, Solana and Monad. `memo` (numeric, generated when omitted) is the idempotency key: the same memo and terms return the stored intent, other terms are `409 idempotency_conflict`. Emits `PAYMENT_INTENT_CREATED`.\n\nRequires the `payments:write` scope. The shared public key may call it.",
         "operationId": "PaymentIntentsController_createPay_v1",
         "parameters": [],
         "requestBody": {
@@ -351,7 +351,7 @@
             }
           },
           "400": {
-            "description": "`validation_failed`: The body, query or headers failed validation\n\n`invalid_amount`: Not a Stellar amount, or not greater than zero\n\n`invalid_memo`: The memo is not the type this route requires",
+            "description": "`validation_failed`: the body failed validation, or a field the network does not take (`callback` off Stellar, no `amount` where one is required). `invalid_amount`: more decimals than the asset has, or not above zero. `invalid_memo`: not a numeric MEMO_ID. `network_unsupported`: with a `dev` key, a network paid through deposit addresses that the sandbox does not settle yet. `asset_unsupported`: the cross-chain route does not trade that asset on that network (in the sandbox: not the network's test stablecoin). `merchant_fee_unsupported`: a merchant fee on such a network, or on Monad without deposit addresses.",
             "content": {
               "application/json": {
                 "schema": {
@@ -390,6 +390,39 @@
                       "code": "invalid_memo",
                       "error": "Bad Request",
                       "message": "memo must be a MEMO_ID: a numeric uint64",
+                      "path": "/v1/payment-intents/pay",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "network_unsupported": {
+                    "summary": "network_unsupported: A dev key on a network the sandbox does not settle yet",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "network_unsupported",
+                      "error": "Bad Request",
+                      "message": "A payment link on Bitcoin is not available in the sandbox: The sandbox does not settle on this network yet: it needs a UTXO deposit and payout path (follow-up).",
+                      "path": "/v1/payment-intents/pay",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "asset_unsupported": {
+                    "summary": "asset_unsupported: The asset is not traded on that network",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "asset_unsupported",
+                      "error": "Bad Request",
+                      "message": "The cross-chain route does not support asset \"DAI\" on base. GET /v1/cross-chain-swaps/assets lists the ones it does.",
+                      "path": "/v1/payment-intents/pay",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "merchant_fee_unsupported": {
+                    "summary": "merchant_fee_unsupported: A merchant fee on a network paid through deposit addresses",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "merchant_fee_unsupported",
+                      "error": "Bad Request",
+                      "message": "A payment link on Bitcoin is paid through a deposit address made for each payment, which pays one recipient: a merchant fee is not supported there.",
                       "path": "/v1/payment-intents/pay",
                       "timestamp": "2026-09-01T12:00:00.000Z"
                     }
@@ -448,13 +481,44 @@
             "$ref": "#/components/responses/UpstreamError"
           },
           "503": {
-            "$ref": "#/components/responses/UpstreamUnavailable"
+            "description": "`provider_unavailable`: a chain node or the cross-chain route is down or rate limiting this service; retry. `misconfigured`: the plan charges a commission on payments from other networks and this deployment has nowhere to collect it, or a Solana link with a merchant fee and no gateway URL configured.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "provider_unavailable": {
+                    "summary": "provider_unavailable: The upstream provider could not be reached, or timed out",
+                    "value": {
+                      "statusCode": 503,
+                      "code": "provider_unavailable",
+                      "error": "Service Unavailable",
+                      "message": "Could not reach the payment provider.",
+                      "path": "/v1/onramp/quotes",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "misconfigured": {
+                    "summary": "misconfigured: A server-side configuration error: retrying will not help",
+                    "value": {
+                      "statusCode": 503,
+                      "code": "misconfigured",
+                      "error": "Service Unavailable",
+                      "message": "Fiat is not configured on this deployment (prod).",
+                      "path": "/v1/onramp/quotes",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
           },
           "504": {
             "$ref": "#/components/responses/UpstreamTimeout"
           }
         },
-        "summary": "Create a `pay` intent: a payment link and QR on Stellar, Solana or Monad",
+        "summary": "Create a `pay` intent: a payment link and QR on any network",
         "tags": [
           "payment-intents"
         ],
@@ -471,7 +535,8 @@
         ],
         "x-cosmos-upstream": [
           "Solana",
-          "Monad"
+          "Monad",
+          "Cross-chain route"
         ]
       }
     },
@@ -501,13 +566,45 @@
             "name": "chain",
             "required": false,
             "in": "query",
-            "description": "Only intents on this chain. Omit for every chain.",
+            "description": "Only intents on this network. Omit for every network.",
             "schema": {
               "type": "string",
               "enum": [
                 "stellar",
                 "solana",
-                "monad"
+                "monad",
+                "eth",
+                "base",
+                "arb",
+                "op",
+                "bsc",
+                "pol",
+                "avax",
+                "gnosis",
+                "bera",
+                "scroll",
+                "xlayer",
+                "abs",
+                "plasma",
+                "hood",
+                "hypercore",
+                "btc",
+                "ltc",
+                "doge",
+                "bch",
+                "dash",
+                "zec",
+                "xrp",
+                "tron",
+                "ton",
+                "near",
+                "sui",
+                "aptos",
+                "movement",
+                "starknet",
+                "cardano",
+                "aleo",
+                "fogo"
               ]
             }
           },
@@ -577,6 +674,42 @@
         ]
       }
     },
+    "/v1/payment-intents/networks": {
+      "get": {
+        "description": "Every payment network, with whether a link can be created there with this key and why not. A `prod` key reaches every network on mainnet; a `dev` key reaches Stellar, Solana and Monad on their test networks, and the networks paid through deposit addresses where the sandbox settles them, each in its test stablecoin (`asset`). Read before offering a network in a form.\n\nRequires the `payments:read` scope. The shared public key may call it.",
+        "operationId": "PaymentIntentsController_listNetworks_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentNetworkListEntity"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "List the networks a payment link can settle on, for this key",
+        "tags": [
+          "payment-intents"
+        ],
+        "x-cosmos-public-key": true,
+        "x-cosmos-scopes": [
+          "payments:read"
+        ]
+      }
+    },
     "/v1/payment-intents/{id}/transitions": {
       "get": {
         "description": "The intent's audit trail as an array, oldest first: every status change with `fromStatus`, `toStatus`, the `txHash` it carried, its `reason` and the `actor` that made it (`api`, `validate`, `observer` or `system`).\n\nRequires the `payments:read` scope.",
@@ -627,6 +760,201 @@
         ],
         "x-cosmos-scopes": [
           "payments:read"
+        ]
+      }
+    },
+    "/v1/payment-intents/{id}/deposits": {
+      "get": {
+        "description": "Newest first, at most 50: every deposit address made for a payer of this link through `POST /v1/payment-links/{id}/deposits`, with what was sent from which network, the refund address and how each stands. The one that settled the intent is also named by its `paidFrom`. Only intents on the key's network.\n\nRequires the `payments:read` scope.",
+        "operationId": "PaymentIntentsController_listDeposits_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentDepositListEntity"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "List a payment intent's deposit addresses (payments from any network)",
+        "tags": [
+          "payment-intents"
+        ],
+        "x-cosmos-scopes": [
+          "payments:read"
+        ]
+      }
+    },
+    "/v1/payment-intents/{id}/payer-emails": {
+      "get": {
+        "description": "Newest first, at most 50: each hosted checkout session of this link that gave an email for the receipt, its language and when it reported its wallet sent the payment (informational). Unverified: anyone holding the link can type any address. The receipt goes to one of them (`receiptTo`), or to none when the payer cannot be told apart (`receiptSkippedAt`).\n\nRequires the `payments:read` scope.",
+        "operationId": "PaymentIntentsController_payerEmails_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentPayerEmailListEntity"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "List the emails payers gave in a payment link’s hosted checkout",
+        "tags": [
+          "payment-intents"
+        ],
+        "x-cosmos-scopes": [
+          "payments:read"
+        ]
+      }
+    },
+    "/v1/payment-intents/{id}/route-check": {
+      "get": {
+        "description": "One dry quote per main origin (USDC and USDT on the networks most payers hold them on, and Bitcoin) for the link’s amount and asset. Routes have minimums of their own: an origin that cannot pay the amount comes back `available: false` with the reason. Nothing blocks the link; the hosted checkout disables those origins. Empty for a link without a fixed amount or one that cannot be paid from another network.\n\nRequires the `payments:read` scope.",
+        "operationId": "PaymentIntentsController_routeCheck_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentRouteCheckListEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/UpstreamError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
+          },
+          "504": {
+            "$ref": "#/components/responses/UpstreamTimeout"
+          }
+        },
+        "summary": "Check which main origins can pay a payment link's amount right now",
+        "tags": [
+          "payment-intents"
+        ],
+        "x-cosmos-rate-limit": [
+          {
+            "name": "payment-intents:route-check",
+            "limit": 30,
+            "windowMs": 60000
+          }
+        ],
+        "x-cosmos-scopes": [
+          "payments:read"
+        ],
+        "x-cosmos-upstream": [
+          "Cross-chain route"
         ]
       }
     },
@@ -1372,6 +1700,145 @@
         "security": []
       }
     },
+    "/v1/payment-links/{id}/payer": {
+      "post": {
+        "description": "The hosted checkout asks the payer for an email before it shows any way to pay and records it here, with the checkout language, as one checkout session: the first call answers the session’s `payerToken` (only its hash is stored), and the session sends it on its later calls (a changed email, `events`, `deposits`). Every session keeps its own email and none can change another’s, so a second payer never blocks the first. The receipt goes to the deposit’s session, else to the session whose wallet account or transaction (registered through `events`) matches the settlement, else to the only session if just one gave an email (with no customer link). Budgeted per client address.",
+        "operationId": "PaymentLinksController_recordPayer_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The payment intent id, as in the link.",
+            "schema": {
+              "example": "cmh4x2k9a0001l70g8v5q3z2w",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayerContactDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayerSessionEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`validation_failed`: not an email, or not a session token. `invalid_state_transition`: the link is no longer open.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed: Not an email",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "validation_failed",
+                      "error": "Bad Request",
+                      "message": "email must be an email",
+                      "path": "/v1/payment-links/cmh4x2k9a0001l70g8v5q3z2w/payer",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "invalid_state_transition": {
+                    "summary": "invalid_state_transition: The link is no longer open",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "invalid_state_transition",
+                      "error": "Bad Request",
+                      "message": "Payment intent cmh4x2k9a0001l70g8v5q3z2w is SUCCEEDED: it can no longer be paid",
+                      "path": "/v1/payment-links/cmh4x2k9a0001l70g8v5q3z2w/payer",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No payment intent has this id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found: No payment intent has this id",
+                    "value": {
+                      "statusCode": 404,
+                      "code": "not_found",
+                      "error": "Not Found",
+                      "message": "Payment intent cmh4x2k9a0001l70g8v5q3z2w not found",
+                      "path": "/v1/payment-links/cmh4x2k9a0001l70g8v5q3z2w/payer",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Record the payer's email before they pay, for their receipt (no API key)",
+        "tags": [
+          "payment-links"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "payment-links:payer",
+            "limit": 10,
+            "windowMs": 60000
+          }
+        ],
+        "security": []
+      }
+    },
     "/v1/payment-links/{id}/events": {
       "post": {
         "description": "The hosted checkout tells what the payer did with a wallet while the link is pending: `walletOpened` (the wallet link, the web wallet, the extension or Freighter was opened), `walletClosed` (the wallet came back without paying) and `sent` (the page saw the wallet send the payment). The owner reads them as `checkoutWalletAt`, `checkoutWalletClosedAt` and `checkoutSentAt` on the intent, to follow a payment that is not on-chain yet.\n\n**Informational only:** the status changes on what the chain says, never on these. An event for a link that is no longer pending is ignored. Budgeted per client address.",
@@ -1767,6 +2234,709 @@
         ],
         "x-cosmos-upstream": [
           "Solana"
+        ],
+        "security": []
+      }
+    },
+    "/v1/payment-links/{id}/deposit-assets": {
+      "get": {
+        "description": "Every network and asset the cross-chain route still trades: a payer picks one, then asks `POST /v1/payment-links/{id}/quote` what paying from it costs. Only for a link that can be paid from another network (`crossChainPayment` on the link); any other is `validation_failed`. Reachable without an API key; budgeted per client address.",
+        "operationId": "PaymentLinksController_depositAssets_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The payment intent id, as in the link.",
+            "schema": {
+              "example": "cmh4x2k9a0001l70g8v5q3z2w",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentDepositAssetsEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The link cannot be paid from another network: a Stellar, Solana or Monad link on a test network or with a merchant fee, or one created without payments from other networks.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed: The link cannot be paid from another network",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "validation_failed",
+                      "error": "Bad Request",
+                      "message": "This payment link cannot be paid from another network: it carries a merchant fee.",
+                      "path": "/v1/payment-links/cmh4x2k9a0001l70g8v5q3z2w/deposit-assets",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No payment intent has this id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found: No payment intent has this id",
+                    "value": {
+                      "statusCode": 404,
+                      "code": "not_found",
+                      "error": "Not Found",
+                      "message": "Payment intent cmh4x2k9a0001l70g8v5q3z2w not found",
+                      "path": "/v1/payment-links/cmh4x2k9a0001l70g8v5q3z2w/deposit-assets",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/UpstreamError"
+          },
+          "503": {
+            "$ref": "#/components/responses/UpstreamUnavailable"
+          },
+          "504": {
+            "$ref": "#/components/responses/UpstreamTimeout"
+          }
+        },
+        "summary": "List what a payer can pay a payment link with, from any network (no API key)",
+        "tags": [
+          "payment-links"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "payment-links:deposit-assets",
+            "limit": 30,
+            "windowMs": 60000
+          }
+        ],
+        "x-cosmos-upstream": [
+          "Cross-chain route"
+        ],
+        "security": []
+      }
+    },
+    "/v1/payment-links/{id}/quote": {
+      "post": {
+        "description": "What the payer sends (`origin.amount`, with the fees and a small buffer for price moves in it; the unused part is refunded) for the merchant to receive exactly the link amount in its asset (on a link without one, the `amount` the payer typed). A dry quote: nothing is reserved and nothing is stored. Routes have minimum amounts of their own, refused as `provider_error` with the reason, so a checkout shows it before any deposit address exists. Only for an open link that can be paid from another network; budgeted per client address.",
+        "operationId": "PaymentLinksController_quote_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The payment intent id, as in the link.",
+            "schema": {
+              "example": "cmh4x2k9a0001l70g8v5q3z2w",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentDepositRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentDepositQuoteEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`validation_failed`: the link cannot be paid from another network, or `refundTo` is not an address of `originChain`. `provider_error`: the cross-chain route refused the payment (a minimum amount, a route it cannot fill); `message` carries its reason. `invalid_state_transition`: the link is no longer open. `asset_unsupported`: the asset sent, or the link's own, is not traded right now. `invalid_amount`: the link's amount does not fit its asset.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed: The link cannot be paid from another network",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "validation_failed",
+                      "error": "Bad Request",
+                      "message": "This payment link cannot be paid from another network: it carries a merchant fee.",
+                      "path": "/v1/payment-links/cmh4x2k9a0001l70g8v5q3z2w/quote",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "provider_error": {
+                    "summary": "provider_error: The cross-chain route refused the payment",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "provider_error",
+                      "error": "Bad Request",
+                      "message": "The cross-chain route refused the request: Temporary swap limits: minimum swap amount is $100",
+                      "path": "/v1/payment-links/cmh4x2k9a0001l70g8v5q3z2w/quote",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "invalid_state_transition": {
+                    "summary": "invalid_state_transition: The link is no longer open",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "invalid_state_transition",
+                      "error": "Bad Request",
+                      "message": "Payment intent cmh4x2k9a0001l70g8v5q3z2w is SUCCEEDED: it can no longer be paid",
+                      "path": "/v1/payment-links/cmh4x2k9a0001l70g8v5q3z2w/quote",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "asset_unsupported": {
+                    "summary": "asset_unsupported: The asset cannot be sent right now",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "asset_unsupported",
+                      "error": "Bad Request",
+                      "message": "The cross-chain route does not support asset \"DOGE\" on tron. GET /v1/cross-chain-swaps/assets lists the ones it does.",
+                      "path": "/v1/payment-links/cmh4x2k9a0001l70g8v5q3z2w/quote",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "invalid_amount": {
+                    "summary": "invalid_amount: The link's amount does not fit its asset",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "invalid_amount",
+                      "error": "Bad Request",
+                      "message": "This payment link's amount has more decimal places than USDC allows",
+                      "path": "/v1/payment-links/cmh4x2k9a0001l70g8v5q3z2w/quote",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No payment intent has this id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found: No payment intent has this id",
+                    "value": {
+                      "statusCode": 404,
+                      "code": "not_found",
+                      "error": "Not Found",
+                      "message": "Payment intent cmh4x2k9a0001l70g8v5q3z2w not found",
+                      "path": "/v1/payment-links/cmh4x2k9a0001l70g8v5q3z2w/quote",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/UpstreamError"
+          },
+          "503": {
+            "description": "`provider_unavailable`: the cross-chain route is down or rate limiting this service; retry. `misconfigured`: this deployment cannot collect the commission a payment from another network pays.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "provider_unavailable": {
+                    "summary": "provider_unavailable: The upstream provider could not be reached, or timed out",
+                    "value": {
+                      "statusCode": 503,
+                      "code": "provider_unavailable",
+                      "error": "Service Unavailable",
+                      "message": "Could not reach the payment provider.",
+                      "path": "/v1/onramp/quotes",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "misconfigured": {
+                    "summary": "misconfigured: A server-side configuration error: retrying will not help",
+                    "value": {
+                      "statusCode": 503,
+                      "code": "misconfigured",
+                      "error": "Service Unavailable",
+                      "message": "Fiat is not configured on this deployment (prod).",
+                      "path": "/v1/onramp/quotes",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "504": {
+            "$ref": "#/components/responses/UpstreamTimeout"
+          }
+        },
+        "summary": "Price paying a payment link from one network and asset (no API key)",
+        "tags": [
+          "payment-links"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "payment-links:quote",
+            "limit": 30,
+            "windowMs": 60000
+          }
+        ],
+        "x-cosmos-upstream": [
+          "Cross-chain route"
+        ],
+        "security": []
+      }
+    },
+    "/v1/payment-links/{id}/deposits": {
+      "post": {
+        "description": "A live quote: an address on `originChain` made for this payment alone, opened only with the payer’s `email` (their receipt goes there). The payer sends `amountIn` of the origin asset there (with `depositMemo` when set) before `expiresAt`; the merchant is paid exactly the link amount, the link turns `SUCCEEDED` and emits `PAYMENT_INTENT_SUCCEEDED`, and a deposit that cannot complete is refunded to `refundTo`. The same origin asset and refund address while an earlier deposit still waits from the same client answers that one. Each client address (an IPv6 caller by its /48) may have two open deposits per link (`409 operation_in_flight`), so no caller can take another payer’s, and a link takes a limited number of new ones every few minutes (`429` with `Retry-After`). Budgeted per client address too.",
+        "operationId": "PaymentLinksController_createDeposit_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The payment intent id, as in the link.",
+            "schema": {
+              "example": "cmh4x2k9a0001l70g8v5q3z2w",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePaymentDepositDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentDepositEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`validation_failed`: the link cannot be paid from another network, or `refundTo` is not an address of `originChain`. `provider_error`: the cross-chain route refused the payment (a minimum amount, a route it cannot fill); `message` carries its reason. `invalid_state_transition`: the link is no longer open. `asset_unsupported`: the asset sent, or the link's own, is not traded right now. `invalid_amount`: the link's amount does not fit its asset. `trustline_missing`: the Stellar merchant does not trust the link's asset; only that account can add the trustline.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed: The link cannot be paid from another network",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "validation_failed",
+                      "error": "Bad Request",
+                      "message": "This payment link cannot be paid from another network: it carries a merchant fee.",
+                      "path": "/v1/payment-links/cmh4x2k9a0001l70g8v5q3z2w/deposits",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "provider_error": {
+                    "summary": "provider_error: The cross-chain route refused the payment",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "provider_error",
+                      "error": "Bad Request",
+                      "message": "The cross-chain route refused the request: Temporary swap limits: minimum swap amount is $100",
+                      "path": "/v1/payment-links/cmh4x2k9a0001l70g8v5q3z2w/deposits",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "invalid_state_transition": {
+                    "summary": "invalid_state_transition: The link is no longer open",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "invalid_state_transition",
+                      "error": "Bad Request",
+                      "message": "Payment intent cmh4x2k9a0001l70g8v5q3z2w is SUCCEEDED: it can no longer be paid",
+                      "path": "/v1/payment-links/cmh4x2k9a0001l70g8v5q3z2w/deposits",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "asset_unsupported": {
+                    "summary": "asset_unsupported: The asset cannot be sent right now",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "asset_unsupported",
+                      "error": "Bad Request",
+                      "message": "The cross-chain route does not support asset \"DOGE\" on tron. GET /v1/cross-chain-swaps/assets lists the ones it does.",
+                      "path": "/v1/payment-links/cmh4x2k9a0001l70g8v5q3z2w/deposits",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "invalid_amount": {
+                    "summary": "invalid_amount: The link's amount does not fit its asset",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "invalid_amount",
+                      "error": "Bad Request",
+                      "message": "This payment link's amount has more decimal places than USDC allows",
+                      "path": "/v1/payment-links/cmh4x2k9a0001l70g8v5q3z2w/deposits",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "trustline_missing": {
+                    "summary": "trustline_missing: An account does not trust the asset, and this request cannot add the trustline for it",
+                    "value": {
+                      "statusCode": 400,
+                      "code": "trustline_missing",
+                      "error": "Bad Request",
+                      "message": "Account GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ has no trustline for USDC:GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5, so it cannot receive the swap. Only that account can add the trustline, by signing a transaction of its own: ask its owner to add it, then try again.",
+                      "path": "/v1/swaps",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No payment intent has this id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found: No payment intent has this id",
+                    "value": {
+                      "statusCode": 404,
+                      "code": "not_found",
+                      "error": "Not Found",
+                      "message": "Payment intent cmh4x2k9a0001l70g8v5q3z2w not found",
+                      "path": "/v1/payment-links/cmh4x2k9a0001l70g8v5q3z2w/deposits",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "This client address already has two open deposit addresses on the link: pay one of them, or try again once they expire. Other payers are not affected.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "operation_in_flight": {
+                    "summary": "operation_in_flight: Too many open deposit addresses from this client",
+                    "value": {
+                      "statusCode": 409,
+                      "code": "operation_in_flight",
+                      "error": "Conflict",
+                      "message": "You already have 2 open deposit addresses for this payment link: pay one of them, or try again once they expire.",
+                      "path": "/v1/payment-links/cmh4x2k9a0001l70g8v5q3z2w/deposits",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "502": {
+            "$ref": "#/components/responses/UpstreamError"
+          },
+          "503": {
+            "description": "`provider_unavailable`: the cross-chain route is down or rate limiting this service; retry. `misconfigured`: this deployment cannot collect the commission a payment from another network pays.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "provider_unavailable": {
+                    "summary": "provider_unavailable: The upstream provider could not be reached, or timed out",
+                    "value": {
+                      "statusCode": 503,
+                      "code": "provider_unavailable",
+                      "error": "Service Unavailable",
+                      "message": "Could not reach the payment provider.",
+                      "path": "/v1/onramp/quotes",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  },
+                  "misconfigured": {
+                    "summary": "misconfigured: A server-side configuration error: retrying will not help",
+                    "value": {
+                      "statusCode": 503,
+                      "code": "misconfigured",
+                      "error": "Service Unavailable",
+                      "message": "Fiat is not configured on this deployment (prod).",
+                      "path": "/v1/onramp/quotes",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "504": {
+            "$ref": "#/components/responses/UpstreamTimeout"
+          }
+        },
+        "summary": "Open a deposit address that pays a payment link from any network (no API key)",
+        "tags": [
+          "payment-links"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "payment-links:deposits",
+            "limit": 10,
+            "windowMs": 60000
+          }
+        ],
+        "x-cosmos-upstream": [
+          "Cross-chain route",
+          "Horizon"
+        ],
+        "security": []
+      }
+    },
+    "/v1/payment-links/{id}/deposits/{depositId}": {
+      "get": {
+        "description": "What the payer sends and where, and how the payment stands, for the checkout to poll every few seconds until it is `SUCCEEDED`, `REFUNDED`, `FAILED` or `EXPIRED`. Both ids are needed; nothing about the merchant is returned. Budgeted per client address.",
+        "operationId": "PaymentLinksController_findDeposit_v1",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The payment intent id, as in the link.",
+            "schema": {
+              "example": "cmh4x2k9a0001l70g8v5q3z2w",
+              "type": "string"
+            }
+          },
+          {
+            "name": "depositId",
+            "required": true,
+            "in": "path",
+            "description": "The deposit id, as `POST /v1/payment-links/{id}/deposits` answered it.",
+            "schema": {
+              "example": "cm3dep0s1t0001l70g8v5q3z2w",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentDepositEntity"
+                }
+              }
+            },
+            "headers": {
+              "ratelimit-limit": {
+                "description": "Requests allowed in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 30
+                }
+              },
+              "ratelimit-remaining": {
+                "description": "Requests left in the current window.",
+                "schema": {
+                  "type": "integer",
+                  "example": 0
+                }
+              },
+              "ratelimit-reset": {
+                "description": "Seconds until the window resets.",
+                "schema": {
+                  "type": "integer",
+                  "example": 42
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "404": {
+            "description": "This link has no deposit with this id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorBodyEntity"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found: No such deposit on this link",
+                    "value": {
+                      "statusCode": 404,
+                      "code": "not_found",
+                      "error": "Not Found",
+                      "message": "Deposit cm3dep0s1t0001l70g8v5q3z2w not found",
+                      "path": "/v1/payment-links/cmh4x2k9a0001l70g8v5q3z2w/deposits/cm3dep0s1t0001l70g8v5q3z2w",
+                      "timestamp": "2026-09-01T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "summary": "Read one deposit address of a payment link (no API key)",
+        "tags": [
+          "payment-links"
+        ],
+        "x-cosmos-public": true,
+        "x-cosmos-rate-limit": [
+          {
+            "name": "payment-links:deposit-read",
+            "limit": 60,
+            "windowMs": 60000
+          }
         ],
         "security": []
       }
@@ -19888,6 +21058,106 @@
           "paidBy"
         ]
       },
+      "PaidFromEntity": {
+        "type": "object",
+        "properties": {
+          "depositId": {
+            "type": "string",
+            "example": "cm3dep0s1t0001l70g8v5q3z2w",
+            "description": "The deposit that settled the intent."
+          },
+          "chain": {
+            "type": "string",
+            "enum": [
+              "stellar",
+              "solana",
+              "monad",
+              "eth",
+              "base",
+              "arb",
+              "op",
+              "bsc",
+              "pol",
+              "avax",
+              "gnosis",
+              "bera",
+              "scroll",
+              "xlayer",
+              "abs",
+              "plasma",
+              "hood",
+              "hypercore",
+              "btc",
+              "ltc",
+              "doge",
+              "bch",
+              "dash",
+              "zec",
+              "xrp",
+              "tron",
+              "ton",
+              "near",
+              "sui",
+              "aptos",
+              "movement",
+              "starknet",
+              "cardano",
+              "aleo",
+              "fogo"
+            ],
+            "example": "tron"
+          },
+          "asset": {
+            "type": "string",
+            "example": "USDT",
+            "description": "The sent asset's symbol."
+          },
+          "contract": {
+            "type": "string",
+            "nullable": true,
+            "example": "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+            "description": "The sent token's contract; null for the native coin."
+          },
+          "amount": {
+            "type": "string",
+            "example": "25.284231",
+            "description": "What the deposit address was asked for, in the sent asset (any surplus was refunded to the payer)."
+          }
+        },
+        "description": "What a payer sent when a payment from another network settled a payment intent.",
+        "required": [
+          "depositId",
+          "chain",
+          "asset",
+          "contract",
+          "amount"
+        ]
+      },
+      "DepositLimitsEntity": {
+        "type": "object",
+        "properties": {
+          "perPayer": {
+            "type": "number",
+            "example": 2,
+            "description": "Open deposit addresses one payer may have on the link."
+          },
+          "perWindow": {
+            "type": "number",
+            "example": 20,
+            "description": "New deposit addresses the link takes per `windowSeconds`."
+          },
+          "windowSeconds": {
+            "type": "number",
+            "example": 300
+          }
+        },
+        "description": "A payment link’s limits on payments from another network, as they apply.",
+        "required": [
+          "perPayer",
+          "perWindow",
+          "windowSeconds"
+        ]
+      },
       "TxPaymentIntentEntity": {
         "type": "object",
         "properties": {
@@ -19923,10 +21193,42 @@
             "enum": [
               "stellar",
               "solana",
-              "monad"
+              "monad",
+              "eth",
+              "base",
+              "arb",
+              "op",
+              "bsc",
+              "pol",
+              "avax",
+              "gnosis",
+              "bera",
+              "scroll",
+              "xlayer",
+              "abs",
+              "plasma",
+              "hood",
+              "hypercore",
+              "btc",
+              "ltc",
+              "doge",
+              "bch",
+              "dash",
+              "zec",
+              "xrp",
+              "tron",
+              "ton",
+              "near",
+              "sui",
+              "aptos",
+              "movement",
+              "starknet",
+              "cardano",
+              "aleo",
+              "fogo"
             ],
             "example": "stellar",
-            "description": "Chain the payment settles on. TX intents are always Stellar."
+            "description": "Network the payment settles on. TX intents are always Stellar; a link on a network other than Stellar, Solana and Monad is paid through deposit addresses (`GET /v1/payment-intents/{id}/deposits`)."
           },
           "network": {
             "type": "string",
@@ -19985,6 +21287,44 @@
                 "$ref": "#/components/schemas/MerchantFeeEntity"
               }
             ]
+          },
+          "paidFrom": {
+            "nullable": true,
+            "description": "What the payer sent when a payment from another network settled the intent (then `txHash` is the payout on its own network); null otherwise.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaidFromEntity"
+              }
+            ]
+          },
+          "depositLimits": {
+            "description": "Limits on payments from another network for this link, as they apply (yours, or the defaults).",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DepositLimitsEntity"
+              }
+            ]
+          },
+          "receiptTo": {
+            "type": "string",
+            "nullable": true,
+            "example": "payer@example.com",
+            "description": "Where the receipt went: an email a payer gave in the hosted checkout (not verified). Null until one was sent. Every email given is listed by `GET /v1/payment-intents/{id}/payer-emails`."
+          },
+          "receiptSkippedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time",
+            "example": null,
+            "description": "When it was decided that no receipt goes out: no checkout session gave an email, or several did and none proved the payment was theirs (a wallet account or transaction matching the settlement)."
+          },
+          "receiptSentAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time",
+            "example": null,
+            "description": "When the payer’s receipt was emailed; null until it was."
           },
           "msg": {
             "type": "object",
@@ -20095,6 +21435,11 @@
           "chainReference",
           "networkFee",
           "merchantFee",
+          "paidFrom",
+          "depositLimits",
+          "receiptTo",
+          "receiptSkippedAt",
+          "receiptSentAt",
           "msg",
           "callback",
           "xdr",
@@ -20112,6 +21457,28 @@
           "updatedAt"
         ]
       },
+      "DepositLimitsDto": {
+        "type": "object",
+        "properties": {
+          "perPayer": {
+            "type": "number",
+            "minimum": 2,
+            "maximum": 10,
+            "default": 2,
+            "description": "Open deposit addresses one payer (one client address) may have on the link.",
+            "example": 4
+          },
+          "perWindow": {
+            "type": "number",
+            "minimum": 20,
+            "maximum": 200,
+            "default": 20,
+            "description": "New deposit addresses the link takes every five minutes, from all payers.",
+            "example": 60
+          }
+        },
+        "description": "Limits on payments from another network for this link: how many deposit addresses one payer may have open, and how many new ones the link takes every five minutes. Raise them for a link many people pay at once."
+      },
       "CreatePayPaymentIntentDto": {
         "type": "object",
         "properties": {
@@ -20120,29 +21487,61 @@
             "enum": [
               "stellar",
               "solana",
-              "monad"
+              "monad",
+              "eth",
+              "base",
+              "arb",
+              "op",
+              "bsc",
+              "pol",
+              "avax",
+              "gnosis",
+              "bera",
+              "scroll",
+              "xlayer",
+              "abs",
+              "plasma",
+              "hood",
+              "hypercore",
+              "btc",
+              "ltc",
+              "doge",
+              "bch",
+              "dash",
+              "zec",
+              "xrp",
+              "tron",
+              "ton",
+              "near",
+              "sui",
+              "aptos",
+              "movement",
+              "starknet",
+              "cardano",
+              "aleo",
+              "fogo"
             ],
             "default": "stellar",
-            "description": "Chain the payment settles on. Omit for Stellar. The network (mainnet or test network) is the one your API key is for, as on Stellar."
+            "description": "Network the payment settles on. Omit for Stellar. On Stellar, Solana and Monad the network tier (mainnet or test network) is the one your API key is for. Every other network settles through a cross-chain payment: it needs an `amount` and takes no `callback` or `merchantFee`. With a `dev` key it settles in the sandbox, on the networks `GET /v1/payment-intents/networks` marks available, in the network's test stablecoin."
           },
           "destination": {
             "type": "string",
-            "description": "Payee's account on the chain: Stellar G…, Solana base58, Monad 0x….",
+            "description": "Payee's account on that network, in its own format: Stellar G…, Solana base58, 0x… on EVM networks, bc1…/1…/3… on Bitcoin, r… on the XRP Ledger, T… on Tron, and so on.",
             "example": "GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO"
           },
           "amount": {
             "type": "string",
-            "description": "Amount the destination should receive, in the asset’s own units (XLM, SOL, MON, or the token). Omit to let the user enter it (e.g. donations), but not on Monad, where the amount is part of how the payment is recognised. At most 7 decimals on Stellar; elsewhere, at most the asset’s own decimals.",
+            "description": "Amount the destination should receive, in the asset’s own units (XLM, SOL, MON, or the token). Omit to let the user enter it (e.g. donations), except on Monad, where the amount is part of how the payment is recognised, and on the networks paid through deposit addresses, where it is what the payment is quoted for. At most 7 decimals on Stellar; elsewhere, at most the asset’s own decimals.",
             "example": "120.1234567"
           },
           "assetCode": {
             "type": "string",
-            "description": "Asset code the destination receives. Omit for the chain’s coin (XLM, SOL, MON). For a Solana or Monad token, the ticker it is labelled with, alongside `assetIssuer`.",
+            "description": "Asset code the destination receives. Omit for the network’s coin (XLM, SOL, MON, ETH, BTC, ...). For a Solana or Monad token, the ticker it is labelled with, alongside `assetIssuer`. On the networks paid through deposit addresses, a symbol the cross-chain route lists once on that network (`GET /v1/cross-chain-swaps/assets`), or name the token by `assetIssuer`.",
             "example": "USDC"
           },
           "assetIssuer": {
             "type": "string",
-            "description": "Stellar: the issuer account. Solana: the SPL mint. Monad: the ERC-20 contract. Omit for the chain’s coin.",
+            "description": "Stellar: the issuer account. Solana: the SPL mint. Monad: the ERC-20 contract. Any other network: the token’s `contract` as `GET /v1/cross-chain-swaps/assets` lists it. Omit for the network’s coin.",
             "example": "GCRCUE2C5TBNIPYHMEP7NK5RWTT2WBSZ75CMARH7GDOHDDCQH3XANFOB"
           },
           "memo": {
@@ -20152,7 +21551,7 @@
           },
           "msg": {
             "type": "string",
-            "description": "Shown to the user in their wallet (≤ 300 chars): SEP-7 `msg` on Stellar, the Solana Pay `message`. Not supported on Monad.",
+            "description": "Shown to the user in their wallet (≤ 300 chars): SEP-7 `msg` on Stellar, the Solana Pay `message`. Not supported on Monad. On the networks paid through deposit addresses it is shown on the hosted checkout only.",
             "example": "pay me with lumens"
           },
           "callback": {
@@ -20173,15 +21572,23 @@
             "example": "ticket"
           },
           "merchantFee": {
-            "description": "Only with an `amount`: your own fee on this payment, paid in its asset to `wallet` (an account on the link's chain, not `destination`). `paidBy: recipient` takes the fee from `amount`; `payer` adds it on top. Stellar: a SEP-7 `pay` link pays one account, so `uri` is the hosted checkout, which asks for the payer and has `POST /v1/payment-links/{id}/transaction` build the envelope with both payments. Solana: `uri` is a Solana Pay transaction request (`/v1/payment-links/{id}/solana-pay`); a SOL fee goes to an existing account. Monad: needs deposit addresses (`merchant_fee_unsupported` without them); the deposit address pays the fee (PaymentSplitForwarder) and the link asks for the amount, plus the fee when the payer pays it.",
+            "description": "Only with an `amount`: your own fee on this payment, paid in its asset to `wallet` (an account on the link's chain, not `destination`). `paidBy: recipient` takes the fee from `amount`; `payer` adds it on top. Stellar: a SEP-7 `pay` link pays one account, so `uri` is the hosted checkout, which asks for the payer and has `POST /v1/payment-links/{id}/transaction` build the envelope with both payments. Solana: `uri` is a Solana Pay transaction request (`/v1/payment-links/{id}/solana-pay`); a SOL fee goes to an existing account. Monad: needs deposit addresses (`merchant_fee_unsupported` without them); the deposit address pays the fee (PaymentSplitForwarder) and the link asks for the amount, plus the fee when the payer pays it. Not supported on the networks paid through deposit addresses (`merchant_fee_unsupported`).",
             "allOf": [
               {
                 "$ref": "#/components/schemas/MerchantFeeDto"
               }
             ]
+          },
+          "depositLimits": {
+            "description": "Your own limits on payments from another network for this link, raised from the defaults (2 open deposit addresses per payer, 20 new ones every five minutes) up to the ceilings. `PATCH` changes them later.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DepositLimitsDto"
+              }
+            ]
           }
         },
-        "description": "Request to create a `pay` intent: a payment link any wallet can pay on Stellar (SEP-7), Solana (Solana Pay) or Monad (EIP-681).",
+        "description": "Request to create a `pay` intent: a payment link on any network payment links settle on (`chain`). Stellar, Solana and Monad links are wallet links (SEP-7, Solana Pay, EIP-681); a link on any other network is the hosted checkout, paid through a deposit address made for each payment.",
         "required": [
           "destination"
         ]
@@ -20221,10 +21628,42 @@
             "enum": [
               "stellar",
               "solana",
-              "monad"
+              "monad",
+              "eth",
+              "base",
+              "arb",
+              "op",
+              "bsc",
+              "pol",
+              "avax",
+              "gnosis",
+              "bera",
+              "scroll",
+              "xlayer",
+              "abs",
+              "plasma",
+              "hood",
+              "hypercore",
+              "btc",
+              "ltc",
+              "doge",
+              "bch",
+              "dash",
+              "zec",
+              "xrp",
+              "tron",
+              "ton",
+              "near",
+              "sui",
+              "aptos",
+              "movement",
+              "starknet",
+              "cardano",
+              "aleo",
+              "fogo"
             ],
             "example": "stellar",
-            "description": "Chain the payment settles on. TX intents are always Stellar."
+            "description": "Network the payment settles on. TX intents are always Stellar; a link on a network other than Stellar, Solana and Monad is paid through deposit addresses (`GET /v1/payment-intents/{id}/deposits`)."
           },
           "network": {
             "type": "string",
@@ -20286,6 +21725,44 @@
               }
             ]
           },
+          "paidFrom": {
+            "nullable": true,
+            "description": "What the payer sent when a payment from another network settled the intent (then `txHash` is the payout on its own network); null otherwise.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaidFromEntity"
+              }
+            ]
+          },
+          "depositLimits": {
+            "description": "Limits on payments from another network for this link, as they apply (yours, or the defaults).",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DepositLimitsEntity"
+              }
+            ]
+          },
+          "receiptTo": {
+            "type": "string",
+            "nullable": true,
+            "example": "payer@example.com",
+            "description": "Where the receipt went: an email a payer gave in the hosted checkout (not verified). Null until one was sent. Every email given is listed by `GET /v1/payment-intents/{id}/payer-emails`."
+          },
+          "receiptSkippedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time",
+            "example": null,
+            "description": "When it was decided that no receipt goes out: no checkout session gave an email, or several did and none proved the payment was theirs (a wallet account or transaction matching the settlement)."
+          },
+          "receiptSentAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time",
+            "example": null,
+            "description": "When the payer’s receipt was emailed; null until it was."
+          },
           "msg": {
             "type": "object",
             "nullable": true,
@@ -20307,7 +21784,7 @@
           "uri": {
             "type": "string",
             "example": "web+stellar:pay?destination=GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO&amount=120.1234567",
-            "description": "The payment link: SEP-7 `web+stellar:pay` on Stellar, Solana Pay on Solana, EIP-681 on Monad. With a merchant fee it is the hosted checkout on Stellar and a Solana Pay transaction request on Solana."
+            "description": "The payment link: SEP-7 `web+stellar:pay` on Stellar, Solana Pay on Solana, EIP-681 on Monad, the hosted checkout on every other network. With a merchant fee it is the hosted checkout on Stellar and a Solana Pay transaction request on Solana."
           },
           "qr": {
             "type": "string",
@@ -20380,7 +21857,7 @@
             "description": "When the intent itself last changed (ISO 8601)."
           }
         },
-        "description": "A `pay` intent as created: a payment link any wallet can pay (SEP-7 `pay` on Stellar, Solana Pay on Solana, EIP-681 on Monad) and its QR.",
+        "description": "A `pay` intent as created: a payment link and its QR. On Stellar, Solana and Monad a wallet link (SEP-7 `pay`, Solana Pay, EIP-681); on every other network the hosted checkout, paid through a deposit address made for each payment.",
         "required": [
           "id",
           "kind",
@@ -20396,6 +21873,11 @@
           "chainReference",
           "networkFee",
           "merchantFee",
+          "paidFrom",
+          "depositLimits",
+          "receiptTo",
+          "receiptSkippedAt",
+          "receiptSentAt",
           "msg",
           "callback",
           "xdr",
@@ -20448,10 +21930,42 @@
             "enum": [
               "stellar",
               "solana",
-              "monad"
+              "monad",
+              "eth",
+              "base",
+              "arb",
+              "op",
+              "bsc",
+              "pol",
+              "avax",
+              "gnosis",
+              "bera",
+              "scroll",
+              "xlayer",
+              "abs",
+              "plasma",
+              "hood",
+              "hypercore",
+              "btc",
+              "ltc",
+              "doge",
+              "bch",
+              "dash",
+              "zec",
+              "xrp",
+              "tron",
+              "ton",
+              "near",
+              "sui",
+              "aptos",
+              "movement",
+              "starknet",
+              "cardano",
+              "aleo",
+              "fogo"
             ],
             "example": "stellar",
-            "description": "Chain the payment settles on. TX intents are always Stellar."
+            "description": "Network the payment settles on. TX intents are always Stellar; a link on a network other than Stellar, Solana and Monad is paid through deposit addresses (`GET /v1/payment-intents/{id}/deposits`)."
           },
           "network": {
             "type": "string",
@@ -20513,6 +22027,44 @@
               }
             ]
           },
+          "paidFrom": {
+            "nullable": true,
+            "description": "What the payer sent when a payment from another network settled the intent (then `txHash` is the payout on its own network); null otherwise.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaidFromEntity"
+              }
+            ]
+          },
+          "depositLimits": {
+            "description": "Limits on payments from another network for this link, as they apply (yours, or the defaults).",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DepositLimitsEntity"
+              }
+            ]
+          },
+          "receiptTo": {
+            "type": "string",
+            "nullable": true,
+            "example": "payer@example.com",
+            "description": "Where the receipt went: an email a payer gave in the hosted checkout (not verified). Null until one was sent. Every email given is listed by `GET /v1/payment-intents/{id}/payer-emails`."
+          },
+          "receiptSkippedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time",
+            "example": null,
+            "description": "When it was decided that no receipt goes out: no checkout session gave an email, or several did and none proved the payment was theirs (a wallet account or transaction matching the settlement)."
+          },
+          "receiptSentAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time",
+            "example": null,
+            "description": "When the payer’s receipt was emailed; null until it was."
+          },
           "msg": {
             "type": "object",
             "nullable": true,
@@ -20533,7 +22085,7 @@
           },
           "uri": {
             "type": "string",
-            "description": "The payment link: SEP-7 on Stellar (`tx` for TX intents, `pay` for PAY), a Solana Pay transfer request on Solana, EIP-681 on Monad.",
+            "description": "The payment link: SEP-7 on Stellar (`tx` for TX intents, `pay` for PAY), a Solana Pay transfer request on Solana, EIP-681 on Monad, the hosted checkout on every other network.",
             "example": "web+stellar:tx?xdr=AAAAAgAAAABx…"
           },
           "qr": {
@@ -20623,6 +22175,11 @@
           "chainReference",
           "networkFee",
           "merchantFee",
+          "paidFrom",
+          "depositLimits",
+          "receiptTo",
+          "receiptSkippedAt",
+          "receiptSentAt",
           "msg",
           "callback",
           "xdr",
@@ -20672,6 +22229,142 @@
           "total",
           "take",
           "skip"
+        ]
+      },
+      "PaymentNetworkAssetEntity": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "example": "USDC"
+          },
+          "contract": {
+            "type": "string",
+            "nullable": true,
+            "example": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+            "description": "The token contract on the test network."
+          },
+          "decimals": {
+            "type": "number",
+            "example": 6
+          }
+        },
+        "description": "The one asset a payment link on this network is in, on the test networks: the network’s test stablecoin.",
+        "required": [
+          "symbol",
+          "contract",
+          "decimals"
+        ]
+      },
+      "PaymentNetworkEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": [
+              "stellar",
+              "solana",
+              "monad",
+              "eth",
+              "base",
+              "arb",
+              "op",
+              "bsc",
+              "pol",
+              "avax",
+              "gnosis",
+              "bera",
+              "scroll",
+              "xlayer",
+              "abs",
+              "plasma",
+              "hood",
+              "hypercore",
+              "btc",
+              "ltc",
+              "doge",
+              "bch",
+              "dash",
+              "zec",
+              "xrp",
+              "tron",
+              "ton",
+              "near",
+              "sui",
+              "aptos",
+              "movement",
+              "starknet",
+              "cardano",
+              "aleo",
+              "fogo"
+            ],
+            "example": "base"
+          },
+          "name": {
+            "type": "string",
+            "example": "Base",
+            "description": "The network, by name."
+          },
+          "network": {
+            "type": "string",
+            "enum": [
+              "public",
+              "testnet"
+            ],
+            "example": "testnet",
+            "description": "The tier the caller’s key reaches: mainnet or the test networks."
+          },
+          "settlesThroughDeposits": {
+            "type": "boolean",
+            "example": true,
+            "description": "True when a link here is paid through a deposit address made for each payment (every network but Stellar, Solana and Monad)."
+          },
+          "available": {
+            "type": "boolean",
+            "example": true,
+            "description": "Whether a link can be created on this network with this key."
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "Why not, when `available` is false; null otherwise."
+          },
+          "asset": {
+            "nullable": true,
+            "description": "On the test networks, the one asset a link paid through deposit addresses is in (its test stablecoin). Null where any asset goes.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaymentNetworkAssetEntity"
+              }
+            ]
+          }
+        },
+        "description": "A network a payment link can settle on, as the caller’s key reaches it.",
+        "required": [
+          "id",
+          "name",
+          "network",
+          "settlesThroughDeposits",
+          "available",
+          "reason",
+          "asset"
+        ]
+      },
+      "PaymentNetworkListEntity": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentNetworkEntity"
+            }
+          }
+        },
+        "description": "Every network a payment link can settle on.",
+        "required": [
+          "data"
         ]
       },
       "PaymentIntentTransitionEntity": {
@@ -20743,6 +22436,455 @@
           "toStatus",
           "actor",
           "createdAt"
+        ]
+      },
+      "CrossChainTransactionEntity": {
+        "type": "object",
+        "properties": {
+          "hash": {
+            "type": "string",
+            "example": "0x9a…",
+            "description": "The transaction id on its chain, as the cross-chain route reports it."
+          },
+          "explorerUrl": {
+            "type": "string",
+            "example": "https://solscan.io/tx/…",
+            "description": "A block explorer link to the transaction, as the cross-chain route reports it."
+          }
+        },
+        "description": "A settlement transaction the cross-chain route reports, with its explorer link.",
+        "required": [
+          "hash",
+          "explorerUrl"
+        ]
+      },
+      "PaymentDepositEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cm3dep0s1t0001l70g8v5q3z2w",
+            "description": "The deposit's id. With the link's id it is what reads the deposit back."
+          },
+          "paymentLinkId": {
+            "type": "string",
+            "example": "cmh4x2k9a0001l70g8v5q3z2w",
+            "description": "The payment link (payment intent) this deposit pays."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "AWAITING_DEPOSIT",
+              "DEPOSIT_DETECTED",
+              "INCOMPLETE_DEPOSIT",
+              "PROCESSING",
+              "SUCCEEDED",
+              "REFUNDED",
+              "FAILED",
+              "EXPIRED"
+            ],
+            "example": "AWAITING_DEPOSIT",
+            "description": "`AWAITING_DEPOSIT`: nothing arrived yet. `DEPOSIT_DETECTED`, `PROCESSING`: the deposit is on its way. `INCOMPLETE_DEPOSIT`: less than `minAmountIn` arrived; send the rest before `expiresAt` or it is refunded. `SUCCEEDED`: the merchant was paid and the link is settled. `REFUNDED`, `FAILED`: the deposit went (or goes) back to `refundTo`, and the link can be paid again. `EXPIRED`: nothing arrived before `expiresAt` (a later deposit is refunded)."
+          },
+          "originChain": {
+            "type": "string",
+            "enum": [
+              "stellar",
+              "solana",
+              "monad",
+              "eth",
+              "base",
+              "arb",
+              "op",
+              "bsc",
+              "pol",
+              "avax",
+              "gnosis",
+              "bera",
+              "scroll",
+              "xlayer",
+              "abs",
+              "plasma",
+              "hood",
+              "hypercore",
+              "btc",
+              "ltc",
+              "doge",
+              "bch",
+              "dash",
+              "zec",
+              "xrp",
+              "tron",
+              "ton",
+              "near",
+              "sui",
+              "aptos",
+              "movement",
+              "starknet",
+              "cardano",
+              "aleo",
+              "fogo"
+            ],
+            "example": "tron",
+            "description": "The network the payer sends from."
+          },
+          "originAsset": {
+            "type": "string",
+            "example": "USDT",
+            "description": "The sent asset's symbol."
+          },
+          "originContract": {
+            "type": "string",
+            "nullable": true,
+            "example": "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+            "description": "The sent token's contract on its network; null for the native coin."
+          },
+          "amountIn": {
+            "type": "string",
+            "example": "25.284231",
+            "description": "What to send, in the origin asset: the fees and a small buffer for price moves are in it, and whatever is not needed is refunded to `refundTo` after the payment."
+          },
+          "minAmountIn": {
+            "type": "string",
+            "example": "25.031458",
+            "description": "The least the deposit may be. Below it the deposit is refunded at `expiresAt` unless it is topped up."
+          },
+          "destinationChain": {
+            "type": "string",
+            "enum": [
+              "stellar",
+              "solana",
+              "monad",
+              "eth",
+              "base",
+              "arb",
+              "op",
+              "bsc",
+              "pol",
+              "avax",
+              "gnosis",
+              "bera",
+              "scroll",
+              "xlayer",
+              "abs",
+              "plasma",
+              "hood",
+              "hypercore",
+              "btc",
+              "ltc",
+              "doge",
+              "bch",
+              "dash",
+              "zec",
+              "xrp",
+              "tron",
+              "ton",
+              "near",
+              "sui",
+              "aptos",
+              "movement",
+              "starknet",
+              "cardano",
+              "aleo",
+              "fogo"
+            ],
+            "example": "base",
+            "description": "The payment link's network: where the merchant is paid."
+          },
+          "destinationAsset": {
+            "type": "string",
+            "example": "USDC",
+            "description": "The payment link's asset: what the merchant receives."
+          },
+          "destinationContract": {
+            "type": "string",
+            "nullable": true,
+            "example": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+            "description": "The payment link's token contract; null for the network's native coin."
+          },
+          "amountOut": {
+            "type": "string",
+            "example": "25",
+            "description": "Exactly the payment link's amount: what the merchant receives."
+          },
+          "feeBps": {
+            "type": "number",
+            "example": 50,
+            "description": "Cosmos Pay's commission on a payment from another network, in basis points of the deposit."
+          },
+          "feeAmount": {
+            "type": "string",
+            "example": "0.126421",
+            "description": "That commission, in the origin asset (inside `amountIn`)."
+          },
+          "merchantFee": {
+            "nullable": true,
+            "description": "The link's merchant fee as this deposit pays it: an app fee of the cross-chain route, in the origin asset, credited to the fee account inside the route; null without one.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MerchantFeeEntity"
+              }
+            ]
+          },
+          "refundTo": {
+            "type": "string",
+            "example": "TLsV52sRDL79HXGGm9yzwKibb6BeruhUzy",
+            "description": "Where a refund goes, on the origin network."
+          },
+          "depositAddress": {
+            "type": "string",
+            "example": "TXk4mWpuXSbT4F7wC6S5K3aA2CKUZPqT3a",
+            "description": "The address made for this payment, on the origin network: send `amountIn` of the origin asset here, and nothing else."
+          },
+          "depositMemo": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "A memo the deposit MUST carry (a Stellar deposit always has one); null when the address alone identifies the payment."
+          },
+          "depositUri": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "The deposit as a wallet link on the origin network, where it has a wallet-link standard (SEP-7, Solana Pay, EIP-681, BIP-21 and its copies, TON transfer, CIP-13). Null: pay `depositAddress` (and `depositMemo`) with any wallet of that network."
+          },
+          "qr": {
+            "type": "string",
+            "example": "data:image/png;base64,iVBORw0KGgo…",
+            "description": "PNG data URL of a QR code: of `depositUri` when there is one, else of `depositAddress`."
+          },
+          "amountOutPaid": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "What the merchant was paid, once the payment settled."
+          },
+          "refundedAmount": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "What went back to `refundTo`, in the origin asset, once a refund is reported."
+          },
+          "originTxHashes": {
+            "nullable": true,
+            "description": "Transactions reported on the origin network; null until there are any.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CrossChainTransactionEntity"
+            }
+          },
+          "destinationTxHashes": {
+            "nullable": true,
+            "description": "Transactions reported on the link's network (the payout to the merchant); null until there are any.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CrossChainTransactionEntity"
+            }
+          },
+          "timeEstimateSeconds": {
+            "type": "number",
+            "example": 82,
+            "description": "The estimated time, in seconds after the deposit confirms, until the merchant is paid."
+          },
+          "expiresAt": {
+            "type": "string",
+            "example": "2026-11-16T15:45:53.576Z",
+            "description": "When the address stops accepting the deposit; one that arrives later is refunded."
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-11-16T15:15:53.576Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "example": "2026-11-16T15:15:53.576Z"
+          }
+        },
+        "description": "A deposit address made for one payment from any network: what the payer sends and where, and how the payment stands.",
+        "required": [
+          "id",
+          "paymentLinkId",
+          "status",
+          "originChain",
+          "originAsset",
+          "originContract",
+          "amountIn",
+          "minAmountIn",
+          "destinationChain",
+          "destinationAsset",
+          "destinationContract",
+          "amountOut",
+          "feeBps",
+          "feeAmount",
+          "merchantFee",
+          "refundTo",
+          "depositAddress",
+          "depositMemo",
+          "depositUri",
+          "qr",
+          "amountOutPaid",
+          "refundedAmount",
+          "originTxHashes",
+          "destinationTxHashes",
+          "timeEstimateSeconds",
+          "expiresAt",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "PaymentDepositListEntity": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentDepositEntity"
+            }
+          }
+        },
+        "description": "A payment intent's deposit addresses, newest first.",
+        "required": [
+          "data"
+        ]
+      },
+      "PaymentPayerEmailEntity": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "payer@example.com"
+          },
+          "lang": {
+            "type": "string",
+            "example": "es",
+            "description": "The language of that checkout."
+          },
+          "sentAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time",
+            "example": null,
+            "description": "The last time that session reported its wallet sent the payment (informational: a report proves nothing); null if it never did."
+          },
+          "recordedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-11-17T12:00:00.000Z"
+          }
+        },
+        "description": "An email a payer typed in a hosted checkout session of this payment link (not verified).",
+        "required": [
+          "email",
+          "lang",
+          "sentAt",
+          "recordedAt"
+        ]
+      },
+      "PaymentPayerEmailListEntity": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentPayerEmailEntity"
+            }
+          }
+        },
+        "description": "The emails payers gave in this payment link's hosted checkout, newest first.",
+        "required": [
+          "data"
+        ]
+      },
+      "PaymentRouteCheckEntity": {
+        "type": "object",
+        "properties": {
+          "chain": {
+            "type": "string",
+            "enum": [
+              "stellar",
+              "solana",
+              "monad",
+              "eth",
+              "base",
+              "arb",
+              "op",
+              "bsc",
+              "pol",
+              "avax",
+              "gnosis",
+              "bera",
+              "scroll",
+              "xlayer",
+              "abs",
+              "plasma",
+              "hood",
+              "hypercore",
+              "btc",
+              "ltc",
+              "doge",
+              "bch",
+              "dash",
+              "zec",
+              "xrp",
+              "tron",
+              "ton",
+              "near",
+              "sui",
+              "aptos",
+              "movement",
+              "starknet",
+              "cardano",
+              "aleo",
+              "fogo"
+            ],
+            "example": "tron"
+          },
+          "asset": {
+            "type": "string",
+            "example": "USDT"
+          },
+          "available": {
+            "type": "boolean",
+            "example": false,
+            "description": "True when the route quoted the amount."
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "example": "The cross-chain route refused the request: Temporary swap limits: minimum swap amount is $100",
+            "description": "Why not, in the route’s words (it names no provider); null when available."
+          },
+          "amount": {
+            "type": "string",
+            "nullable": true,
+            "example": "25.284231",
+            "description": "What the payer would send from there; null when not available."
+          }
+        },
+        "description": "Whether one origin network and asset can pay a payment link's amount right now, from a dry quote: routes have minimums of their own.",
+        "required": [
+          "chain",
+          "asset",
+          "available",
+          "reason",
+          "amount"
+        ]
+      },
+      "PaymentRouteCheckListEntity": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "description": "One entry per main origin (USDC and USDT on the networks most payers hold them on, and Bitcoin) the route answered for; an origin that could not be asked right now is left out. Empty for a link without a fixed amount or one that cannot be paid from another network.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentRouteCheckEntity"
+            }
+          }
+        },
+        "description": "How the main origins fare for a payment link's amount: the ones that cannot pay it now, and why.",
+        "required": [
+          "data"
         ]
       },
       "ValidatePaymentIntentDto": {
@@ -20837,6 +22979,14 @@
             ],
             "description": "Design of the hosted checkout page (`https://payments.cosmospay.lat/<id>`). Accepted in any status, final ones included, alone or with the other fields: it changes nothing about the payment.",
             "example": "split"
+          },
+          "depositLimits": {
+            "description": "Your limits on payments from another network for this link. Accepted in any status, alone or with the other fields; a field left out keeps its value.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DepositLimitsDto"
+              }
+            ]
           }
         },
         "description": "Changes to a payment intent: send only the fields that change."
@@ -20883,10 +23033,42 @@
             "enum": [
               "stellar",
               "solana",
-              "monad"
+              "monad",
+              "eth",
+              "base",
+              "arb",
+              "op",
+              "bsc",
+              "pol",
+              "avax",
+              "gnosis",
+              "bera",
+              "scroll",
+              "xlayer",
+              "abs",
+              "plasma",
+              "hood",
+              "hypercore",
+              "btc",
+              "ltc",
+              "doge",
+              "bch",
+              "dash",
+              "zec",
+              "xrp",
+              "tron",
+              "ton",
+              "near",
+              "sui",
+              "aptos",
+              "movement",
+              "starknet",
+              "cardano",
+              "aleo",
+              "fogo"
             ],
             "example": "stellar",
-            "description": "Chain the payment settles on."
+            "description": "Network the payment settles on."
           },
           "network": {
             "type": "string",
@@ -20912,8 +23094,9 @@
           },
           "payTo": {
             "type": "string",
+            "nullable": true,
             "example": "GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO",
-            "description": "The address the payer sends to, always the one inside `uri`. Stellar and Solana: the merchant’s account. Monad with a relayer: the intent’s own deposit address, which forwards the payment to the merchant less `networkFee`."
+            "description": "The address the payer sends to, always the one inside `uri`. Stellar and Solana: the merchant’s account. Monad with a relayer: the intent’s own deposit address, which forwards the payment to the merchant less `networkFee`. Null on every other network: the payer pays a deposit address made for the payment (`POST /v1/payment-links/{id}/deposits`), never the merchant directly."
           },
           "amount": {
             "type": "string",
@@ -20946,7 +23129,7 @@
           "uri": {
             "type": "string",
             "example": "web+stellar:pay?destination=GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO&amount=25.5&memo=4127759120438726917&memo_type=MEMO_ID&msg=Order+%2324",
-            "description": "The payment link, exactly as the wallet opens it: SEP-7 on Stellar, Solana Pay on Solana, EIP-681 on Monad. It is the same link the merchant handed out, so it carries what the wallet needs: a SEP-7 `callback` the merchant set and, for a `TX` intent, the unsigned envelope."
+            "description": "The payment link, exactly as the wallet opens it: SEP-7 on Stellar, Solana Pay on Solana, EIP-681 on Monad, the hosted checkout on every other network. It is the same link the merchant handed out, so it carries what the wallet needs: a SEP-7 `callback` the merchant set and, for a `TX` intent, the unsigned envelope."
           },
           "qr": {
             "type": "string",
@@ -20979,6 +23162,11 @@
             "type": "boolean",
             "example": false,
             "description": "True when the payment cannot be one link (a Stellar link with a merchant fee: SEP-7 `pay` pays one account). Ask the payer for their account, then `POST /v1/payment-links/{id}/transaction` builds the envelope to sign; `uri` is the hosted checkout then, not a wallet link."
+          },
+          "crossChainPayment": {
+            "type": "boolean",
+            "example": true,
+            "description": "True when the payer may pay from another network and asset, through a deposit address made for the payment (`/v1/payment-links/{id}/deposit-assets`, `/quote`, `/deposits`). Always true on the networks with no wallet link of their own, where it is the way to pay; on Stellar, Solana and Monad, true for a mainnet link with an amount and no merchant fee."
           },
           "expiresAt": {
             "type": "string",
@@ -21024,6 +23212,7 @@
           "networkFee",
           "merchantFee",
           "payerAccountRequired",
+          "crossChainPayment",
           "expiresAt",
           "createdAt",
           "checkoutTheme"
@@ -21069,6 +23258,53 @@
           "qr"
         ]
       },
+      "PayerContactDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "The payer's email, as typed in the checkout (not verified).",
+            "example": "payer@example.com"
+          },
+          "lang": {
+            "type": "string",
+            "enum": [
+              "en",
+              "es",
+              "pt",
+              "fr",
+              "de",
+              "hi",
+              "zh"
+            ],
+            "default": "en",
+            "description": "The language of the payer's checkout: the receipt is written in it."
+          },
+          "payerToken": {
+            "type": "string",
+            "description": "This checkout session's token, from an earlier answer: the session changes its own email. Without it (or with one this link does not know) a new session is opened.",
+            "example": "q8V0n3cJxZr2m1bWk7yTt4uP9aLs6dEf0gHiJkLmNoQ"
+          }
+        },
+        "description": "The payer's email (and checkout language), recorded before the hosted checkout shows how to pay: the receipt goes there.",
+        "required": [
+          "email"
+        ]
+      },
+      "PayerSessionEntity": {
+        "type": "object",
+        "properties": {
+          "payerToken": {
+            "type": "string",
+            "description": "Random, 256 bits, base64url. Only its SHA-256 is stored; keep it in the page that asked for it.",
+            "example": "q8V0n3cJxZr2m1bWk7yTt4uP9aLs6dEf0gHiJkLmNoQ"
+          }
+        },
+        "description": "A hosted checkout session's token: the session's only credential, answered once. Send it on the session's later calls (`payer`, `events`, `deposits`).",
+        "required": [
+          "payerToken"
+        ]
+      },
       "CheckoutEventDto": {
         "type": "object",
         "properties": {
@@ -21081,6 +23317,21 @@
             ],
             "description": "`walletOpened`: the payer opened a wallet from the page (the wallet link, the web wallet, the extension, Freighter). `walletClosed`: the wallet came back without paying (it declined, or the page was shown again first). `sent`: the page saw the wallet send the payment.",
             "example": "walletOpened"
+          },
+          "payerToken": {
+            "type": "string",
+            "description": "The checkout session's token. With `address` or `txHash` it registers what this session pays with; a report without them is informational.",
+            "example": "q8V0n3cJxZr2m1bWk7yTt4uP9aLs6dEf0gHiJkLmNoQ"
+          },
+          "address": {
+            "type": "string",
+            "description": "The account the session's connected wallet pays from, on the link's network (with `payerToken`). When it is the payment's source, the receipt and the customer link go to this session's email.",
+            "example": "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ"
+          },
+          "txHash": {
+            "type": "string",
+            "description": "The transaction the wallet answered when it sent the payment (with `payerToken`). When it is the payment's transaction, the receipt and the customer link go to this session's email.",
+            "example": "b7f1c3a2d4e5f60718293a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d"
           }
         },
         "description": "What the payer did with a wallet, as the hosted checkout page reports it. Informational: the intent status changes only on the chain.",
@@ -21139,6 +23390,482 @@
         "description": "Answer to a Solana Pay transaction request POST: the unsigned transaction the wallet signs.",
         "required": [
           "transaction"
+        ]
+      },
+      "CrossChainAssetEntity": {
+        "type": "object",
+        "properties": {
+          "chain": {
+            "type": "string",
+            "enum": [
+              "stellar",
+              "solana",
+              "monad",
+              "eth",
+              "base",
+              "arb",
+              "op",
+              "bsc",
+              "pol",
+              "avax",
+              "gnosis",
+              "bera",
+              "scroll",
+              "xlayer",
+              "abs",
+              "plasma",
+              "hood",
+              "hypercore",
+              "btc",
+              "ltc",
+              "doge",
+              "bch",
+              "dash",
+              "zec",
+              "xrp",
+              "tron",
+              "ton",
+              "near",
+              "sui",
+              "aptos",
+              "movement",
+              "starknet",
+              "cardano",
+              "aleo",
+              "fogo"
+            ],
+            "example": "stellar",
+            "description": "The network id a request names it by (originChain / destinationChain)."
+          },
+          "chainName": {
+            "type": "string",
+            "example": "Stellar",
+            "description": "The network, by name: for display."
+          },
+          "symbol": {
+            "type": "string",
+            "example": "USDC",
+            "description": "The token's symbol, as the cross-chain route lists it."
+          },
+          "assetId": {
+            "type": "string",
+            "example": "nep245:v2_1.omni.hot.tg:1100_111bzQBB65GxAPAVoxqmMcgYo5oS3txhqs1Uh1cgahKQUeTUq1TJu",
+            "description": "The cross-chain route’s id for the asset."
+          },
+          "decimals": {
+            "type": "number",
+            "example": 7,
+            "description": "The token's decimal places on its network, as the cross-chain route lists them."
+          },
+          "contract": {
+            "type": "object",
+            "nullable": true,
+            "example": "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+            "description": "The token on its network (SPL mint, ERC-20 address, Stellar issuer, Sui coin type, TON jetton master, ...); null for the native coin."
+          },
+          "priceUsd": {
+            "type": "number",
+            "nullable": true,
+            "example": 0.999538,
+            "description": "The cross-chain route’s reference price in USD, indicative only: for showing an estimate before a quote. It may be a few minutes old, and every amount still comes from a quote. Null when the cross-chain route lists none."
+          }
+        },
+        "description": "A token the cross-chain route can swap, on one of the networks cross-chain swaps reach.",
+        "required": [
+          "chain",
+          "chainName",
+          "symbol",
+          "assetId",
+          "decimals",
+          "contract",
+          "priceUsd"
+        ]
+      },
+      "PaymentDepositAssetsEntity": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "description": "Every asset the cross-chain route still trades.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CrossChainAssetEntity"
+            }
+          },
+          "routes": {
+            "description": "The main origins checked against the link’s amount: show one that is not `available` as unavailable, with its `reason`. Empty for a link without a fixed amount (the quote tells then).",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentRouteCheckEntity"
+            }
+          }
+        },
+        "description": "What the payer of a payment link can pay from, and how the main origins fare for the link's amount.",
+        "required": [
+          "data",
+          "routes"
+        ]
+      },
+      "PaymentDepositRequestDto": {
+        "type": "object",
+        "properties": {
+          "originChain": {
+            "type": "string",
+            "enum": [
+              "stellar",
+              "solana",
+              "monad",
+              "eth",
+              "base",
+              "arb",
+              "op",
+              "bsc",
+              "pol",
+              "avax",
+              "gnosis",
+              "bera",
+              "scroll",
+              "xlayer",
+              "abs",
+              "plasma",
+              "hood",
+              "hypercore",
+              "btc",
+              "ltc",
+              "doge",
+              "bch",
+              "dash",
+              "zec",
+              "xrp",
+              "tron",
+              "ton",
+              "near",
+              "sui",
+              "aptos",
+              "movement",
+              "starknet",
+              "cardano",
+              "aleo",
+              "fogo"
+            ],
+            "example": "tron",
+            "description": "The network the payer sends from: a `chain` from `GET /v1/payment-links/{id}/deposit-assets`."
+          },
+          "originAsset": {
+            "type": "string",
+            "description": "The asset sent: \"native\" or the native ticker (TRX, ETH, BTC), a symbol listed once on that network (USDT), its contract, or Stellar CODE:ISSUER. See `GET /v1/payment-links/{id}/deposit-assets`.",
+            "example": "USDT"
+          },
+          "refundTo": {
+            "type": "string",
+            "description": "Where the deposit is refunded if the payment cannot complete (or the surplus of an overpayment), on originChain: normally the paying wallet.",
+            "example": "TLsV52sRDL79HXGGm9yzwKibb6BeruhUzy"
+          },
+          "amount": {
+            "type": "string",
+            "description": "Only for a link with no fixed amount: what the merchant should receive, in the link's asset, as the payer typed it. The quote pays exactly it; a link with an amount refuses another one.",
+            "example": "25"
+          }
+        },
+        "description": "How a payer pays a payment link from any network: the asset sent and the address a refund goes to, on that network.",
+        "required": [
+          "originChain",
+          "originAsset",
+          "refundTo"
+        ]
+      },
+      "PaymentDepositQuoteOrigin": {
+        "type": "object",
+        "properties": {
+          "chain": {
+            "type": "string",
+            "enum": [
+              "stellar",
+              "solana",
+              "monad",
+              "eth",
+              "base",
+              "arb",
+              "op",
+              "bsc",
+              "pol",
+              "avax",
+              "gnosis",
+              "bera",
+              "scroll",
+              "xlayer",
+              "abs",
+              "plasma",
+              "hood",
+              "hypercore",
+              "btc",
+              "ltc",
+              "doge",
+              "bch",
+              "dash",
+              "zec",
+              "xrp",
+              "tron",
+              "ton",
+              "near",
+              "sui",
+              "aptos",
+              "movement",
+              "starknet",
+              "cardano",
+              "aleo",
+              "fogo"
+            ],
+            "example": "tron"
+          },
+          "asset": {
+            "type": "string",
+            "example": "USDT",
+            "description": "The asset's symbol."
+          },
+          "assetId": {
+            "type": "string",
+            "example": "nep141:tron-d28a265909efecdcee7c5028585214ea0b96f015.omft.near",
+            "description": "The cross-chain route's id for the asset."
+          },
+          "contract": {
+            "type": "string",
+            "nullable": true,
+            "example": "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+            "description": "The token's contract on its network; null for the native coin."
+          },
+          "amount": {
+            "type": "string",
+            "example": "25.284231",
+            "description": "What to send: the fees and a small buffer for price moves are in it; what is not needed is refunded."
+          },
+          "minimum": {
+            "type": "string",
+            "example": "25.031458",
+            "description": "The least a deposit may be before it is refunded."
+          },
+          "amountUsd": {
+            "type": "string",
+            "nullable": true,
+            "example": "25.27",
+            "description": "The cross-chain route's USD valuation, informational only."
+          }
+        },
+        "description": "The leg a payer sends, in a quote for paying a payment link from any network.",
+        "required": [
+          "chain",
+          "asset",
+          "assetId",
+          "contract",
+          "amount",
+          "minimum",
+          "amountUsd"
+        ]
+      },
+      "PaymentDepositQuoteDestination": {
+        "type": "object",
+        "properties": {
+          "chain": {
+            "type": "string",
+            "enum": [
+              "stellar",
+              "solana",
+              "monad",
+              "eth",
+              "base",
+              "arb",
+              "op",
+              "bsc",
+              "pol",
+              "avax",
+              "gnosis",
+              "bera",
+              "scroll",
+              "xlayer",
+              "abs",
+              "plasma",
+              "hood",
+              "hypercore",
+              "btc",
+              "ltc",
+              "doge",
+              "bch",
+              "dash",
+              "zec",
+              "xrp",
+              "tron",
+              "ton",
+              "near",
+              "sui",
+              "aptos",
+              "movement",
+              "starknet",
+              "cardano",
+              "aleo",
+              "fogo"
+            ],
+            "example": "base"
+          },
+          "asset": {
+            "type": "string",
+            "example": "USDC",
+            "description": "The link's asset."
+          },
+          "contract": {
+            "type": "string",
+            "nullable": true,
+            "example": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+            "description": "The link's token contract; null for the native coin."
+          },
+          "amount": {
+            "type": "string",
+            "example": "25",
+            "description": "The link's amount, exactly."
+          },
+          "amountUsd": {
+            "type": "string",
+            "nullable": true,
+            "example": "24.99",
+            "description": "The cross-chain route's USD valuation, informational only."
+          }
+        },
+        "description": "The leg the merchant receives, in a quote for paying a payment link from any network: always the link's amount.",
+        "required": [
+          "chain",
+          "asset",
+          "contract",
+          "amount",
+          "amountUsd"
+        ]
+      },
+      "CrossChainFeeEntity": {
+        "type": "object",
+        "properties": {
+          "bps": {
+            "type": "number",
+            "example": 50,
+            "description": "Basis points of the input."
+          },
+          "amount": {
+            "type": "string",
+            "example": "0.5",
+            "description": "In the origin asset."
+          },
+          "asset": {
+            "type": "string",
+            "example": "XLM",
+            "description": "The origin asset's symbol: the commission is paid in it."
+          }
+        },
+        "description": "The plan commission on a cross-chain swap, which the cross-chain route takes out of the input as an app fee.",
+        "required": [
+          "bps",
+          "amount",
+          "asset"
+        ]
+      },
+      "PaymentDepositQuoteEntity": {
+        "type": "object",
+        "properties": {
+          "origin": {
+            "$ref": "#/components/schemas/PaymentDepositQuoteOrigin"
+          },
+          "destination": {
+            "$ref": "#/components/schemas/PaymentDepositQuoteDestination"
+          },
+          "fee": {
+            "description": "Cosmos Pay's commission on a payment from another network, in the origin asset (inside `origin.amount`).",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CrossChainFeeEntity"
+              }
+            ]
+          },
+          "timeEstimateSeconds": {
+            "type": "number",
+            "example": 82,
+            "description": "The estimated time, in seconds after the deposit confirms, until the merchant is paid."
+          }
+        },
+        "description": "Response of `POST /v1/payment-links/{id}/quote`: what paying the link from one network and asset costs. Nothing is stored.",
+        "required": [
+          "origin",
+          "destination",
+          "fee",
+          "timeEstimateSeconds"
+        ]
+      },
+      "CreatePaymentDepositDto": {
+        "type": "object",
+        "properties": {
+          "originChain": {
+            "type": "string",
+            "enum": [
+              "stellar",
+              "solana",
+              "monad",
+              "eth",
+              "base",
+              "arb",
+              "op",
+              "bsc",
+              "pol",
+              "avax",
+              "gnosis",
+              "bera",
+              "scroll",
+              "xlayer",
+              "abs",
+              "plasma",
+              "hood",
+              "hypercore",
+              "btc",
+              "ltc",
+              "doge",
+              "bch",
+              "dash",
+              "zec",
+              "xrp",
+              "tron",
+              "ton",
+              "near",
+              "sui",
+              "aptos",
+              "movement",
+              "starknet",
+              "cardano",
+              "aleo",
+              "fogo"
+            ],
+            "example": "tron",
+            "description": "The network the payer sends from: a `chain` from `GET /v1/payment-links/{id}/deposit-assets`."
+          },
+          "originAsset": {
+            "type": "string",
+            "description": "The asset sent: \"native\" or the native ticker (TRX, ETH, BTC), a symbol listed once on that network (USDT), its contract, or Stellar CODE:ISSUER. See `GET /v1/payment-links/{id}/deposit-assets`.",
+            "example": "USDT"
+          },
+          "refundTo": {
+            "type": "string",
+            "description": "Where the deposit is refunded if the payment cannot complete (or the surplus of an overpayment), on originChain: normally the paying wallet.",
+            "example": "TLsV52sRDL79HXGGm9yzwKibb6BeruhUzy"
+          },
+          "amount": {
+            "type": "string",
+            "description": "Only for a link with no fixed amount: what the merchant should receive, in the link's asset, as the payer typed it. The quote pays exactly it; a link with an amount refuses another one.",
+            "example": "25"
+          },
+          "payerToken": {
+            "type": "string",
+            "description": "The checkout session token `POST /v1/payment-links/{id}/payer` answered: the receipt goes to that session's email when this deposit settles the payment.",
+            "example": "q8V0n3cJxZr2m1bWk7yTt4uP9aLs6dEf0gHiJkLmNoQ"
+          }
+        },
+        "description": "Opens a deposit address for one payer: the asset sent, the refund address, and the email the receipt goes to.",
+        "required": [
+          "originChain",
+          "originAsset",
+          "refundTo",
+          "payerToken"
         ]
       },
       "CustomerWalletDto": {
@@ -21287,6 +24014,11 @@
             "example": "ada@example.com",
             "description": "Contact email address; null when none was given."
           },
+          "emailProvidedByPayer": {
+            "type": "boolean",
+            "example": false,
+            "description": "True when `email` was typed by a payer in the hosted checkout to get a receipt: not verified. False when you set it, or there is none."
+          },
           "wallets": {
             "description": "The customer's wallets, oldest first, on any chain payments settle on.",
             "type": "array",
@@ -21330,6 +24062,7 @@
         "required": [
           "id",
           "name",
+          "emailProvidedByPayer",
           "wallets",
           "createdAt",
           "updatedAt"
@@ -21359,6 +24092,11 @@
             "nullable": true,
             "example": "ada@example.com",
             "description": "Contact email address; null when none was given."
+          },
+          "emailProvidedByPayer": {
+            "type": "boolean",
+            "example": false,
+            "description": "True when `email` was typed by a payer in the hosted checkout to get a receipt: not verified. False when you set it, or there is none."
           },
           "wallets": {
             "description": "The customer's wallets, oldest first, on any chain payments settle on.",
@@ -21418,6 +24156,7 @@
         "required": [
           "id",
           "name",
+          "emailProvidedByPayer",
           "wallets",
           "createdAt",
           "updatedAt",
@@ -23048,95 +25787,6 @@
         },
         "description": "The swap transaction: `signedXdr` for a Stellar swap, `signedTransaction` for a Solana swap, and for a Monad swap either `signedTransaction` (this service broadcasts it) or `txHash` (the wallet already broadcast it). Whichever is sent, it must be the transaction built for this swap."
       },
-      "CrossChainAssetEntity": {
-        "type": "object",
-        "properties": {
-          "chain": {
-            "type": "string",
-            "enum": [
-              "stellar",
-              "solana",
-              "monad",
-              "eth",
-              "base",
-              "arb",
-              "op",
-              "bsc",
-              "pol",
-              "avax",
-              "gnosis",
-              "bera",
-              "scroll",
-              "xlayer",
-              "abs",
-              "plasma",
-              "hood",
-              "hypercore",
-              "btc",
-              "ltc",
-              "doge",
-              "bch",
-              "dash",
-              "zec",
-              "xrp",
-              "tron",
-              "ton",
-              "near",
-              "sui",
-              "aptos",
-              "movement",
-              "starknet",
-              "cardano",
-              "aleo",
-              "fogo"
-            ],
-            "example": "stellar",
-            "description": "The network id a request names it by (originChain / destinationChain)."
-          },
-          "chainName": {
-            "type": "string",
-            "example": "Stellar",
-            "description": "The network, by name: for display."
-          },
-          "symbol": {
-            "type": "string",
-            "example": "USDC",
-            "description": "The token's symbol, as the cross-chain route lists it."
-          },
-          "assetId": {
-            "type": "string",
-            "example": "nep245:v2_1.omni.hot.tg:1100_111bzQBB65GxAPAVoxqmMcgYo5oS3txhqs1Uh1cgahKQUeTUq1TJu",
-            "description": "The cross-chain route’s id for the asset."
-          },
-          "decimals": {
-            "type": "number",
-            "example": 7,
-            "description": "The token's decimal places on its network, as the cross-chain route lists them."
-          },
-          "contract": {
-            "type": "object",
-            "nullable": true,
-            "example": "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
-            "description": "The token on its network (SPL mint, ERC-20 address, Stellar issuer, Sui coin type, TON jetton master, ...); null for the native coin."
-          },
-          "priceUsd": {
-            "type": "number",
-            "nullable": true,
-            "example": 0.999538,
-            "description": "The cross-chain route’s reference price in USD, indicative only: for showing an estimate before a quote. It may be a few minutes old, and every amount still comes from a quote. Null when the cross-chain route lists none."
-          }
-        },
-        "description": "A token the cross-chain route can swap, on one of the networks cross-chain swaps reach.",
-        "required": [
-          "chain",
-          "chainName",
-          "symbol",
-          "assetId",
-          "decimals",
-          "contract",
-          "priceUsd"
-        ]
-      },
       "CrossChainAssetListEntity": {
         "type": "object",
         "properties": {
@@ -23462,32 +26112,6 @@
           "minimum"
         ]
       },
-      "CrossChainFeeEntity": {
-        "type": "object",
-        "properties": {
-          "bps": {
-            "type": "number",
-            "example": 50,
-            "description": "Basis points of the input."
-          },
-          "amount": {
-            "type": "string",
-            "example": "0.5",
-            "description": "In the origin asset."
-          },
-          "asset": {
-            "type": "string",
-            "example": "XLM",
-            "description": "The origin asset's symbol: the commission is paid in it."
-          }
-        },
-        "description": "The plan commission on a cross-chain swap, which the cross-chain route takes out of the input as an app fee.",
-        "required": [
-          "bps",
-          "amount",
-          "asset"
-        ]
-      },
       "CrossChainQuoteEntity": {
         "type": "object",
         "properties": {
@@ -23692,26 +26316,6 @@
           "amount",
           "recipient",
           "refundTo"
-        ]
-      },
-      "CrossChainTransactionEntity": {
-        "type": "object",
-        "properties": {
-          "hash": {
-            "type": "string",
-            "example": "0x9a…",
-            "description": "The transaction id on its chain, as the cross-chain route reports it."
-          },
-          "explorerUrl": {
-            "type": "string",
-            "example": "https://solscan.io/tx/…",
-            "description": "A block explorer link to the transaction, as the cross-chain route reports it."
-          }
-        },
-        "description": "A settlement transaction the cross-chain route reports, with its explorer link.",
-        "required": [
-          "hash",
-          "explorerUrl"
         ]
       },
       "CrossChainSwapCreatedEntity": {
@@ -36563,6 +39167,7 @@
               "idempotency_conflict",
               "operation_in_flight",
               "invalid_state_transition",
+              "payer_session_unknown",
               "slippage_exceeded",
               "insufficient_balance",
               "no_path_found",

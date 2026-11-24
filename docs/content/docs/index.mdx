@@ -4,8 +4,8 @@ description: Accept stablecoin payments from every network Cosmos Pay works with
 ---
 
 **Cosmos Pay** lets you accept payments that customers pay from any network we work with (payment
-intents with SEP-7, Solana Pay and EIP-681 links, and a swap in first when the funds are on another
-network), swap on one network or between them, and manage webhooks, products, customers and analytics. These docs cover both ways to integrate:
+intents with SEP-7, Solana Pay and EIP-681 links, or a deposit address made for each payment when the
+funds are on another network), swap on one network or between them, and manage webhooks, products, customers and analytics. These docs cover both ways to integrate:
 
 <Cards>
   <Card title="SDK · Overview" href="/sdk/server/overview" description="What @cosmosapp/pay_sdk is, the server + browser entry points, and the mental model." />
@@ -27,3 +27,9 @@ The network is chosen by the API key type: `dv_` keys hit **testnet**, `prod_` k
 On Solana and Monad, pass `chain`, with the SDK (`createPay({ chain: 'solana', ... })`, from version 2.2) or the [REST API](/api/payment-intents):
 you get a Solana Pay or EIP-681 link, the payer pays it from any wallet on that chain, and the
 Payments API detects the payment on-chain and fires the same webhooks.
+
+On every other network the Payments API lists (Ethereum, Base, Tron, Bitcoin, TON and the rest), pass its
+`chain` with a `prod_` key and an `amount`: the link's `uri` is the hosted checkout, where the payer picks
+the network and token they pay with and gets a deposit address made for that payment. You receive exactly
+the `amount` on the link's network, and the same webhooks fire. Any mainnet link with an amount and no
+merchant fee can be paid that way from another network too.

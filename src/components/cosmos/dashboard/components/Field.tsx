@@ -1,9 +1,10 @@
-import { useId } from "react";
+import { useId, type ReactNode } from "react";
 import { Select } from "@/components/cosmos/dashboard/components/Select";
 
 /* A labelled field: the label above, the input, and its help under it (read with the input
    through aria-describedby). */
-export function Field({ label, hint = undefined, ...p }) {
+// Anything else is the input's own attribute (value, onChange, placeholder, aria-*...).
+export function Field({ label, hint = undefined, ...p }: { label?: ReactNode; hint?: ReactNode } & Record<string, any>) {
   const id = useId();
   const helpId = hint ? `${id}-help` : undefined;
   return (
