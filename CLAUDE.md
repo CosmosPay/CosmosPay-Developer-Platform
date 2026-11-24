@@ -1276,6 +1276,12 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   (1 hour, 24 hours, 7 days, 30 days), with who does each step once the QR is shown. The checks are
   `src/lib/qr-charges.ts` (`tests/unit/qrCharges.test.ts`, which also holds the mock's answers
   against `docs/openapi.json`'s `P2pPaymentRequestEntity`).
+  **The entry shows only where the server has charges**: they ship with a Payments API release,
+  so the shell reads the list once per environment (`take=1`, kept for the session) and keeps
+  "QR charges" out of the sidebar and the search until that read goes through or the route itself
+  refuses it (`chargesAvailable` in `src/lib/qr-charges.ts`: a 404, 501, 503, any other 5xx or no
+  answer keep it out), and a `?view=charges` link on such a server opens the overview. Not a
+  `DISABLED_VIEWS` entry: it turns on by itself once the server ships the routes.
 
 ### The payments landing
 

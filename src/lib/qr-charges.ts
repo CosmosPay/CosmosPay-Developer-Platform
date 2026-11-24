@@ -227,3 +227,18 @@ export function safeChargeUrl(url: unknown, id: string): string | null {
   if (parsed.pathname !== `/fiat/${id}`) return null;
   return parsed.href;
 }
+
+/* ---- whether the Payments API has charges at all ---- */
+
+/** Charges in local money ship with a release of the Payments API, so the server behind an
+    environment may not have them yet, or may have the rail switched off. The dashboard reads one
+    charge from the list before it puts "QR charges" in the sidebar, and this says what that read
+    proved, from its HTTP status (`undefined` when no answer came back): the route is there when the
+    read went through, or when the route itself refused it (any 4xx but 404: a session, a
+    permission, a limit). A 404 (no such route), 501 or 503 (the rail is off there), any other 5xx
+    and no answer at all keep the view out, so it only appears once a server proves it has charges. */
+export function chargesAvailable(status: number | null | undefined): boolean {
+  if (typeof status !== "number" || !Number.isInteger(status)) return false;
+  if (status >= 200 && status < 300) return true;
+  return status >= 400 && status < 500 && status !== 404;
+}
