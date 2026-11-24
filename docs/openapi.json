@@ -15928,7 +15928,7 @@
         },
         "summary": "Read a charge in local money as its payer sees it (no API key)",
         "tags": [
-          "payment-links"
+          "fiat-charges"
         ],
         "x-cosmos-public": true,
         "x-cosmos-rate-limit": [
@@ -16068,7 +16068,7 @@
         },
         "summary": "Start paying a charge in local money (no API key)",
         "tags": [
-          "payment-links"
+          "fiat-charges"
         ],
         "x-cosmos-public": true,
         "x-cosmos-rate-limit": [
@@ -16281,7 +16281,7 @@
         },
         "summary": "Start verifying a payer by email (no API key)",
         "tags": [
-          "payment-links"
+          "fiat-charges"
         ],
         "x-cosmos-public": true,
         "x-cosmos-rate-limit": [
@@ -16491,7 +16491,7 @@
         },
         "summary": "Verify a payer’s emailed code (no API key)",
         "tags": [
-          "payment-links"
+          "fiat-charges"
         ],
         "x-cosmos-public": true,
         "x-cosmos-rate-limit": [
@@ -16712,7 +16712,7 @@
         },
         "summary": "Read where a payer stands in verifying their identity (no API key)",
         "tags": [
-          "payment-links"
+          "fiat-charges"
         ],
         "x-cosmos-public": true,
         "x-cosmos-rate-limit": [
@@ -16954,7 +16954,7 @@
         },
         "summary": "Send a payer’s city and phone (no API key)",
         "tags": [
-          "payment-links"
+          "fiat-charges"
         ],
         "x-cosmos-public": true,
         "x-cosmos-rate-limit": [
@@ -17196,7 +17196,7 @@
         },
         "summary": "Verify a payer’s phone code (no API key)",
         "tags": [
-          "payment-links"
+          "fiat-charges"
         ],
         "x-cosmos-public": true,
         "x-cosmos-rate-limit": [
@@ -17417,7 +17417,7 @@
         },
         "summary": "List a payer’s saved bank accounts (no API key)",
         "tags": [
-          "payment-links"
+          "fiat-charges"
         ],
         "x-cosmos-public": true,
         "x-cosmos-rate-limit": [
@@ -17725,7 +17725,7 @@
         },
         "summary": "Start paying a charge through a verified seller (no API key)",
         "tags": [
-          "payment-links"
+          "fiat-charges"
         ],
         "x-cosmos-public": true,
         "x-cosmos-rate-limit": [
@@ -17922,7 +17922,7 @@
         },
         "summary": "Read a payment to a verified seller (no API key)",
         "tags": [
-          "payment-links"
+          "fiat-charges"
         ],
         "x-cosmos-public": true,
         "x-cosmos-rate-limit": [
@@ -18142,7 +18142,7 @@
         },
         "summary": "Tell the seller the transfer was made (no API key)",
         "tags": [
-          "payment-links"
+          "fiat-charges"
         ],
         "x-cosmos-public": true,
         "x-cosmos-rate-limit": [
@@ -18362,7 +18362,7 @@
         },
         "summary": "Cancel a payment the payer has not made (no API key)",
         "tags": [
-          "payment-links"
+          "fiat-charges"
         ],
         "x-cosmos-public": true,
         "x-cosmos-rate-limit": [
@@ -18874,7 +18874,7 @@
         },
         "summary": "Get bank transfer instructions for a charge (no API key)",
         "tags": [
-          "payment-links"
+          "fiat-charges"
         ],
         "x-cosmos-public": true,
         "x-cosmos-rate-limit": [
@@ -23089,7 +23089,11 @@
     },
     {
       "name": "payment-links",
-      "description": "The payer’s view of one payment link, served without a key to the hosted checkout on payments.cosmospay.lat. The link id is the capability: anyone holding it can read the amount, the address to pay and the live status, and nothing about the merchant. A charge in local money shown as a QR is read and paid the same way, under `/fiat/{id}`."
+      "description": "The payer’s view of one payment link, served without a key to the hosted checkout on payments.cosmospay.lat. The link id is the capability: anyone holding it can read the amount, the address to pay and the live status, and nothing about the merchant. A charge in local money shown as a QR has its own page, Charges in Local Money."
+    },
+    {
+      "name": "fiat-charges",
+      "description": "The payer’s side of a charge in local money shown as a QR, served without a key to its payer page on payments.cosmospay.lat. The charge id is the capability: anyone holding it can read the amount and how it can be paid, and nothing about the seller’s account."
     },
     {
       "name": "public-key",

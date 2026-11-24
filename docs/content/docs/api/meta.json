@@ -12,6 +12,7 @@
     "liquidity-pools",
     "assets",
     "payment-links",
+    "fiat-charges",
     "public-key",
     "plugins",
     "aliases",
