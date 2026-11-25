@@ -85,7 +85,8 @@ import {
   type DepositRoute,
   type PaymentDeposit,
 } from "@/lib/payments/deposits";
-import { isDepositNetwork, isNetwork, isNetworkAddress, networkName, type NetworkId } from "@/lib/chains";
+import { EVM_CHAIN_PARAMS, isDepositNetwork, isEvmChain, isNetworkAddress, isSwapNetwork, networkName, type SwapNetworkId } from "@/lib/chains";
+import type { DiscoveredEvmWallet } from "@cosmosapp/pay_sdk/wallets";
 import { statusMessage } from "@/lib/payments/embed-protocol";
 import { previewLink } from "@/lib/payments/preview";
 import { signWithFreighter } from "@/lib/wallets/freighter";
@@ -101,6 +102,7 @@ interface Runtime {
   extOpening: string;
   extSent: string;
   extFailed: string;
+  payWith: string;
   errorBody: string;
   rateLimited: string;
   timerLabel: string;
@@ -249,7 +251,7 @@ export function startCheckout(): void {
   let xcAmount = "";
   let xcAssetsLoading = false;
   let xcAssetsRetryAt = 0;
-  let xcNetwork: NetworkId | "" = "";
+  let xcNetwork: SwapNetworkId | "" = "";
   let xcAssetId = "";
   let xcRefund = "";
   let xcDefaulted = false;
@@ -387,16 +389,16 @@ export function startCheckout(): void {
     toggle('[data-slot="tx-note"]', l.kind !== "TX");
     // A TX link carries a transaction prepared for one payer: there is nothing to send by hand.
     // Nor on a Stellar or Solana link with a merchant fee: a transfer by hand would skip the
-    // fee's payment, and the link settles only on both. A Monad link's deposit address splits
-    // the fee itself, so sending it the total by hand pays both.
-    const noManual = l.kind === "TX" || payerLink || (l.merchantFee !== null && l.chain !== "monad");
+    // fee's payment, and the link settles only on both. A Monad or Arc link's deposit address
+    // splits the fee itself, so sending it the total by hand pays both.
+    const noManual = l.kind === "TX" || payerLink || (l.merchantFee !== null && !isEvmChain(l.chain));
     rows("manual", noManual);
     if (noManual && method === "manual") selectMethod("qr", false);
 
     text("pay-to", l.payTo ?? "");
     text("pay-to-short", l.payTo ? shortAddress(l.payTo) : "");
     // The memo is what matches a Stellar payment to this link. Elsewhere it is only the
-    // link's internal key (Solana matches by reference, Monad by deposit address).
+    // link's internal key (Solana matches by reference, Monad and Arc by deposit address).
     rows("memo", l.chain !== "stellar");
     text("memo", l.memo);
     text("memo-text", l.memo);
@@ -433,6 +435,7 @@ export function startCheckout(): void {
       }
     }
     offerExtension(l, phase);
+    offerEvmWallets(l, phase, gated);
     renderXc(l, phase, gated);
   }
 
@@ -703,6 +706,75 @@ export function startCheckout(): void {
     }
   }
 
+  /* ---- a browser EVM wallet (Monad and Arc links) ----
+     Every EVM wallet the browser announces (EIP-6963, else the injected one) gets a button, once
+     the payer can pay. A click connects it, has it switch to the link's chain (adding the chain with
+     its public parameters, src/lib/chains.ts, when the wallet does not know it yet: most do not know
+     Arc) and send what the EIP-681 link says, to the address it names. The account and the hash go
+     to the dashboard as this session's proof; the status still follows the chain. The wallets
+     module loads only on an EVM link. */
+  const walletsModule = () => import("@cosmosapp/pay_sdk/wallets");
+  let evmWallets: DiscoveredEvmWallet[] | null = null;
+  let evmLooking = false;
+  function offerEvmWallets(l: PaymentLink, phase: Phase, gated: boolean) {
+    const boxes = all<HTMLElement>('[data-slot="evm-wallets"]');
+    const usable = !preview && phase === "open" && !gated && isEvmChain(l.chain) && l.amount !== null;
+    if (!usable || !evmWallets) {
+      boxes.forEach((b) => { b.hidden = true; });
+      if (usable && !evmLooking) {
+        evmLooking = true;
+        void walletsModule()
+          .then((w) => w.discoverEvmWallets(window))
+          .then((found) => { evmWallets = found; }, () => { evmWallets = []; })
+          .finally(() => { if (link) render(link); });
+      }
+      return;
+    }
+    const wallets = evmWallets;
+    const key = wallets.map((w) => w.id).join(",");
+    boxes.forEach((box) => {
+      if (box.dataset.filled !== key) {
+        box.replaceChildren(...wallets.map((w) => {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "btn btn-outline-w";
+          b.dataset.action = "pay-evm";
+          b.dataset.wallet = w.id;
+          b.textContent = t.payWith.replace("{wallet}", w.name);
+          return b;
+        }));
+        box.dataset.filled = key;
+      }
+      box.hidden = wallets.length === 0;
+    });
+  }
+
+  async function payWithEvm(button: HTMLButtonElement) {
+    const l = link;
+    const wallet = evmWallets?.find((w) => w.id === button.dataset.wallet);
+    if (!l || !wallet || preview || !isEvmChain(l.chain) || phaseOf(l) !== "open") return;
+    button.disabled = true;
+    text("ext-status", t.extOpening);
+    report("walletOpened");
+    try {
+      const { parseEip681 } = await walletsModule();
+      const call = parseEip681(l.uri);
+      const chain = EVM_CHAIN_PARAMS[l.chain][l.network];
+      // parsePaymentLink held the link to this chain's id already; a link for any other is never sent.
+      if (call.chainId !== chain.chainId) throw new Error("The link names another chain.");
+      const from = await wallet.connect();
+      const txHash = await wallet.sendTransaction({ from, ...call }, chain);
+      report("sent", { address: from, txHash });
+      text("ext-status", t.extSent);
+      void load();
+    } catch {
+      report("walletClosed");
+      text("ext-status", t.extFailed);
+    } finally {
+      button.disabled = false;
+    }
+  }
+
   /* ---- the payer of a Stellar link with a merchant fee ---- */
   const payerStatus = (message: string) => text("payer-status", message);
 
@@ -936,7 +1008,7 @@ export function startCheckout(): void {
     toggle('[data-slot="xc-routes"]', !note);
     // The refund address is on the network the payer pays from, so it waits for that network.
     toggle("[data-xc-refund]", !xcNetwork);
-    if (isNetwork(xcNetwork)) text("xc-refund-label", xcText(t.xc.refund, { network: networkName(xcNetwork) }));
+    if (isSwapNetwork(xcNetwork)) text("xc-refund-label", xcText(t.xc.refund, { network: networkName(xcNetwork) }));
     all<HTMLInputElement>('input[name="refundTo"]').forEach((input) => {
       if (input.value !== xcRefund) input.value = xcRefund;
       input.disabled = xcBusy;
@@ -1189,6 +1261,8 @@ export function startCheckout(): void {
       selectMethod(button.dataset.methodTab as Method, false);
     } else if (button.dataset.action === "pay-extension") {
       void payWithExtension(button as HTMLButtonElement);
+    } else if (button.dataset.action === "pay-evm") {
+      void payWithEvm(button as HTMLButtonElement);
     } else if (button.dataset.action === "payer-freighter") {
       void useFreighter(button as HTMLButtonElement);
     } else if (button.dataset.action === "sign-freighter") {
@@ -1233,7 +1307,7 @@ export function startCheckout(): void {
   root.addEventListener("change", (e) => {
     const el = e.target as HTMLElement;
     if (el instanceof HTMLSelectElement && el.matches("[data-xc-network]")) {
-      xcNetwork = isNetwork(el.value) ? el.value : "";
+      xcNetwork = isSwapNetwork(el.value) ? el.value : "";
       const only = xcAssets?.filter((a) => a.chain === xcNetwork && !xcRefused(a)) ?? [];
       xcAssetId = only.length === 1 ? only[0].assetId : "";
     } else if (el instanceof HTMLSelectElement && el.matches("[data-xc-asset]")) {

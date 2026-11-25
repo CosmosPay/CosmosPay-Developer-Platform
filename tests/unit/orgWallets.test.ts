@@ -9,7 +9,7 @@ import { verify as starkVerify, Signature as StarkSignature } from "@scure/stark
 import { addedByAddress, CHALLENGE_TTL_MS, isLiveChallenge, normalizeWalletAddress, walletProofMessage, WALLET_PROVIDERS, type WalletChallenge } from "@/lib/org-wallets";
 import { decodeBase58, recoverEvmSigner, verifyOwnershipProof, verifyWalletProof, type ProofContext } from "@/lib/org-wallets-verify";
 import { ORG_PERMISSIONS } from "@/lib/org-permissions";
-import { NETWORK_IDS, type NetworkId } from "@/lib/chains";
+import { PAYMENT_NETWORK_IDS, type NetworkId } from "@/lib/chains";
 import { connectWalletBodySchema, walletChallengeBodySchema } from "@/schemas/org-wallets";
 
 /* The organization's wallets: the challenge's message, its life, and the signature check on each
@@ -183,10 +183,11 @@ test("a connect request proves a wallet with a provider's signature, or with a s
 test("every network proves its wallets with a signature; only addresses that cannot sign are typed twice", () => {
   assert.deepEqual(WALLET_PROVIDERS.base, ["evm"]);
   assert.deepEqual(WALLET_PROVIDERS.hypercore, ["evm"]);
+  assert.deepEqual(WALLET_PROVIDERS.arc, ["evm"]);
   assert.deepEqual(WALLET_PROVIDERS.fogo, ["phantom", "solflare"]);
   assert.deepEqual(WALLET_PROVIDERS.tron, ["tip191"]);
   assert.deepEqual(WALLET_PROVIDERS.btc, ["bip322", "signmessage"]);
-  for (const chain of NETWORK_IDS) assert.ok(!WALLET_PROVIDERS[chain].includes("address"), `${chain} has a signature`);
+  for (const chain of PAYMENT_NETWORK_IDS) assert.ok(!WALLET_PROVIDERS[chain].includes("address"), `${chain} has a signature`);
   // Addresses that sign: keys, and single keys wrapped in SegWit.
   for (const [chain, address] of [
     ["btc", "1Poj4FaWFGPhMF1ZMfx39k2DhPT7A8tp8P"], ["btc", "36dPsdEHe5Md1htZRbDYsbAAofC1QWC152"], ["btc", "bc1qlg5syy78nd2eq0a70flry29n00ryka9mgdvm4n"],
@@ -211,6 +212,7 @@ test("an EVM signature proves the same key on every EVM network, and on no other
   const signature = `0x${Buffer.from(s.toCompactRawBytes()).toString("hex")}${(27 + s.recovery).toString(16)}`;
   assert.equal(verifyWalletProof("base", address, message, signature), true);
   assert.equal(verifyWalletProof("arb", address, message, signature), true);
+  assert.equal(verifyWalletProof("arc", address, message, signature), true);
   assert.equal(verifyWalletProof("tron", address, message, signature), false);
   assert.equal(normalizeWalletAddress("base", address.toUpperCase().replace("0X", "0x")), address);
   assert.equal(normalizeWalletAddress("tron", "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"), "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t");
@@ -295,6 +297,27 @@ for (const c of CASES) {
     assert.equal(await verifyOwnershipProof({ ...challenge, nonce: "1".repeat(64) }, c.address, c.input, ctx), false, "another nonce");
     assert.equal(await verifyOwnershipProof({ ...challenge, orgId: "org_other" }, c.address, c.input, ctx), c.chain === "ton", "another organization (TON's proof names the nonce only, which the server ties to the organization)");
     assert.equal(await verifyOwnershipProof(challenge, c.address, { ...c.input, provider: "evm" }, ctx), false, "a provider that does not sign there");
+  });
+}
+
+/* The EVM networks sign with personal_sign over the challenge's own message: a key made here signs
+   it, as a browser wallet would, on Monad, Arc and an EVM network of the route alike. */
+for (const chain of ["monad", "arc", "base"] as NetworkId[]) {
+  test(`dispatcher: ${chain} (EVM) proves its address over the challenge, and nothing else`, async () => {
+    const priv = secp256k1.utils.randomPrivateKey();
+    const address = `0x${Buffer.from(keccak_256(secp256k1.getPublicKey(priv, false).slice(1)).slice(-20)).toString("hex")}`;
+    const challenge = challengeOf(chain, address);
+    const text = new TextEncoder().encode(walletProofMessage({ ...challenge, address }));
+    const digest = keccak_256(new Uint8Array([...new TextEncoder().encode(`Ethereum Signed Message:
+${text.length}`), ...text]));
+    const s = secp256k1.sign(digest, priv);
+    const input = { provider: "evm" as const, signature: `0x${Buffer.from(s.toCompactRawBytes()).toString("hex")}${(27 + s.recovery).toString(16)}` };
+    assert.equal(await verifyOwnershipProof(challenge, address, input, ctx), true);
+    assert.match(walletProofMessage({ ...challenge, address }), new RegExp(`Network: ${chain === "arc" ? "Arc" : chain === "monad" ? "Monad" : "Base"}`));
+    assert.equal(await verifyOwnershipProof({ ...challenge, nonce: "1".repeat(64) }, address, input, ctx), false, "another nonce");
+    assert.equal(await verifyOwnershipProof({ ...challenge, orgId: "org_other" }, address, input, ctx), false, "another organization");
+    assert.equal(await verifyOwnershipProof(challenge, "0x0000000000000000000000000000000000000001", input, ctx), false, "another address");
+    assert.equal(await verifyOwnershipProof(challenge, address, { ...input, provider: "phantom" }, ctx), false, "a provider that does not sign there");
   });
 }
 

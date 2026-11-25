@@ -24,7 +24,7 @@ import { BulkActions, SelectCell, SelectHead, useBulkDelete, useSelection } from
 import { CheckoutDesignPicker } from "@/components/cosmos/dashboard/components/CheckoutDesignPicker";
 import { RouteFeeWalletSelect, WalletSelect } from "@/components/cosmos/dashboard/components/OrgWallets";
 import { PayLinkRowActions, PaymentAmount, STATUS_PILL, amountLabel, chainOf, networkLabel } from "@/components/cosmos/dashboard/components/PayLinkDetail";
-import { NATIVE_CODES, NETWORK_IDS, NETWORKS_BY_NAME, TEST_NETWORKS, TOKEN_PRESETS, ADDRESS_PLACEHOLDERS, isAddress, isChain, isDepositNetwork, networkName, sameNetworkAddress } from "@/lib/chains";
+import { NATIVE_CODES, PAYMENT_NETWORK_IDS, NETWORKS_BY_NAME, TEST_NETWORKS, TOKEN_PRESETS, ADDRESS_PLACEHOLDERS, isAddress, isChain, isDepositNetwork, isEvmChain, networkName, offersNativeCoin, sameNetworkAddress } from "@/lib/chains";
 import { parseDepositAssets, type DepositAsset } from "@/lib/payments/deposits";
 import { standardAssets } from "@/lib/stellar-assets";
 import { DEPOSIT_LIMIT_PER_PAYER, DEPOSIT_LIMIT_PER_WINDOW, DEPOSIT_LIMIT_WINDOW_MINUTES, routeFeeAccount, takesDeposits } from "@/lib/deposit-limits";
@@ -33,7 +33,7 @@ import { DATE_RANGES, countBy, inRange, matchesQuery, rangeStart } from "@/lib/d
 const STATUSES = ["PENDING", "SUBMITTED", "SUCCEEDED", "FAILED", "CANCELLED", "EXPIRED"];
 const KINDS = ["PAY", "TX"];
 const DEFAULTS = { q: "", status: "all", chain: "all", kind: "all", date: "any" };
-const ALLOWED = { status: ["all", ...STATUSES], chain: ["all", ...NETWORK_IDS], kind: ["all", ...KINDS], date: DATE_RANGES };
+const ALLOWED = { status: ["all", ...STATUSES], chain: ["all", ...PAYMENT_NETWORK_IDS], kind: ["all", ...KINDS], date: DATE_RANGES };
 
 export function PaymentsView({ canManage = true, canConnectWallets = false, orgId, env = "dev" }) {
   const t = useT();
@@ -188,8 +188,8 @@ export function PaymentsView({ canManage = true, canConnectWallets = false, orgI
 }
 
 /* ---------------- create modal ---------------- */
-/* A payment link on any network the Payments API reaches. Stellar, Solana and Monad take the
-   environment's network (Solana devnet and Monad testnet in the sandbox) and their own wallet
+/* A payment link on any network the Payments API reaches. Stellar, Solana, Monad and Arc take the
+   environment's network (Solana devnet, Monad testnet and Arc Testnet in the sandbox) and their own wallet
    links; every other network is paid through a deposit address made for each payment, on mainnet
    only, for an amount in one of the tokens listed there. Composed as the payer will meet it: the
    network (by name, none first for being ours), the amount with its asset in one field (as a swap
@@ -233,7 +233,7 @@ function CreatePayLinkModal({ pl, orgId, env, canConnectWallets, initial = null,
 
   const stellar = chain === "stellar";
   const isTx = stellar && kind === "tx";
-  // Every network but Stellar, Solana and Monad: paid through a deposit address, mainnet only.
+  // Every network but Stellar, Solana, Monad and Arc: paid through a deposit address.
   const deposit = isDepositNetwork(chain);
   // The tokens listed on the other networks, from the Payments API (never sampled), read once.
   const [listed, setListed] = useState<DepositAsset[] | null | undefined>(undefined);
@@ -260,15 +260,18 @@ function CreatePayLinkModal({ pl, orgId, env, canConnectWallets, initial = null,
           symbol: a.symbol,
         }));
     }
+    // Arc's coin is USDC, already its first preset: it is not offered twice.
     return [
-      { key: "native", code: "", issuer: "", label: NATIVE_CODES[chain], hint: undefined, symbol: NATIVE_CODES[chain] },
+      ...(offersNativeCoin(chain) ? [{ key: "native", code: "", issuer: "", label: NATIVE_CODES[chain], hint: undefined, symbol: NATIVE_CODES[chain] }] : []),
       ...TOKEN_PRESETS[chain][tier].map((p) => ({ key: `preset:${p.issuer}`, code: p.code, issuer: p.issuer, label: p.code, hint: `${p.issuer.slice(0, 4)}…${p.issuer.slice(-4)}`, symbol: p.code })),
     ];
   }, [chain, tier, stellar, deposit, listed]);
-  // On another network the first listed token is the choice until the person picks one.
+  // On another network, or on Arc (no coin of its own to offer), the first listed token is the
+  // choice until the person picks one.
+  const firstListed = deposit || !offersNativeCoin(chain);
   useEffect(() => {
-    if (deposit && assets.length && !assets.some((a) => a.key === assetKey)) setAssetKey(assets[0].key);
-  }, [deposit, assets, assetKey]);
+    if (firstListed && assets.length && assetKey !== "custom" && !assets.some((a) => a.key === assetKey)) setAssetKey(assets[0].key);
+  }, [firstListed, assets, assetKey]);
   // The asset named by `initial`, once: the chain's coin, a listed asset by its code, else custom.
   const placed = useRef(false);
   useEffect(() => {
@@ -290,7 +293,7 @@ function CreatePayLinkModal({ pl, orgId, env, canConnectWallets, initial = null,
     if (c === chain) return;
     setChain(c); setKind("pay"); setDestination(""); setSource(""); setAssetKey("native"); setCustomCode(""); setCustomIssuer("");
     setFeePct(""); setFeeFixed(""); setFeeWallet("");
-    if (c === "monad") setMsg("");
+    if (isEvmChain(c)) setMsg("");
   };
   // The sandbox has no other networks: payments there run on mainnet only.
   const unavailable = deposit && tier !== "public";
@@ -302,8 +305,8 @@ function CreatePayLinkModal({ pl, orgId, env, canConnectWallets, initial = null,
     ? /^[A-Za-z0-9]{1,12}$/.test(customCode.trim()) && (customCode.trim().toLowerCase() === "xlm" || isAddress("stellar", customIssuer))
     : /^[A-Za-z0-9]{1,12}$/.test(customCode.trim()) && isAddress(chain, customIssuer));
   // An open amount is the payer's to type: on Stellar and Solana in their wallet, on the networks
-  // paid through a deposit address on the payment page. Monad recognises a payment by its amount.
-  const amountNeeded = isTx || chain === "monad";
+  // paid through a deposit address on the payment page. Monad and Arc recognise a payment by its amount.
+  const amountNeeded = isTx || isEvmChain(chain);
   const amountOk = !amount.trim() || /^\d+(\.\d+)?$/.test(amount.trim());
   const memoOk = !memo.trim() || /^\d{1,20}$/.test(memo.trim());
   const mf = m.merchantFee;
@@ -339,7 +342,7 @@ function CreatePayLinkModal({ pl, orgId, env, canConnectWallets, initial = null,
       ...(assetCode ? { assetCode } : {}),
       ...(assetCode && assetIssuer ? { assetIssuer } : {}),
       ...(memo.trim() ? { memo: memo.trim() } : {}),
-      ...(chain !== "monad" && msg.trim() ? { msg: msg.trim() } : {}),
+      ...(!isEvmChain(chain) && msg.trim() ? { msg: msg.trim() } : {}),
       checkoutTheme,
       ...(feeOn
         ? {
@@ -423,7 +426,7 @@ function CreatePayLinkModal({ pl, orgId, env, canConnectWallets, initial = null,
           <div className="sp pl-amount">
             <div className="sp-top"><label htmlFor="paylink-amount">{m.amount}</label></div>
             <div className="sp-row">
-              <input id="paylink-amount" className="sp-amount" inputMode="decimal" autoComplete="off" placeholder="0" value={amount} onChange={(e) => setAmount(e.target.value.replace(",", "."))} aria-describedby={isTx && chain !== "monad" ? undefined : "paylink-amount-h"} aria-invalid={amountOk ? undefined : true} />
+              <input id="paylink-amount" className="sp-amount" inputMode="decimal" autoComplete="off" placeholder="0" value={amount} onChange={(e) => setAmount(e.target.value.replace(",", "."))} aria-describedby={isTx && !isEvmChain(chain) ? undefined : "paylink-amount-h"} aria-invalid={amountOk ? undefined : true} />
               <Select
                 className="asset-dd" label={m.asset} value={assetKey} onChange={setAssetKey}
                 disabled={deposit && !assets.length}
@@ -435,7 +438,7 @@ function CreatePayLinkModal({ pl, orgId, env, canConnectWallets, initial = null,
               />
             </div>
           </div>
-          {(chain === "monad" || deposit || !isTx) && <p className="field-help" id="paylink-amount-h">{chain === "monad" ? m.amountMonad : deposit ? m.amountDeposit : m.amountHint}</p>}
+          {(isEvmChain(chain) || deposit || !isTx) && <p className="field-help" id="paylink-amount-h">{isEvmChain(chain) ? fmt(m.amountRequired, { network: networkName(chain) }) : deposit ? m.amountDeposit : m.amountHint}</p>}
           {deposit && !unavailable && Array.isArray(listed) && !assets.length && <p className="field-err" role="alert">{m.assetsError}</p>}
         </div>
         {custom && (
@@ -451,7 +454,7 @@ function CreatePayLinkModal({ pl, orgId, env, canConnectWallets, initial = null,
         <WalletSelect id="paylink-dest" orgId={orgId} chain={chain} value={destination} onChange={setDestination} canConnect={canConnectWallets} label={m.destination} />
         {isTx && <Field label={m.source} value={source} onChange={(e) => setSource(e.target.value)} placeholder="G…" aria-invalid={invalid(sourceOk, source)} autoComplete="off" spellCheck={false} />}
         <Field label={m.memo} hint={stellar ? m.memoHint : m.memoHintOther} value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="123456789" inputMode="numeric" aria-invalid={memoOk ? undefined : true} />
-        {chain !== "monad" && <Field label={m.message} hint={deposit ? m.messageHintCheckout : m.messageHint} value={msg} onChange={(e) => setMsg(e.target.value)} placeholder={t.dash.examples.order} />}
+        {!isEvmChain(chain) && <Field label={m.message} hint={deposit ? m.messageHintCheckout : m.messageHint} value={msg} onChange={(e) => setMsg(e.target.value)} placeholder={t.dash.examples.order} />}
         {/* A link that takes payments from other networks: how many deposit addresses one payer may
             hold open and how many new ones it takes per window, raised from the defaults. */}
         {canDeposit && (

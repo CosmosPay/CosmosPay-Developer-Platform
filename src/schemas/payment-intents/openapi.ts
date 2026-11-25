@@ -30,10 +30,13 @@ import {
   takeQuery,
 } from '@/schemas/shared/openapi-params';
 import { CHECKOUT_THEMES } from '@/lib/payments/checkout-themes';
-import { NETWORK_IDS, type NetworkId } from '@/lib/chains';
+import { NETWORK_IDS, PAYMENT_NETWORK_IDS, type NetworkId, type SwapNetworkId } from '@/lib/chains';
 import { DEPOSIT_STATUSES } from '@/lib/payments/deposits';
 
-const NETWORKS = NETWORK_IDS as [NetworkId, ...NetworkId[]];
+// Where a payment settles (Arc included), and the swap platform's networks a payment from
+// another network travels between (Arc is not one).
+const NETWORKS = PAYMENT_NETWORK_IDS as [NetworkId, ...NetworkId[]];
+const SWAP_NETWORKS = NETWORK_IDS as [SwapNetworkId, ...SwapNetworkId[]];
 
 const TAG = 'Payment Intents';
 
@@ -47,12 +50,12 @@ export const paymentIntentSchema = z
     chain: z.enum(NETWORKS).openapi({
       example: 'stellar',
       description:
-        'Where the payment settles: any network the Payments API reaches. Stellar, Solana and Monad have their own wallet links; every other network is paid through a deposit address made for each payment, on mainnet only.',
+        'Where the payment settles: any network the Payments API reaches. Stellar, Solana, Monad and Arc have their own wallet links; every other network is paid through a deposit address made for each payment.',
     }),
     status: z
       .enum(['PENDING', 'SUBMITTED', 'SUCCEEDED', 'FAILED', 'CANCELLED', 'EXPIRED'])
       .openapi({ example: 'PENDING' }),
-    network: z.string().openapi({ example: 'testnet', description: 'The tier on every chain: public (mainnet) or testnet (Solana devnet, Monad testnet).' }),
+    network: z.string().openapi({ example: 'testnet', description: 'The tier on every chain: public (mainnet) or testnet (Solana devnet, Monad testnet, Arc Testnet).' }),
     source: z.string().nullable().openapi({ example: null }),
     destination: z
       .string()
@@ -96,7 +99,7 @@ export const paymentIntentSchema = z
     paidFrom: z
       .object({
         depositId: z.string().openapi({ example: 'cmh4x2k9a0002l70g8v5q3z2x' }),
-        chain: z.enum(NETWORKS).openapi({ example: 'tron' }),
+        chain: z.enum(SWAP_NETWORKS).openapi({ example: 'tron' }),
         asset: z.string().openapi({ example: 'USDT' }),
         contract: z.string().nullable().openapi({ example: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t' }),
         amount: z.string().openapi({ example: '25.31' }),
@@ -144,12 +147,12 @@ const paymentDepositSchema = z
     id: z.string().openapi({ example: 'cmh4x2k9a0002l70g8v5q3z2x' }),
     paymentLinkId: z.string().openapi({ example: 'cmh4x2k9a0001l70g8v5q3z2w' }),
     status: z.enum(DEPOSIT_STATUSES as [string, ...string[]]).openapi({ example: 'AWAITING_DEPOSIT' }),
-    originChain: z.enum(NETWORKS).openapi({ example: 'tron' }),
+    originChain: z.enum(SWAP_NETWORKS).openapi({ example: 'tron' }),
     originAsset: z.string().openapi({ example: 'USDT' }),
     originContract: z.string().nullable().openapi({ example: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t' }),
     amountIn: z.string().openapi({ example: '25.31', description: 'What the payer sends; any surplus is refunded to `refundTo`.' }),
     minAmountIn: z.string().openapi({ example: '25.06' }),
-    destinationChain: z.enum(NETWORKS).openapi({ example: 'base' }),
+    destinationChain: z.enum(SWAP_NETWORKS).openapi({ example: 'base' }),
     destinationAsset: z.string().openapi({ example: 'USDC' }),
     destinationContract: z.string().nullable().openapi({ example: '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913' }),
     amountOut: z.string().openapi({ example: '25', description: 'What the merchant receives: the intent amount.' }),
@@ -194,7 +197,7 @@ const paymentRouteCheckListSchema = z
   .object({
     data: z.array(
       z.object({
-        chain: z.enum(NETWORKS).openapi({ example: 'tron' }),
+        chain: z.enum(SWAP_NETWORKS).openapi({ example: 'tron' }),
         asset: z.string().openapi({ example: 'USDT' }),
         available: z.boolean().openapi({ example: false, description: 'True when the route quoted the amount.' }),
         reason: z.string().nullable().openapi({
@@ -282,7 +285,7 @@ registerRoutes([
     tags: [TAG],
     summary: 'Create a payment intent',
     description:
-      'Creates a payment link on any network (`pay`; on every network but Stellar, Solana and Monad, mainnet only, with or without an amount) or a Stellar `tx` intent (unsigned XDR). Requires the `payments:create` permission in the organization the body names, and `destination` must be one of the wallets of that organization (`/api/organizations/{id}/wallets`; 400 otherwise). A merchant fee goes to one of its wallets too: on a network paid through a deposit address, one of its NEAR wallets or EVM addresses, where the cross-chain route credits it.',
+      'Creates a payment link on any network (`pay`; on every network but Stellar, Solana, Monad and Arc through a deposit address, with or without an amount) or a Stellar `tx` intent (unsigned XDR). Requires the `payments:create` permission in the organization the body names, and `destination` must be one of the wallets of that organization (`/api/organizations/{id}/wallets`; 400 otherwise). A merchant fee goes to one of its wallets too: on a network paid through a deposit address, one of its NEAR wallets or EVM addresses, where the cross-chain route credits it.',
     security: sessionSecurity,
     request: {
       query: z.object({ env: envQuery }),

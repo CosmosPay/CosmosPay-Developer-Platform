@@ -9,7 +9,7 @@
    tests/unit/seoMarkdown.test.ts covers it. */
 import { messages } from "@/lib/i18n/messages/index";
 import { PLAN_IDS, PLAN_SPECS, PROTECTED_PAYMENT_FEE_PCT, PRIVATE_PAYMENT_FEE_PCT, pricingCopyVars, swapFeePct, type PlanId } from "@/lib/plans";
-import { NETWORK_IDS } from "@/lib/chains";
+import { withNetworkCounts } from "@/lib/chains";
 import { docsLink, docsRoot, loginUrl } from "@/lib/urls";
 import { CONTACT_ADDRESS } from "@/lib/payments/contact";
 import { GITHUB_ORG, SDK_NPM, SDK_PACKAGE, chromeStoreListing } from "@/lib/seo/schema";
@@ -54,7 +54,7 @@ import {
   STAT_VALUES,
   STAT_VARS,
   STORY_KEYS,
-  SWAP_NETWORKS,
+  NETWORK_VARS,
   WALLET_LINKS,
   WALLET_MORE,
   WALLET_VERSION,
@@ -99,7 +99,7 @@ function home({ c, input, docs, login, at, lang }: Ctx): Block[] {
   const r = l.resources;
   const m = l.marketplace;
   const cta = l.cta;
-  const nets = { n: SWAP_NETWORKS };
+  const nets = NETWORK_VARS;
   const self = pageUrl(input.site, "/", lang);
   const pathHref = (i: number): string => {
     const target = PATH_TARGETS[i];
@@ -279,7 +279,7 @@ function about({ c, input, at }: Ctx): Block[] {
     p(t.lede),
     p(t.disambiguation),
     ul([
-      term(t.facts.networks, t.facts.networksValue.replace(/\{n\}/g, String(NETWORK_IDS.length))),
+      term(t.facts.networks, withNetworkCounts(t.facts.networksValue)),
       term(t.facts.based, t.facts.basedValue),
       term(t.facts.code, link(GITHUB_ORG.replace(/^https:\/\//, ""), GITHUB_ORG)),
       term(t.facts.sdk, link(SDK_PACKAGE, SDK_NPM)),
@@ -290,7 +290,7 @@ function about({ c, input, at }: Ctx): Block[] {
     ul(links.networks.map((href, i) => link(c.footer.groups.networks.links[i], at(href)))),
     ...links.products.flatMap((product) => {
       const item = t.products.items[product.key];
-      return [h(3, item.t), p(item.d.replace(/\{n\}/g, String(NETWORK_IDS.length))), p(link(item.a, at(product.href)))];
+      return [h(3, item.t), p(withNetworkCounts(item.d)), p(link(item.a, at(product.href)))];
     }),
     h(2, t.code.title),
     p(t.code.lede),

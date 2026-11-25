@@ -20,6 +20,7 @@ import { explicitLang, pageUrl } from "@/lib/seo/lang-urls";
 import { ORGANIZATION_NODE } from "@/lib/seo/org";
 import { modifiedAt } from "@/lib/seo/page-dates-build";
 import { pageShareImage } from "@/lib/seo/og-image-urls";
+import { NETWORK_COUNTS } from "@/lib/chains";
 import { PAYMENTS_AREA_SERVED, jsonLdText, plansProductNode, serviceNode, webPageNodes, webSiteNode, type Crumb, type JsonLdNode } from "@/lib/seo/schema";
 
 interface Props {
@@ -56,6 +57,7 @@ const KEY = {
   stellar: "stellar",
   solana: "solana",
   monad: "monad",
+  arc: "arc",
 } as const satisfies Record<SectionPage | NetworkPage, keyof typeof t.pages>;
 const questions = faq ?? (page === "faq" ? d.faq : undefined);
 // The page's share card (the one og:image names), as its primaryImageOfPage.
@@ -79,7 +81,8 @@ const graph: JsonLdNode[] = [
     name: "Cosmos Pay Payments",
     site: SITE,
     langs: codes,
-    description: "Payment links, a hosted checkout and a payments API to accept stablecoins on Stellar, Solana, Monad and every network its swaps reach.",
+    // Every network Cosmos Pay works with, by its count (product owner, 2026-11-03: never three first).
+    description: `Payment links, a hosted checkout and a payments API to accept stablecoins on ${NETWORK_COUNTS.n} networks.`,
   }),
   ...webPageNodes({
     url,

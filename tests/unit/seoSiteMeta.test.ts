@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { PAGE_LANGS, SITE_LANGS, SITE_PAGE_PATHS, TOS_LAST_UPDATED, crumbName, siteLang, siteMeta } from '@/lib/seo/site-meta';
-import { NETWORK_IDS } from '@/lib/chains';
+import { NETWORK_COUNTS } from '@/lib/chains';
 
 const EM_DASH = /—/;
 /** Display width as a result snippet measures it: a CJK character takes two Latin ones' room. */
@@ -25,7 +25,7 @@ test('the home, /pricing, /about and /brand have their own title and description
 test("the home's description counts the networks, filled, in every site language", () => {
   for (const lang of SITE_LANGS) {
     const { description } = siteMeta('home', lang);
-    assert.ok(description.includes(String(NETWORK_IDS.length)), `home/${lang} names the count: ${description}`);
+    assert.ok(description.includes(String(NETWORK_COUNTS.n)), `home/${lang} names the count: ${description}`);
     assert.ok(!description.includes('{n}'), `home/${lang} leaves no placeholder`);
   }
 });

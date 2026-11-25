@@ -4,7 +4,7 @@
    each wallet shows the text and the person approves it there. One way per wallet:
    - Freighter (Stellar): SEP-53 signMessage, base64 back.
    - Phantom and Solflare (Solana): their injected provider's signMessage over UTF-8, base64 back.
-   - An EVM wallet (Monad): the injected EIP-1193 provider's personal_sign, 0x-hex back.
+   - An EVM wallet (Monad, Arc and every EVM network): the injected EIP-1193 provider's personal_sign, 0x-hex back.
    `detectWallets` says which are installed; nothing is loaded or asked before a click. */
 import type { WalletProvider } from "@/lib/org-wallets";
 

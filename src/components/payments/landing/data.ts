@@ -32,7 +32,7 @@ export function landingData(lang: Locale, layout: LandingLayout = "single") {
       : { integrations: "#integrations", swaps: "/swaps", useCases: "#pl-uses", security: "#pl-security", fees: "#pricing", faq: "#pl-faq" },
   );
   // Pages of their own in both layouts: the fee comparison, one page per network and the guides.
-  const pageLinks = localized({ compare: "/compare", stellar: "/stellar", solana: "/solana", monad: "/monad", learn: "/learn" });
+  const pageLinks = localized({ compare: "/compare", stellar: "/stellar", solana: "/solana", monad: "/monad", arc: "/arc", learn: "/learn" });
 
   const CREATE_LINK = loginTo("/dashboard?view=payments");
   const CONTACT = `mailto:${CONTACT_ADDRESS}`;

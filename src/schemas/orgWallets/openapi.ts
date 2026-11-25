@@ -10,7 +10,7 @@ import { errors, jsonCreated, jsonOk, registerRoutes, sessionSecurity } from "@/
 import { z } from "@/lib/openapi/zod";
 import { connectWalletBodySchema, renameWalletBodySchema, walletChallengeBodySchema } from "@/schemas/org-wallets";
 import { jsonBody, pathParam } from "@/schemas/shared/openapi-params";
-import { NETWORK_IDS, type NetworkId } from "@/lib/chains";
+import { PAYMENT_NETWORK_IDS, type NetworkId } from "@/lib/chains";
 import { WALLET_PROVIDER_IDS } from "@/lib/org-wallets";
 
 const TAG = "Organizations";
@@ -20,7 +20,7 @@ const walletParams = orgIdParam.extend(pathParam("walletId", "clx9z8a1b0000wllt1
 const walletSchema = z
   .object({
     id: z.string().openapi({ example: "clx9z8a1b0000wllt1234abcd" }),
-    chain: z.enum(NETWORK_IDS as [NetworkId, ...NetworkId[]]).openapi({ example: "stellar", description: "Any network a payment link settles on." }),
+    chain: z.enum(PAYMENT_NETWORK_IDS as [NetworkId, ...NetworkId[]]).openapi({ example: "stellar", description: "Any network a payment link settles on." }),
     address: z.string().openapi({ example: "GCKFBEIYV2U22IO2BJ4KVJOIP7XPWQGQFKKWXR6DOSJBV7STMAQSMTGG", description: "As the network writes it; hex addresses (EVM and the like) lower-cased." }),
     label: z.string().nullable().openapi({ example: "Treasury" }),
     provider: z.enum(WALLET_PROVIDER_IDS).nullable().openapi({ example: "freighter", description: "What proved the address: the wallet that signed (`freighter`, `phantom`, `solflare`, `evm`) or the signature's standard (`tip191`, `tonproof`, `nep413`, `sui`, `aip62`, `snip12`, `cip30`, `xrpl`, `bip322`, `signmessage`); `address` when it was added by its address, with no signature (an address that cannot sign a message); null for a signed Stellar XDR." }),
@@ -35,7 +35,7 @@ const challengeBody = walletChallengeBodySchema.openapi("OrganizationWalletChall
 
 const challengeSchema = z
   .object({
-    chain: z.enum(NETWORK_IDS as [NetworkId, ...NetworkId[]]).openapi({ example: "tron" }),
+    chain: z.enum(PAYMENT_NETWORK_IDS as [NetworkId, ...NetworkId[]]).openapi({ example: "tron" }),
     address: z.string().nullable().openapi({ example: "TCLBgkbfVkJroVBJVqBEsxtPNQEQMTQCLQ", description: "As stored and compared (hex lower-cased); null on TON." }),
     nonce: z.string().openapi({ example: "0f1e2d3c4b5a69788796a5b4c3d2e1f00112233445566778899aabbccddeeff0", description: "32 random bytes, hex. Send it back as `nonce` when connecting." }),
     issuedAt: z.string().openapi({ example: "2026-11-16T12:00:00.000Z" }),
@@ -51,7 +51,7 @@ const connectBody = connectWalletBodySchema.openapi("ConnectOrganizationWalletBo
   description: [
     "`nonce` names the challenge (POST .../wallets/challenge) and `provider` how it was signed; the proof is `signature` or `proof`.",
     "Stellar: SEP-53 base64 (`freighter`), or `signedXdr` instead (no `provider`): the proof transaction carrying the message (a manageData entry, sequence 1, never valid, public network passphrase), signed by the address in any wallet.",
-    "Solana and Fogo: Ed25519 base64 over the message (`phantom`, `solflare`). Monad and every other EVM network: personal_sign 0x-hex (`evm`).",
+    "Solana and Fogo: Ed25519 base64 over the message (`phantom`, `solflare`). Monad, Arc and every other EVM network: personal_sign 0x-hex (`evm`).",
     "Tron: TIP-191 signMessageV2 0x-hex (`tip191`). Sui: the serialized personal-message signature, base64 (`sui`).",
     "Bitcoin: BIP-322 simple, the base64 witness (`bip322`), or a BIP-137 compact signature (`signmessage`). Litecoin, Dogecoin, Dash, Zcash (transparent) and Bitcoin Cash: the wallet's signmessage, base64 (`signmessage`).",
     "TON (`tonproof`): `proof` is TON Connect's answer, `{ publicKey, walletStateInit, proof: { timestamp, domain, payload, signature } }`, its payload the nonce and its domain `domain`.",

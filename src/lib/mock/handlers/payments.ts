@@ -5,7 +5,7 @@
    and deletes last until the dev server restarts. Shapes follow src/lib/cosmos.ts and the
    Payments API's spec (docs/openapi.json). */
 import { Account, Asset, BASE_FEE, Memo, Networks, Operation, TransactionBuilder } from "@stellar/stellar-sdk";
-import { CHAINS, NATIVE_CODES, NETWORK_NATIVE_CODES, isAddress, isChain, isNetwork, type Chain, type NetworkId } from "@/lib/chains";
+import { CHAINS, EVM_CHAIN_IDS, NATIVE_CODES, NETWORK_NATIVE_CODES, TOKEN_PRESETS, isAddress, isChain, isEvmChain, isNetwork, networkName, offersNativeCoin, type Chain, type NetworkId } from "@/lib/chains";
 import { CHECKOUT_THEMES, isCheckoutTheme, type CheckoutTheme } from "@/lib/payments/checkout-themes";
 import type { Customer, CustomerWallet, DepositLimits, MerchantFee, PaymentIntent, PaymentPayerEmail, PaymentRouteCheck, Product, WebhookEndpoint } from "@/lib/cosmos";
 import { DEPOSIT_LIMIT_PER_PAYER, DEPOSIT_LIMIT_PER_WINDOW, DEPOSIT_LIMIT_WINDOW_MINUTES, isRouteFeeAccount, routeFeeAccount, takesDeposits } from "@/lib/deposit-limits";
@@ -104,11 +104,15 @@ const DAY = 24 * HOUR;
 /* The hosted checkout's origin: the local payments host the mock script sets, so a link's
    checkout opens on this server (src/lib/mock/gateway.ts answers its reads). */
 const PAYMENTS_ORIGIN = (process.env.PUBLIC_PAYMENTS_URL || "https://payments.cosmospay.lat").replace(/\/+$/, "");
-const MONAD_CHAIN_ID: Record<MockEnv, number> = { dev: 10143, prod: 143 };
 const TOKEN_MINT: Record<Exclude<Chain, "stellar">, Record<MockEnv, string | null>> = {
   solana: { dev: "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU", prod: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v" },
   monad: { dev: null, prod: "0x754704bc059f8c67012fed69bc8a327a5aafb603" },
+  // Arc's USDC: the ERC-20 interface to its gas coin, one address on both networks.
+  arc: { dev: TOKEN_PRESETS.arc.testnet[0].issuer, prod: TOKEN_PRESETS.arc.public[0].issuer },
 };
+/* A token named by its ticker alone: the chain's preset with that ticker (src/lib/chains.ts). */
+const presetIssuer = (chain: Exclude<Chain, "stellar">, env: MockEnv, code: string) =>
+  TOKEN_PRESETS[chain][env === "prod" ? "public" : "testnet"].find((p) => p.code === code)?.issuer ?? null;
 const TOKEN_DECIMALS: Record<string, number> = { USDC: 6, SOL: 9, MON: 18 };
 /** What one unit is worth in USD (testnet assets at their mainnet counterpart's price). */
 const PRICE_USD: Record<string, number> = { USDC: 1, EURC: 1.08, XLM: 0.27, SOL: 162, MON: 0.05 };
@@ -203,20 +207,22 @@ function buildUri(env: MockEnv, i: MockIntent): string {
     return `solana:${i.destination}${qs ? `?${qs}` : ""}`;
   }
   const deposit = i.chainReference ?? i.destination;
-  const chainId = MONAD_CHAIN_ID[env];
+  const chainId = EVM_CHAIN_IDS[i.chain === "arc" ? "arc" : "monad"][networkOf(env)];
+  // The deposit address takes the amount plus a merchant fee the payer pays, as the server links it.
+  const sent = i.amount && i.merchantFee?.paidBy === "payer" ? decimal(Number(i.amount) + Number(i.merchantFee.amount), 6) : i.amount;
   if (i.assetIssuer) {
-    const units = i.amount ? `&uint256=${toBaseUnits(i.amount, TOKEN_DECIMALS.USDC)}` : "";
+    const units = sent ? `&uint256=${toBaseUnits(sent, TOKEN_DECIMALS.USDC)}` : "";
     return `ethereum:${i.assetIssuer}@${chainId}/transfer?address=${deposit}${units}`;
   }
   return `ethereum:${deposit}@${chainId}${i.amount ? `?value=${toBaseUnits(i.amount, TOKEN_DECIMALS.MON)}` : ""}`;
 }
 
 function chainHash(chain: Chain, label: string): string {
-  return chain === "solana" ? solanaSignature(label) : chain === "monad" ? evmTxHash(label) : txHash(label);
+  return chain === "solana" ? solanaSignature(label) : isEvmChain(chain) ? evmTxHash(label) : txHash(label);
 }
 
 function payerAddress(chain: Chain, label: string): string {
-  return chain === "solana" ? solanaAddress(label) : chain === "monad" ? evmAddress(label) : stellarAccount(label);
+  return chain === "solana" ? solanaAddress(label) : isEvmChain(chain) ? evmAddress(label) : stellarAccount(label);
 }
 
 function walletsOf(customer: Customer): CustomerWallet[] {
@@ -299,7 +305,9 @@ function seedIntents(env: MockEnv, customers: Customer[]): StoredIntent[] {
     const ageHours = 60 * 24 * Math.pow(i / total, 1.7) + r.next() * 3 + 0.05;
     const createdAt = hoursAgo(ageHours);
     const x = r.next();
-    const chain: Chain = x < 0.6 ? "stellar" : x < 0.85 ? "solana" : "monad";
+    // A few links on Arc too, among them an open one and a paid one among the newest, so both tiers
+    // show Arc in the lists, a payment's view and the local checkout.
+    const chain: Chain = i === 2 || i === 3 || i % 13 === 7 ? "arc" : x < 0.6 ? "stellar" : x < 0.85 ? "solana" : "monad";
     // The newest few cover every open state, so the views always have one of each to show.
     const status = i < RECENT_STATUSES.length ? RECENT_STATUSES[i] : intentStatus(r, ageHours);
     const id = cuid(`intent:${env}:${i}`);
@@ -313,6 +321,9 @@ function seedIntents(env: MockEnv, customers: Customer[]): StoredIntent[] {
     if (chain === "stellar") {
       if (a < 0.6) [asset, assetIssuer] = ["USDC", USDC_ISSUER[env]];
       else if (a < 0.75) [asset, assetIssuer] = ["EURC", EURC_ISSUER[env]];
+    } else if (chain === "arc") {
+      // Arc charges USDC or EURC through their contracts; its coin (USDC) is never a separate asset.
+      [asset, assetIssuer] = a < 0.7 ? ["USDC", presetIssuer("arc", env, "USDC")] : ["EURC", presetIssuer("arc", env, "EURC")];
     } else {
       const mint = TOKEN_MINT[chain][env];
       if (mint && a < 0.62) [asset, assetIssuer] = ["USDC", mint];
@@ -338,11 +349,15 @@ function seedIntents(env: MockEnv, customers: Customer[]): StoredIntent[] {
       source = holders.length && r.chance(0.75) ? r.pick(holders).address : payerAddress(chain, `payer:${env}:${i}`);
     }
     const memo = chain === "stellar" ? String(r.int(100_000, 990_000_000)) : "";
-    const msg = chain !== "monad" && r.chance(0.4) ? r.pick(msgs) : null;
+    const msg = !isEvmChain(chain) && r.chance(0.4) ? r.pick(msgs) : null;
     const callback = kind === "TX" && r.chance(0.5) ? "url:https://andes.example.com/cosmos/callback" : null;
 
     let merchantFee: MerchantFee | null = null;
-    if (chain === "stellar" && amount && r.chance(0.18)) {
+    // The open Arc link carries a merchant fee to the organization's second Arc wallet, which the
+    // deposit address splits, as on Monad.
+    if (chain === "arc" && i === 2 && amount && wallets[1]) {
+      merchantFee = { bps: 150, fixed: "0", amount: decimal((Number(amount) * 150) / 10_000, 6), asset: label, wallet: wallets[1].address, paidBy: "payer" };
+    } else if (chain === "stellar" && amount && r.chance(0.18)) {
       const bps = r.pick([100, 150, 250]);
       const fixed = label === "XLM" ? "1" : "0.25";
       merchantFee = {
@@ -382,8 +397,8 @@ function seedIntents(env: MockEnv, customers: Customer[]): StoredIntent[] {
       reference: r.chance(0.3) ? `order_${r.int(1000, 9999)}` : null,
       checkoutTheme: r.pick(CHECKOUT_THEMES),
       merchantFee,
-      chainReference: chain === "solana" ? solanaAddress(`ref:${id}`) : chain === "monad" ? evmAddress(`deposit:${id}`) : null,
-      networkFee: chain === "monad" ? (asset === "native" ? "0.01" : "0.02") : null,
+      chainReference: chain === "solana" ? solanaAddress(`ref:${id}`) : isEvmChain(chain) ? evmAddress(`deposit:${id}`) : null,
+      networkFee: chain === "arc" ? "0.01" : chain === "monad" ? (asset === "native" ? "0.01" : "0.02") : null,
       expiresAt: new Date(ms(createdAt) + DAY).toISOString(),
       checkoutSeenAt: seen,
       checkoutWalletAt: walletAt,
@@ -617,8 +632,8 @@ const state = (env: MockEnv): PaymentsState => mockEnvStore("payments", env, see
 
 /** A customer with the stats the API derives from the payments its wallets made. */
 function withStats(env: MockEnv, c: Customer): Customer {
-  const addresses = new Set(walletsOf(c).map((w) => (w.chain === "monad" ? w.address.toLowerCase() : w.address)));
-  const mine = state(env).intents.filter(({ intent }) => intent.source && addresses.has(intent.chain === "monad" ? intent.source.toLowerCase() : intent.source));
+  const addresses = new Set(walletsOf(c).map((w) => (isEvmChain(w.chain) ? w.address.toLowerCase() : w.address)));
+  const mine = state(env).intents.filter(({ intent }) => intent.source && addresses.has(isEvmChain(intent.chain) ? intent.source.toLowerCase() : intent.source));
   const settled = mine.filter(({ intent }) => intent.status === "SUCCEEDED");
   const total = settled.reduce((n, { intent }) => n + (Number(intent.amount) || 0), 0);
   return { ...c, account: walletsOf(c)[0]?.address ?? null, payments: mine.length, succeeded: settled.length, total: decimal(total, 7) };
@@ -696,15 +711,18 @@ function createIntent(req: MockRequest): Response {
   if (chain !== "stellar" && kind === "TX") return badRequest(`Transaction intents are Stellar only; use a payment link on ${chain}.`);
   if (kind === "TX" && (!source || !isAddress("stellar", source))) return badRequest("A source account is required for a transaction intent.");
   if (kind === "TX" && !amount) return badRequest("An amount is required for a transaction intent.");
-  if (chain === "monad" && !amount) return badRequest("An amount is required on Monad: it is part of how the payment is recognised.");
+  if (isEvmChain(chain) && !amount) return badRequest(`An amount is required on ${networkName(chain)}: it is part of how the payment is recognised.`);
 
+  // On Arc the coin is USDC itself: no asset, `USDC` or `native` all store its ERC-20 interface, in
+  // 6 decimals, as the Payments API does.
   const code = (str(b, "assetCode") ?? "").trim().toUpperCase();
-  const native = !code || code === NATIVE_CODES[chain] || code === "NATIVE";
+  const native = offersNativeCoin(chain) && (!code || code === NATIVE_CODES[chain] || code === "NATIVE");
+  const named = !offersNativeCoin(chain) && (!code || code === "NATIVE") ? NATIVE_CODES[chain] : code;
   const issuerIn = str(b, "assetIssuer")?.trim() || null;
-  const asset = native ? "native" : code;
+  const asset = native ? "native" : named;
   const assetIssuer = native
     ? null
-    : issuerIn ?? (chain === "stellar" ? (code === "USDC" ? USDC_ISSUER[env] : code === "EURC" ? EURC_ISSUER[env] : null) : TOKEN_MINT[chain][env]);
+    : issuerIn ?? (chain === "stellar" ? (named === "USDC" ? USDC_ISSUER[env] : named === "EURC" ? EURC_ISSUER[env] : null) : presetIssuer(chain, env, named) ?? TOKEN_MINT[chain][env]);
   if (!native && !assetIssuer) return badRequest("A non-native asset requires an issuer.");
 
   const limits = depositLimitsFrom(b);
@@ -752,8 +770,8 @@ function createIntent(req: MockRequest): Response {
     reference: null,
     checkoutTheme: isCheckoutTheme(theme) ? theme : "classic",
     merchantFee,
-    chainReference: chain === "solana" ? solanaAddress(`ref:${id}`) : chain === "monad" ? evmAddress(`deposit:${id}`) : null,
-    networkFee: chain === "monad" ? (asset === "native" ? "0.01" : "0.02") : null,
+    chainReference: chain === "solana" ? solanaAddress(`ref:${id}`) : isEvmChain(chain) ? evmAddress(`deposit:${id}`) : null,
+    networkFee: chain === "arc" ? "0.01" : chain === "monad" ? (asset === "native" ? "0.01" : "0.02") : null,
     expiresAt: new Date(Date.now() + DAY).toISOString(),
     checkoutSeenAt: null,
     checkoutWalletAt: null,
@@ -938,7 +956,7 @@ function validateIntent(req: MockRequest): Response {
   if (intent.status !== "PENDING" && intent.status !== "SUBMITTED") {
     return ok({ valid: false, status: intent.status, reason: "The payment is already final.", paymentIntent: intent }, "Payment intent validated");
   }
-  const shape = intent.chain === "stellar" ? /^[0-9a-f]{64}$/i : intent.chain === "monad" ? /^0x[0-9a-f]{64}$/i : /^[1-9A-HJ-NP-Za-km-z]{43,90}$/;
+  const shape = intent.chain === "stellar" ? /^[0-9a-f]{64}$/i : isEvmChain(intent.chain) ? /^0x[0-9a-f]{64}$/i : /^[1-9A-HJ-NP-Za-km-z]{43,90}$/;
   if (!shape.test(hash)) {
     return ok({ valid: false, status: intent.status, reason: "Transaction not found on the network.", paymentIntent: intent }, "Payment intent validated");
   }
@@ -1169,7 +1187,7 @@ function createCustomer(req: MockRequest): Response {
   const account = str(b, "account")?.trim();
   if (account) {
     const chain = chainOfAddress(account);
-    if (!chain) return badRequest("Must be a Stellar, Solana or Monad address.");
+    if (!chain) return badRequest("Must be a Stellar, Solana, Monad or Arc address.");
     if (!wallets.some((w) => w.address === account)) wallets.unshift({ id: uuid(`wallet:new:${account}:${now}`), chain, address: account, label: null, createdAt: now });
   }
   const customer: Customer = {

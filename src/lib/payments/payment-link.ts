@@ -3,7 +3,7 @@
    and every decision the page makes from it. Pure, so it is unit-tested under plain
    node; the browser script only wires it to the DOM. */
 import { DEFAULT_CHECKOUT_THEME, isCheckoutTheme, type CheckoutTheme } from "@/lib/payments/checkout-themes";
-import { CHAINS, NETWORK_NATIVE_CODES, explorerTxUrl as chainExplorerTx, isChain, isDepositNetwork, isNetwork, networkName, type Chain, type NetworkId, type Tier } from "@/lib/chains";
+import { CHAINS, EVM_CHAIN_IDS, NETWORK_NATIVE_CODES, explorerTxUrl as chainExplorerTx, isChain, isDepositNetwork, isEvmChain, isNetwork, isSwapNetwork, networkName, type Chain, type EvmChain, type NetworkId, type Tier } from "@/lib/chains";
 
 // The chain vocabulary is src/lib/chains.ts's; re-exported for the checkout and the embed.
 export { CHAINS, isDepositNetwork, type Chain, type NetworkId, type Tier };
@@ -31,13 +31,13 @@ export interface MerchantFee {
 export interface PaymentLink {
   id: string;
   kind: "PAY" | "TX";
-  /** Where it settles: any network of NETWORK_IDS. Stellar, Solana and Monad have their own wallet links. */
+  /** Where it settles: any network a payment settles on. Stellar, Solana, Monad and Arc have their own wallet links. */
   chain: NetworkId;
   network: Tier;
   status: LinkStatus;
   /**
    * Where the payer sends: always the address inside `uri`. Null on every network but Stellar,
-   * Solana and Monad: the payer pays a deposit address made for the payment
+   * Solana, Monad and Arc: the payer pays a deposit address made for the payment
    * (src/lib/payments/deposits.ts), never the merchant directly.
    */
   payTo: string | null;
@@ -68,7 +68,7 @@ export interface PaymentLink {
    * The payer may pay from another network, with any token listed there, through a deposit
    * address made for the payment. Always so on a network with no wallet link of its own (the only
    * way to pay it); on Stellar, Solana and Monad only for a mainnet link with an amount and no
-   * merchant fee.
+   * merchant fee. Never on Arc, which the cross-chain route does not reach.
    */
   crossChainPayment: boolean;
 }
@@ -83,13 +83,23 @@ export function isPaymentLinkId(id: string | undefined | null): id is string {
 
 /* The only schemes a payment URI may carry. Anything else (javascript:, data:, http:) is
    refused before it can become an href. A link on any other network carries the hosted checkout. */
-const URI_SCHEMES: Record<Chain, RegExp> = {
+const URI_SCHEMES: Record<Exclude<Chain, EvmChain>, RegExp> = {
   stellar: /^web\+stellar:(pay|tx)\?/i,
   // A transfer request names the recipient; a transaction request (a link with a merchant fee)
   // names the https endpoint the wallet asks for the transaction, URL-encoded.
   solana: /^solana:(?:[1-9A-HJ-NP-Za-km-z]{32,44}(?:\?|$)|https%3A%2F%2F)/,
-  monad: /^ethereum:0x[0-9a-fA-F]{40}/,
 };
+/* An EIP-681 link (Monad, Arc): the payee or token contract, then the chain's own id for the
+   link's tier. Without it, or with another chain's, a wallet would pay on whichever chain it has
+   open (Ethereum for an id left out), so such a link is refused. */
+const EIP681 = /^ethereum:(?:pay-)?0x[0-9a-fA-F]{40}@(\d{1,12})(?:[/?]|$)/;
+
+/** Whether `uri` is the wallet link a payment on `chain` (a chain of its own) and `network` carries. */
+export function isWalletUri(chain: Chain, network: Tier, uri: string): boolean {
+  if (!isEvmChain(chain)) return URI_SCHEMES[chain].test(uri);
+  const id = EIP681.exec(uri)?.[1];
+  return id !== undefined && Number(id) === EVM_CHAIN_IDS[chain][network];
+}
 const QR_DATA_URL = /^data:image\/png;base64,[A-Za-z0-9+/=]+$/;
 /* A link that builds its envelope for its payer points at the hosted checkout instead. */
 const CHECKOUT_URI = /^https?:\/\/[^\s"'<>]+$/i;
@@ -139,11 +149,12 @@ export function parsePaymentLink(body: unknown): PaymentLink | null {
     // Only a Stellar link with a fee builds its envelope for its payer; anything else claiming
     // it would hide the wallet link the payment needs.
     if (payerAccountRequired && (chain !== "stellar" || !merchantFee || b.amount === null)) return null;
-    if (payerAccountRequired ? !CHECKOUT_URI.test(b.uri) : !URI_SCHEMES[chain].test(b.uri)) return null;
+    if (payerAccountRequired ? !CHECKOUT_URI.test(b.uri) : !isWalletUri(chain, b.network, b.uri)) return null;
     // Offered only where the server can take it: a mainnet link with no fee, with an amount or
     // one the payer types (a fee goes to a wallet on the chain, which the route cannot pay beside
-    // the merchant; a server that predates the field says nothing, which is no).
-    crossChainPayment = b.crossChainPayment === true && b.network === "public" && !merchantFee;
+    // the merchant; a server that predates the field says nothing, which is no), on a chain the
+    // cross-chain route reaches (never Arc).
+    crossChainPayment = b.crossChainPayment === true && b.network === "public" && !merchantFee && isSwapNetwork(chain);
   } else {
     // Every other network is paid through a deposit address made for the payment: `payTo` is
     // none, the `uri` is this page. Which of those links can be paid is the server's call and it

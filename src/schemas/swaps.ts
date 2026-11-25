@@ -13,10 +13,11 @@
    what guarantees the extension has run by the time they are constructed. It is the same
    `z` otherwise, so validation is unchanged. */
 import { z } from "@/lib/openapi/zod";
-import { ADDRESS_MESSAGES, ADDRESS_PATTERNS, CHAINS, NETWORK_IDS, isChain, type Chain } from "@/lib/chains";
+import { ADDRESS_MESSAGES, ADDRESS_PATTERNS, DEX_CHAINS, NETWORK_IDS, isDexChain, type DexChain } from "@/lib/chains";
 
-export const SWAP_CHAINS = CHAINS;
-export type SwapChain = Chain;
+/* The chains a swap runs on with their own market; no swap runs on Arc. */
+export const SWAP_CHAINS = DEX_CHAINS;
+export type SwapChain = DexChain;
 
 const STELLAR_ADDRESS = ADDRESS_PATTERNS.stellar;
 const SOLANA_ADDRESS = ADDRESS_PATTERNS.solana;
@@ -176,18 +177,18 @@ function checkCrossChain(
 ) {
   // Within Stellar, Solana or Monad their own market settles a swap (POST /api/swaps); within
   // any other network NEAR Intents may.
-  if (v.originChain === v.destinationChain && isChain(v.originChain)) {
+  if (v.originChain === v.destinationChain && isDexChain(v.originChain)) {
     ctx.addIssue({ code: "custom", path: ["destinationChain"], message: `A swap within ${v.originChain} goes through its own market: use /api/swaps.` });
   }
   const check = (chain: string, value: string, key: "recipient" | "refundTo") => {
-    if (isChain(chain) ? !ADDRESS_RULES[chain].re.test(value) : !LOOSE_ADDRESS.test(value)) {
-      ctx.addIssue({ code: "custom", path: [key], message: isChain(chain) ? ADDRESS_RULES[chain].message : `Must be an address on ${chain}.` });
+    if (isDexChain(chain) ? !ADDRESS_RULES[chain].re.test(value) : !LOOSE_ADDRESS.test(value)) {
+      ctx.addIssue({ code: "custom", path: [key], message: isDexChain(chain) ? ADDRESS_RULES[chain].message : `Must be an address on ${chain}.` });
     }
   };
   check(v.destinationChain, v.recipient, "recipient");
   check(v.originChain, v.refundTo, "refundTo");
   const places = v.amount.split(".")[1]?.length ?? 0;
-  const max = isChain(v.originChain) ? AMOUNT_PLACES[v.originChain] : NEAR_MAX_PLACES;
+  const max = isDexChain(v.originChain) ? AMOUNT_PLACES[v.originChain] : NEAR_MAX_PLACES;
   if (places > max) {
     ctx.addIssue({ code: "custom", path: ["amount"], message: `Amount must have at most ${max} decimals on ${v.originChain}.` });
   }

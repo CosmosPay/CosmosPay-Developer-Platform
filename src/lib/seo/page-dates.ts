@@ -212,6 +212,7 @@ const PAYMENTS_OWN: Record<Exclude<PaymentsPage, "learn" | `learn/${string}`> | 
   stellar: { sections: NETWORK.sections, copy: ["network", "networks.stellar", "pricing"], data: [...NETWORK.data, "src/lib/stellar-assets.ts"] },
   solana: { sections: NETWORK.sections, copy: ["network", "networks.solana", "pricing"], data: NETWORK.data },
   monad: { sections: NETWORK.sections, copy: ["network", "networks.monad", "pricing"], data: NETWORK.data },
+  arc: { sections: NETWORK.sections, copy: ["network", "networks.arc", "pricing"], data: NETWORK.data },
 };
 
 /** The files and catalog blocks the gateway's page at `path` is made from, in `lang`. */

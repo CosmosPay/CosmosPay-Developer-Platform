@@ -12,13 +12,13 @@ import { landingContent, type LandingContent } from "@/lib/payments/landing-cont
 import { fillPageCopy, pageMeta, type CopyPage } from "@/lib/payments/landing-i18n";
 import { GUIDE_CONFIG, fill, guideCopy } from "@/lib/payments/learn/index";
 import { learnHrefs, type LearnLink } from "@/lib/payments/learn/links";
-import { GUIDES, GUIDE_DATES, INTEGRATIONS_GUIDES, NETWORK_GUIDES, PAYMENTS_PAGES, SWAPS_GUIDES, guideOf, pagePath, type Guide, type NetworkPage, type PaymentsPage } from "@/lib/payments/site-pages";
+import { COMPARED_CHAINS, type ComparedChain, GUIDES, GUIDE_DATES, INTEGRATIONS_GUIDES, NETWORK_GUIDES, PAYMENTS_PAGES, SWAPS_GUIDES, guideOf, pagePath, type Guide, type NetworkPage, type PaymentsPage } from "@/lib/payments/site-pages";
 import { LOCALES, MESSAGES, type Locale } from "@/lib/payments/i18n";
 import { BEYOND_ROWS, COMPARE_CHECKED, ESCROW_COM, STRIPE_STABLECOINS, compareRows, formatRate } from "@/lib/payments/compare";
 import { NETWORK_WALLETS, networkPresets, payLinkCurl } from "@/lib/payments/network-pages";
 import { CHECKOUT_THEMES } from "@/lib/payments/checkout-themes";
 import { CONTACT_ADDRESS } from "@/lib/payments/contact";
-import { CHAINS, CHAIN_NAMES, NETWORK_IDS, TEST_NETWORKS, type Chain } from "@/lib/chains";
+import { CHAINS, CHAIN_NAMES, NETWORK_COUNTS, TEST_NETWORKS, type Chain } from "@/lib/chains";
 import { PLAN_IDS, PLAN_SPECS, PRIVATE_PAYMENT_FEE_PCT, planSwapFeeBps, swapFeePct, swapFeeRange, type PlanId } from "@/lib/plans";
 import { publicSwapCalls, USDT0_OTHER_NETWORKS_BEFORE_ROUTES } from "@/lib/public-swaps";
 import { messages } from "@/lib/i18n/messages/index";
@@ -42,6 +42,7 @@ const COPY_KEY: Partial<Record<PaymentsPage, CopyPage>> = {
   stellar: "stellar",
   solana: "solana",
   monad: "monad",
+  arc: "arc",
 };
 
 interface Ctx {
@@ -387,7 +388,7 @@ function swapsPage(ctx: Ctx): Block[] {
   const { d, lang, docs, input } = ctx;
   const sp = ((messages as Record<string, (typeof messages)["en"]>)[lang] ?? messages.en).swapsPage;
   const rates = { pct: swapFeePct("community"), ...swapFeeRange() };
-  const nets = { n: String(NETWORK_IDS.length) };
+  const nets = { n: String(NETWORK_COUNTS.n), swapN: String(NETWORK_COUNTS.swapN) };
   const labels = { key: sp.apiStep1, cross: sp.apiStep2, usdt0: sp.apiStep3 };
   return [
     ...pageHeader(d.t.pages.swaps),
@@ -439,14 +440,14 @@ function guidePage(ctx: Ctx, guide: Guide): Block[] {
         .join(", ");
     const rows = Object.entries(tbl.rows).map(([key, row]) => [
       row.k,
-      ...CHAINS.map((chain) => {
+      ...COMPARED_CHAINS.map((chain) => {
         if (key === "presets") return codes(chain, "public");
         if (key === "test") return `${TEST_NETWORKS[chain]} (${codes(chain, "testnet")})`;
         if ("value" in row) return fill(row.value, vars);
-        return fill((row as Record<Chain, string>)[chain], { ...vars, wallets: wallets.format(NETWORK_WALLETS[chain]) });
+        return fill((row as Record<ComparedChain, string>)[chain], { ...vars, wallets: wallets.format(NETWORK_WALLETS[chain]) });
       }),
     ]);
-    return [h(2, tbl.title), table([tbl.topic, ...CHAINS.map((chain) => link(CHAIN_NAMES[chain], page(`/${chain}`)))], rows), p(tbl.note), ...linksOf(tbl.links)];
+    return [h(2, tbl.title), table([tbl.topic, ...COMPARED_CHAINS.map((chain) => link(CHAIN_NAMES[chain], page(`/${chain}`)))], rows), p(tbl.note), ...linksOf(tbl.links)];
   };
   const blocks = cfg.order.flatMap((key): Block[] => {
     if (key === "table") return networkTable();
@@ -517,6 +518,7 @@ function contentPage(ctx: Ctx, page: PaymentsPage): Block[] {
     case "stellar":
     case "solana":
     case "monad":
+    case "arc":
       return networkPage(ctx, page);
     case "learn":
       return learnHub(ctx);

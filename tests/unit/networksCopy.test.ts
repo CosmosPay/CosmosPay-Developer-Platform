@@ -3,20 +3,21 @@ import assert from "node:assert/strict";
 import { landingContent } from "@/lib/payments/landing-content";
 import { messages } from "@/lib/i18n/messages/index";
 import { LOCALES } from "@/lib/i18n/locales";
-import { NETWORK_IDS, networkName } from "@/lib/chains";
+import { NETWORK_COUNTS, PAYMENT_NETWORK_IDS, networkName } from "@/lib/chains";
 
 /* Cosmos Pay works with every network of its swap platform (product owner, 2026-11-03: "no
    pongas estrictamente solana monad o stellar, sino toda nuestra colección", and again when the
    hero and the FAQ still named the three first). Where Cosmos Pay presents itself, the copy
-   counts the whole collection instead of naming Stellar, Solana and Monad as its networks. The
-   network pages, the guide comparing those three and the dashboard's forms still name them:
+   counts the whole collection instead of naming Stellar, Solana and Monad (or Arc) as its
+   networks: `{n}` for the networks it works with, `{swapN}` for the ones its swaps reach. The
+   network pages, the guide comparing three of them and the dashboard's forms still name them:
    they are about them. */
 
-const THREE = ["Stellar", "Solana", "Monad"];
+const OURS = ["Stellar", "Solana", "Monad", "Arc"];
 // The networks answer lists the whole collection by name, those three among the rest: that list
 // is the point, so it is taken out before looking.
-const withoutList = (text: string) => NETWORK_IDS.every((id) => text.includes(networkName(id))) ? text.replace(new RegExp(`${networkName(NETWORK_IDS[0])}.*${networkName(NETWORK_IDS[NETWORK_IDS.length - 1])}`, "s"), "") : text;
-const namesTwo = (text: string) => THREE.filter((name) => withoutList(text).includes(name)).length >= 2;
+const withoutList = (text: string) => PAYMENT_NETWORK_IDS.every((id) => text.includes(networkName(id))) ? text.replace(new RegExp(`${networkName(PAYMENT_NETWORK_IDS[0])}.*${networkName(PAYMENT_NETWORK_IDS[PAYMENT_NETWORK_IDS.length - 1])}`, "s"), "") : text;
+const namesTwo = (text: string) => OURS.filter((name) => withoutList(text).includes(name)).length >= 2;
 const langs = LOCALES.map((l) => (typeof l === "string" ? l : (l as { code: string }).code));
 
 test("the gateway's hero, how it works and every answer of its FAQ count the networks, in every language", () => {
@@ -24,7 +25,7 @@ test("the gateway's hero, how it works and every answer of its FAQ count the net
     const { t, faq } = landingContent(lang as never);
     const texts = { "meta.description": t.meta.description, "hero.lede": t.hero.lede, "how.pay.body": t.how.pay.body, ...Object.fromEntries(faq.map((f, i) => [`faq[${i}]`, f.a])) };
     for (const [key, text] of Object.entries(texts)) assert.ok(!namesTwo(text), `${lang} ${key}: ${text}`);
-    assert.ok(t.hero.lede.includes(String(NETWORK_IDS.length)), `${lang} hero.lede names the count`);
+    assert.ok(t.hero.lede.includes(String(NETWORK_COUNTS.n)), `${lang} hero.lede names the count`);
   }
 });
 
@@ -33,11 +34,24 @@ test("the gateway's copy leaves no network count unfilled, but its step counters
     const leftover: string[] = [];
     const walk = (value: unknown, path: string) => {
       if (typeof value === "string") {
-        if (value.includes("{n}") && !path.endsWith(".counter")) leftover.push(path);
+        if ((value.includes("{n}") || value.includes("{swapN}")) && !path.endsWith(".counter")) leftover.push(path);
       } else if (value && typeof value === "object") for (const [k, v] of Object.entries(value)) walk(v, `${path}.${k}`);
     };
     walk(landingContent(lang as never).t, lang);
     assert.deepEqual(leftover, [], lang);
+  }
+});
+
+/* Arc is a network a payment settles on but no swap reaches: a sentence about swaps counts the
+   networks they reach, one about where Cosmos Pay works counts them all. */
+test("the gateway counts swaps by the networks they reach and payments by every network, in every language", () => {
+  for (const lang of langs) {
+    const { t, faq } = landingContent(lang as never);
+    assert.ok(t.pages.swaps.lede.includes(String(NETWORK_COUNTS.swapN)), `${lang} pages.swaps.lede counts the swap networks`);
+    assert.ok(!t.pages.swaps.lede.includes(String(NETWORK_COUNTS.n)), `${lang} pages.swaps.lede does not count Arc`);
+    assert.ok(t.hero.lede.includes(String(NETWORK_COUNTS.n)), `${lang} hero.lede counts every network`);
+    const networks = faq[1].a;
+    assert.ok(networks.includes(networkName("arc")) && networks.includes(String(NETWORK_COUNTS.n)) && networks.includes(String(NETWORK_COUNTS.swapN)), `${lang} the networks answer names Arc and both counts`);
   }
 });
 
@@ -74,7 +88,7 @@ test("the company site's wallet card counts the networks the wallet holds, in ev
   for (const [lang, m] of Object.entries(messages as Record<string, any>)) {
     const text: string = m.about.products.items.wallet.d;
     assert.ok(!namesTwo(text), `${lang} about.products.items.wallet.d: ${text}`);
-    assert.ok(text.includes("{n}"), `${lang} about.products.items.wallet.d counts the networks`);
+    assert.ok(text.includes("{swapN}"), `${lang} about.products.items.wallet.d counts the networks`);
   }
 });
 
@@ -91,10 +105,13 @@ test("the wallet and the API present themselves by every network in llms.txt and
     "JSON-LD api": String(apiNode({ site, docs: "https://dev.cosmospay.lat/docs/", apiBase: "https://api.cosmospay.lat/cosmos-api" }).description),
     "JSON-LD wallet": String(walletNode(site, wallet).description),
   };
+  // The API counts the networks a payment settles on (and the ones its swaps reach); the wallet
+  // keeps the count it had, the networks swaps reach.
+  const counts: Record<string, number> = { "llms.txt wallet": NETWORK_COUNTS.swapN, "JSON-LD api": NETWORK_COUNTS.n, "JSON-LD wallet": NETWORK_COUNTS.swapN };
   for (const [key, text] of Object.entries(texts)) {
     assert.ok(text, `${key} exists`);
     assert.ok(!namesTwo(text), `${key}: ${text}`);
-    assert.ok(text.includes(String(NETWORK_IDS.length)), `${key} names the count`);
+    assert.ok(text.includes(String(counts[key])), `${key} names the count`);
   }
 });
 

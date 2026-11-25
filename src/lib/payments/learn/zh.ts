@@ -5,7 +5,7 @@ export const zh: LearnMessages = {
   hub: {
     nav: "指南",
     title: "稳定币支付指南",
-    lede: "为使用 Cosmos Pay 收取稳定币的企业准备的指南：如何在线接受 USDC，以及如何使用各网络的支付链接标准（SEP-7、Solana Pay、EIP-681）收款，如何在网站上添加支付按钮，如何以任意金额接受捐赠，如何在 WhatsApp 上发送支付链接，如何在服务器上确认支付，稳定币支付网关有什么作用，各网络的对比，如何在 {n} 个网络之间兑换，以及如何从 Stellar 向 EVM 网络发送 USDT0。",
+    lede: "为使用 Cosmos Pay 收取稳定币的企业准备的指南：如何在线接受 USDC，以及如何使用各网络的支付链接标准（SEP-7、Solana Pay、EIP-681）收款，如何在网站上添加支付按钮，如何以任意金额接受捐赠，如何在 WhatsApp 上发送支付链接，如何在服务器上确认支付，稳定币支付网关有什么作用，各网络的对比，如何在 {swapN} 个网络之间兑换，以及如何从 Stellar 向 EVM 网络发送 USDT0。",
     meta: "稳定币支付指南 | Cosmos Pay",
     description: "指南：在线及在各个网络上接受 USDC、支付按钮、捐赠、Webhook、WhatsApp 支付链接、跨链兑换，以及从 Stellar 发送 USDT0。",
   },
@@ -36,7 +36,7 @@ export const zh: LearnMessages = {
         payer: {
           title: "您的客户需要什么",
           body: [
-            "同一网络上的一个钱包，其中持有 USDC 并能打开这笔支付：在 Stellar 上，任何能打开 SEP-7 链接的钱包；在 Solana 上，任何能读取 Solana Pay 链接的钱包；在 Monad 上，任何能读取 EIP-681 链接的 EVM 钱包。网络费也由客户的钱包支付。",
+            "同一网络上的一个钱包，其中持有 USDC 并能打开这笔支付：在 Stellar 上，任何能打开 SEP-7 链接的钱包；在 Solana 上，任何能读取 Solana Pay 链接的钱包；在 Monad 和 Arc 上，任何能读取 EIP-681 链接的 EVM 钱包。网络费也由客户的钱包支付。",
             "无需账户。客户打开收银台，扫描二维码或点击钱包按钮，然后在钱包中确认支付。",
           ],
         },
@@ -53,14 +53,14 @@ export const zh: LearnMessages = {
         network: {
           title: "选择哪个网络收款",
           body: [
-            "在客户已经持有 USDC 的网络上收款。在 Stellar 和 Solana 的主网与测试网上，以及 Monad 主网上，USDC 都是预设资产。在这三个网络上，任何其他代币都可以按其发行方、铸币地址（mint）或合约收取。",
+            "在客户已经持有 USDC 的网络上收款。在 Stellar、Solana 和 Arc 的主网与测试网上，以及 Monad 主网上，USDC 都是预设资产。在这四个网络上，任何其他代币都可以按其发行方、铸币地址（mint）或合约收取。",
           ],
           links: { networksGuide: "Stellar、Solana 与 Monad 对比", stellar: "Stellar 支付", solana: "Solana 支付", monad: "Monad 支付" },
         },
         cost: {
           title: "费用是多少",
           body: [
-            "每笔支付按您套餐的费率计费，所有网络相同：Starter 为 {starterRate}，无月费。网络费由付款方的钱包支付；在 Monad 上，将付款转发给您的中继所收取的费用从该笔付款中扣除。",
+            "每笔支付按您套餐的费率计费，所有网络相同：Starter 为 {starterRate}，无月费。网络费由付款方的钱包支付；在 Monad 和 Arc 上，将付款转发给您的中继所收取的费用从该笔付款中扣除。",
           ],
           links: { fees: "价格与费用计算器", compare: "我们的费用对比" },
         },
@@ -68,7 +68,7 @@ export const zh: LearnMessages = {
       steps: {
         title: "一步步接受您的第一笔 USDC 支付",
         items: {
-          sandbox: { title: "创建账户并切换到沙箱", body: "登录控制台，在顶部选择“沙箱”。在那里创建的内容都运行在测试网上（Stellar Testnet、Solana Devnet 和 Monad Testnet），不涉及真实资金。" },
+          sandbox: { title: "创建账户并切换到沙箱", body: "登录控制台，在顶部选择“沙箱”。在那里创建的内容都运行在测试网上（Stellar Testnet、Solana Devnet、Monad Testnet 和 Arc Testnet），不涉及真实资金。" },
           wallet: { title: "添加收款钱包", body: "在组织设置中，添加一个位于您收款网络上的钱包，并签署控制台请求签署的内容，以证明该钱包属于您。" },
           charge: { title: "创建一笔测试收款", body: "在“支付”中创建支付链接，填写网络、金额、资产和收款钱包。也可以创建测试 API 密钥（以 dv_ 开头），从您的服务器调用 POST /v1/payment-intents/pay。在 Stellar Testnet 上可以用 XLM 收款，Testnet 的水龙头 Friendbot 可为测试账户充入 XLM。" },
           pay: { title: "用测试钱包付款", body: "打开收银台页面：页面会注明它运行在测试网上。用该网络上的钱包付款，然后看着收银台变为“已支付”，控制台中的链接变为“成功”。" },
@@ -185,7 +185,7 @@ export const zh: LearnMessages = {
         fit: {
           title: "Cosmos Pay 属于哪一类",
           body: [
-            "Cosmos Pay 是支持 {n} 个网络的非托管式稳定币支付网关：您的客户可以从其中任何一个网络付款，兑换则可将您收到的款项转到其中任何一个网络。您通过支付链接、托管收银台或支付 API 收款，并自行选择收款的钱包地址。Cosmos Pay 不保存任何人的密钥。",
+            "Cosmos Pay 是支持 {n} 个网络的非托管式稳定币支付网关：您的客户可以在其中任何一个网络上付款，兑换则可在其覆盖的 {swapN} 个网络之间转移您收到的款项。您通过支付链接、托管收银台或支付 API 收款，并自行选择收款的钱包地址。Cosmos Pay 不保存任何人的密钥。",
             "每笔支付都直接进入您的地址；在需要充值地址的网络上，则进入为该笔支付创建的充值地址，该地址只能将款项转发到您的地址（扣除中继费用）：Cosmos Pay 不持有它的任何密钥。每笔支付都可以在网络上核查，每个已支付的收银台都会附上该交易在公共区块浏览器中的链接。",
           ],
           links: { security: "支付如何受到保护", acceptGuide: "如何在线接受 USDC 支付", integrations: "集成选项" },
@@ -203,8 +203,8 @@ export const zh: LearnMessages = {
       title: "Stellar、Solana 与 Monad 收款对比",
       meta: "Stellar、Solana 与 Monad 支付对比 | Cosmos Pay",
       description: "使用 Cosmos Pay 接受稳定币支付时，Stellar、Solana 与 Monad 的对比：链接标准、资产、测试网、网络费和费率。",
-      summary: "并列比较拥有自己付款链接标准的三个网络：链接格式、资产、测试网和费用。",
-      lede: "使用 Cosmos Pay 时，无论在 Stellar、Solana 还是 Monad 上，支付都会到达您的地址，并按同样的套餐费率计费。不同之处在于钱包读取的链接（Stellar 上为 SEP-7，Solana 上为 Solana Pay，Monad 上为指向充值地址的 EIP-681）、付款与链接的匹配方式，以及哪些资产有预设。下表按 Cosmos Pay 的支持情况对三者进行比较；兑换将这三个网络与 Cosmos Pay 支持的 {n} 个网络中的其他网络连接起来。",
+      summary: "并列比较三个拥有自己付款链接标准的网络：链接格式、资产、测试网和费用。",
+      lede: "使用 Cosmos Pay 时，无论在 Stellar、Solana 还是 Monad 上，支付都会到达您的地址，并按同样的套餐费率计费。不同之处在于钱包读取的链接（Stellar 上为 SEP-7，Solana 上为 Solana Pay，Monad 上为指向充值地址的 EIP-681）、付款与链接的匹配方式，以及哪些资产有预设。下表按 Cosmos Pay 的支持情况对三者进行比较；兑换将这三个网络与其覆盖的 {swapN} 个网络中的其他网络连接起来。",
       table: {
         title: "三个结算网络并列对比",
         caption: "使用 Cosmos Pay 收款时 Stellar、Solana 与 Monad 的对比",
@@ -635,11 +635,11 @@ export const zh: LearnMessages = {
     },
     crossChain: {
       nav: "跨链兑换",
-      title: "如何在 {n} 个网络之间兑换代币",
-      meta: "在 {n} 个网络之间兑换代币 | Cosmos Pay",
-      description: "通过 Cosmos Pay 在 {n} 个网络之间兑换代币：报价、充值、费用、退款和所需时间。",
+      title: "如何在 {swapN} 个网络之间兑换代币",
+      meta: "在 {swapN} 个网络之间兑换代币 | Cosmos Pay",
+      description: "通过 Cosmos Pay 在 {swapN} 个网络之间兑换代币：报价、充值、费用、退款和所需时间。",
       summary: "获取兑换报价、发送充值并跟踪直至送达：跨链兑换，失败时会在来源链上退款。",
-      lede: "Cosmos Pay 可以在 {n} 个网络之间兑换代币。您先获取报价，在报价过期前将输入金额发送到充值地址，输出金额随即到达您在另一个网络上的地址。如果兑换无法完成，输入金额会退回到您在发送网络上的地址。",
+      lede: "Cosmos Pay 可以在 {swapN} 个网络之间兑换代币。您先获取报价，在报价过期前将输入金额发送到充值地址，输出金额随即到达您在另一个网络上的地址。如果兑换无法完成，输入金额会退回到您在发送网络上的地址。",
       sections: {
         how: {
           title: "跨链兑换如何运作",
@@ -689,7 +689,7 @@ export const zh: LearnMessages = {
         links: { crossChainApi: "跨链兑换 API", webhooksGuide: "如何在服务器上确认支付" },
       },
       faq: {
-        networks: { q: "我可以在哪些网络之间兑换？", a: "共 {n} 个网络，即 Cosmos Pay 兑换平台的全部网络。同一网络内的交易对则属于同链兑换。" },
+        networks: { q: "我可以在哪些网络之间兑换？", a: "共 {swapN} 个网络，即 Cosmos Pay 兑换平台的全部网络。同一网络内的交易对则属于同链兑换。" },
         test: { q: "可以测试跨链兑换吗？", a: "不能在测试网上测试：这类兑换仅在主网上运行。测试密钥可以列出资产和获取报价。" },
         refund: { q: "如果兑换失败，我的资金会怎样？", a: "资金会退回到您提供的退款地址，即您发送时所在的网络上。" },
         account: { q: "我需要账户吗？", a: "在公开兑换页面上不需要。使用您自己的账户时，控制台和 API 会按您套餐的费率计费。" },

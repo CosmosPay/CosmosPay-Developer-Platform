@@ -13,7 +13,7 @@ import { LANDING, pageMeta, type CopyPage } from '@/lib/payments/landing-i18n';
 import { LOCALES, type Locale } from '@/lib/payments/i18n';
 import { LEARN, guideCopy } from '@/lib/payments/learn/index';
 import { PAYMENTS_PAGES, guideOf, type PaymentsPage } from '@/lib/payments/site-pages';
-import { NETWORK_IDS } from '@/lib/chains';
+import { NETWORK_IDS, withNetworkCounts } from '@/lib/chains';
 
 const MAX = 160;
 const length = (text: string) => [...text].length;
@@ -22,11 +22,11 @@ const EM_DASH = String.fromCodePoint(0x2014);
 const SPACED_DASH = new RegExp(String.raw`\s[${String.fromCodePoint(0x2013)}-]\s`);
 
 /** What src/pages/site/<page>.astro passes as its description: the search copy of site-meta.ts,
- *  or for /swaps its catalog's, with `{n}` filled from NETWORK_IDS as swaps.astro does. */
+ *  or for /swaps its catalog's, with its counts filled as swaps.astro does. */
 function siteDescription(page: SitePage, lang: string): string {
   if (page === 'swaps') {
     const catalog = (messages as Record<string, typeof messages.en>)[lang] ?? messages.en;
-    return catalog.swapsPage.metaDescription.replace(/\{n\}/g, String(NETWORK_IDS.length));
+    return withNetworkCounts(catalog.swapsPage.metaDescription);
   }
   return siteMeta(page, lang).description;
 }
@@ -43,6 +43,7 @@ const COPY_PAGES: Record<string, CopyPage> = {
   stellar: 'stellar',
   solana: 'solana',
   monad: 'monad',
+  arc: 'arc',
 };
 
 /** What a gateway page passes to PaymentsLayout and LandingHead: pageMeta() for the home, the

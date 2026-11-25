@@ -7,7 +7,7 @@
 import { LANDING, fillPageCopy } from "@/lib/payments/landing-i18n";
 import { LEARN } from "@/lib/payments/learn/index";
 import { PLAN_SPECS, swapFeePct, PROTECTED_PAYMENT_FEE_PCT } from "@/lib/plans";
-import { NETWORK_IDS, networkName } from "@/lib/chains";
+import { NETWORK_IDS, PAYMENT_NETWORK_IDS, networkName } from "@/lib/chains";
 import { networkLogo, tokenLogo } from "@/lib/token-logos";
 import type { Locale } from "@/lib/payments/i18n";
 import { SAMPLE_LINK_ID } from "@/lib/payments/integration-demo";
@@ -22,7 +22,7 @@ export interface MarqueeItem {
   mark?: "stellar" | "cosmos";
   token?: string;
   network?: string;
-  page?: "stellar" | "solana" | "monad";
+  page?: "stellar" | "solana" | "monad" | "arc";
 }
 
 /* What customers pay with, as marquees. Official artwork only: the coins from
@@ -30,19 +30,21 @@ export interface MarqueeItem {
    adapters), Monad and EURC from Trust Wallet's assets, Stellar's mark in currentColor so it
    follows the theme (Mark.astro), Cosmos from public/brand. Files in public/media/brands. */
 const CHAIN_ROW: readonly MarqueeItem[] = [
-  // The three networks lead to their own pages.
+  // The four networks with a wallet link of their own lead to their own pages; Arc's mark is its
+  // network logo from the manifest.
   { name: "Stellar", mark: "stellar", page: "stellar" },
   { name: "Solana", file: "sol.svg", page: "solana" },
   { name: "Monad", file: "monad.webp", page: "monad" },
+  { name: "Arc", network: "arc", page: "arc" },
   { name: "USDC", file: "usdc.svg" },
   { name: "EURC", file: "eurc.webp" },
   { name: "XLM", file: "xlm.svg" },
   { name: "SOL", file: "sol.svg" },
   { name: "MON", file: "monad.webp" },
 ];
-/* The networks NEAR Intents swaps between (beyond the three a payment settles on) and the tokens
+/* The networks NEAR Intents swaps between (beyond the chains of the row above) and the tokens
    people hold most there, each with its official logo (src/lib/token-logos.ts). */
-const SETTLE = ["stellar", "solana", "monad"];
+const SETTLE = ["stellar", "solana", "monad", "arc"];
 const SWAP_TOKENS = ["USDT", "USDT0", "DAI", "WBTC", "cbBTC"];
 const SWAP_ROW: readonly MarqueeItem[] = [
   ...NETWORK_IDS.filter((id) => !SETTLE.includes(id) && networkLogo(id)).map((id) => ({ name: networkName(id), network: id })),
@@ -66,8 +68,9 @@ const WALLET_ROW: readonly MarqueeItem[] = [
 /** The plan names: product names, never translated. */
 export const planName = (id: string): string => id[0].toUpperCase() + id.slice(1);
 
-/* `{n}` anywhere in the gateway's copy is how many networks Cosmos Pay works with (NETWORK_IDS),
-   so any sentence can name the whole collection by its count (product owner, 2026-11-03: never
+/* `{n}` anywhere in the gateway's copy is how many networks Cosmos Pay works with
+   (PAYMENT_NETWORK_IDS), and `{swapN}` how many its swaps reach (NETWORK_IDS), so any sentence
+   can name the whole collection by its count (product owner, 2026-11-03: never
    Stellar, Solana and Monad as if they were the only networks). A step counter's `{n}` is its
    step instead, filled by the page as the visitor scrolls, so `counter` keys keep theirs. */
 function withNetworkCount<T>(value: T, key = ""): T {
@@ -175,10 +178,10 @@ export function landingContent(lang: Locale) {
   const PROTECTED_PCT = PROTECTED_PAYMENT_FEE_PCT;
   // "What is Cosmos Pay?" opens the list, so the home (its first four) and /faq both start with an
   // answer a reader or an AI answer can quote on its own.
-  // The answers name every network Cosmos Pay works with, the swap platform's whole collection
-  // (product owner, 2026-11-03): their count ({n}) and their names ({networks}) come from
-  // NETWORK_IDS, never written, so a network added there reaches every language's FAQ.
-  const networkList = new Intl.ListFormat(lang, { type: "conjunction" }).format(NETWORK_IDS.map((id) => networkName(id)));
+  // The answers name every network Cosmos Pay works with (product owner, 2026-11-03): their count
+  // ({n}) and their names ({networks}) come from PAYMENT_NETWORK_IDS, never written, so a network
+  // added there reaches every language's FAQ; how many of them swaps reach is {swapN}.
+  const networkList = new Intl.ListFormat(lang, { type: "conjunction" }).format(PAYMENT_NETWORK_IDS.map((id) => networkName(id)));
   const fillNetworks = (text: string) => fillPageCopy(text).replace(/\{networks\}/g, networkList);
   const faq = (["what", "networks", "wallet", "account", "wallets", "assets", "custody", "service", "protected", "zk", "expiry", "refunds", "testing", "designs"] as const).map((key) => ({
     q: fillNetworks(t.faq[key].q),
