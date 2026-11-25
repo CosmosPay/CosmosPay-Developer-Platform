@@ -1,7 +1,7 @@
 {
   "name": "paydev",
   "type": "module",
-  "version": "0.37.1",
+  "version": "0.38.0",
   "engines": {
     "node": ">=22.23.4"
   },

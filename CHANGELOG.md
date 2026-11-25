@@ -2,6 +2,90 @@
 
 All notable changes to the Cosmos Pay Developer Platform are documented here.
 Generated from [Conventional Commits](https://www.conventionalcommits.org) by [git-cliff](https://git-cliff.org).
+## [0.38.0] - 2026-11-25
+
+### Features
+- One network vocabulary for payment links on every network (1ff7de9)
+- Pay a link from any network through a deposit address (5eef4b8)
+- Create payment links and connect wallets on every network (89c54fa)
+- Payer email before paying, open amounts, route minimums and per-link limits (1fdd5cb)
+- One checkout session per page for the payer's email (251461a)
+- Send the session's proof with its wallet events (e7854a5)
+- Server-side message-signature verifiers for every signing network (d34d59d)
+- Single-use challenges and per-network proofs on the connect route (998f9ac)
+- Sign the wallet challenge on every network (b5c695c)
+- Arc, a native payment chain no swap reaches (d7b5cff)
+- Arc in every catalog, and two network counts (9d310b9)
+- Arc payment links, organization wallets and customers (c8dc9c9)
+- Pay Arc links, from any browser EVM wallet (21eae32)
+- The /arc network page (db959b6)
+- Arc's network mark (db032f6)
+- Arc wallets, payments and links in both tiers (b3e7e34)
+- A brand page at /brand with the logos, colours, typeface and kit (9855090)
+- Payer page for charges in local money (QR charges) (54ee0bd)
+- QR charges in local money in the Fiat group (c2057c2)
+- Keyless route for the bank-transfer webhook (f7eca15)
+- QR charges paid by bank transfer (40d0dfe)
+- Show the transfer's own amount, cents included (7296a83)
+- Phone, city and postal code optional when activating bank transfers (cba0010)
+- Let the payer session through the payment-links preflight (2e113ce)
+- Copy for paying a QR charge by transfer to a verified person (3e30f9b)
+- Model and mock for QR charges paid direct (7c6834c)
+- The payer page pays a QR charge direct, inside the page (90c4fa6)
+- Show QR charges only where the Payments API has them (7e35225)
+- Link a Discord server to the organization (cb4085e)
+- Live Discord link in dev:mock (663fe57)
+
+### Bug Fixes
+- Say when a network's token list cannot be read (4a53735)
+- A payer's open deposits, not the link's, in the busy message (796a134)
+- The busy message covers the payer's cap and a full link (98f1d02)
+- Own words for a payer's open deposits and a busy link (6e1a697)
+- A payer email given first by another client never locks the payer out (7647aa5)
+- Register Freighter's account before the payment exists (74811fd)
+- Aleo wallets are added by address, without the GPL-3.0 verifier (9974af2)
+- Load deposit-network links on test networks, with open amounts and merchant fees (4c11750)
+- Say "paid" once when a deposit from another network settles (f5949ba)
+- Astro 7.4.12 and @astrojs/node 11.1.13 for GHSA-r3h5-4585-7x3w (0c6b633)
+- LOBSTR signer 2.1.0, Apache-2.0 instead of GPL-3.0 (41d3624)
+- Scopes fit in the gateway's label, so full-access keys can be created (2e63050)
+- Pin effect to 3.22.5 for GHSA-7589-6fvf-x4pw (64013a5)
+- Pin Astro's compiler to 0.5.2 on dev too (bef81db)
+- Arc copy true on any deployment, footer networks alphabetical (a1253a5)
+- Wrap the CVU's digit groups flush (8fa9e42)
+- No bank transfers card where the rail is off (e20cb44)
+- Seller's charge read carries p2pDirect, as the server's entity (91e4d29)
+- Unlink fails closed, and the previous linker hears about a move (eb17bad)
+- Least-privilege bot key, no link takeover, safe bot URL, full unlink (13c7bb0)
+- Docs advisories, in-range updates, astro pinned at 7.4.12 (f26fb2a)
+
+### Miscellaneous
+- Merge origin/dev into feat/arc-network (4edbea1)
+- Merge origin/dev into feat/qr-charges-dashboard (58468be)
+- Merge origin/dev into feat/qr-charges (5a9b5a0)
+- Merge feat/qr-charges into feat/qr-charges-dashboard (8053660)
+- Merge feat/qr-charges-dashboard into feat/bank-transfer-charges (b943598)
+- Merge feat/bank-transfer-charges into feat/p2p-direct (8929279)
+- Merge origin/dev into feat/discord-link (5bbcb24)
+
+### Documentation
+- Payment links settle on every network, paid from any network (556f44f)
+- Regenerate the API reference from the community server spec (07c38f0)
+- Per-network proofs, challenges and what stays address-only (ec216c7)
+- Regenerate the API reference from the community server spec (6ef056a)
+- Arc as a native payment chain, and the two counts (d05f76d)
+- Regenerate the Payments API reference with Arc (b043148)
+- Validate never fails an EVM intent on a reverted transaction (0e6f2a8)
+- Bank transfer on QR charges in the API reference and CLAUDE.md (8b06427)
+- Sync the spec from the community server's bank-transfer PR (aabad1c)
+- The direct flow of QR charges in CLAUDE.md (84a83fd)
+- Sync the Payments API reference with the server's direct routes (f884ef6)
+- Charges in local money get their own reference page (717a0bc)
+- Sync the reference with the community server's dev spec (a7bc22e)
+
+### Testing
+- Ban Koywe in copy beside the other providers (15e99e8)
+
 ## [0.37.1] - 2026-11-24
 
 ### Bug Fixes
