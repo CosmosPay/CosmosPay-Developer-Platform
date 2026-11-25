@@ -303,7 +303,7 @@
     },
     "/v1/payment-intents/pay": {
       "post": {
-        "description": "Answers a link and its QR on `chain`, any network payment links settle on: SEP-7 `web+stellar:pay` on Stellar (the default), Solana Pay on Solana and EIP-681 on Monad, on the key's network (a `prod` key gets mainnet, a `dev` key the test networks); on every other network the hosted checkout, where the payer pays a deposit address made for the payment from any network (`amount` required, no `merchantFee` or `callback`; with a `dev` key, only where the sandbox settles, in the network's test stablecoin: `GET /v1/payment-intents/networks`). A mainnet link with an amount and no merchant fee can also be paid from another network on Stellar, Solana and Monad. `memo` (numeric, generated when omitted) is the idempotency key: the same memo and terms return the stored intent, other terms are `409 idempotency_conflict`. Emits `PAYMENT_INTENT_CREATED`.\n\nRequires the `payments:write` scope. The shared public key may call it.",
+        "description": "Answers a link and its QR on `chain`, any network payment links settle on: SEP-7 `web+stellar:pay` on Stellar (the default), Solana Pay on Solana and EIP-681 on Monad and Arc, on the key's network (a `prod` key gets mainnet, a `dev` key the test networks); on every other network the hosted checkout, where the payer pays a deposit address made for the payment from any network (`amount` required, no `merchantFee` or `callback`; with a `dev` key, only where the sandbox settles, in the network's test stablecoin: `GET /v1/payment-intents/networks`). A mainnet link with an amount and no merchant fee can also be paid from another network on Stellar, Solana and Monad. `memo` (numeric, generated when omitted) is the idempotency key: the same memo and terms return the stored intent, other terms are `409 idempotency_conflict`. Emits `PAYMENT_INTENT_CREATED`.\n\nRequires the `payments:write` scope. The shared public key may call it.",
         "operationId": "PaymentIntentsController_createPay_v1",
         "parameters": [],
         "requestBody": {
@@ -351,7 +351,7 @@
             }
           },
           "400": {
-            "description": "`validation_failed`: the body failed validation, or a field the network does not take (`callback` off Stellar, no `amount` where one is required). `invalid_amount`: more decimals than the asset has, or not above zero. `invalid_memo`: not a numeric MEMO_ID. `network_unsupported`: with a `dev` key, a network paid through deposit addresses that the sandbox does not settle yet. `asset_unsupported`: the cross-chain route does not trade that asset on that network (in the sandbox: not the network's test stablecoin). `merchant_fee_unsupported`: a merchant fee on such a network, or on Monad without deposit addresses.",
+            "description": "`validation_failed`: the body failed validation, or a field the network does not take (`callback` off Stellar, no `amount` where one is required). `invalid_amount`: more decimals than the asset has, or not above zero. `invalid_memo`: not a numeric MEMO_ID. `network_unsupported`: with a `dev` key, a network paid through deposit addresses that the sandbox does not settle yet; or Arc on a deployment that issues no Arc deposit addresses (an Arc link is paid only to one, `GET /v1/payment-intents/networks` says so). `asset_unsupported`: the cross-chain route does not trade that asset on that network (in the sandbox: not the network's test stablecoin). `merchant_fee_unsupported`: a merchant fee on such a network, or on Monad without deposit addresses.",
             "content": {
               "application/json": {
                 "schema": {
@@ -536,6 +536,7 @@
         "x-cosmos-upstream": [
           "Solana",
           "Monad",
+          "Arc",
           "Cross-chain route"
         ]
       }
@@ -573,6 +574,7 @@
                 "stellar",
                 "solana",
                 "monad",
+                "arc",
                 "eth",
                 "base",
                 "arb",
@@ -676,7 +678,7 @@
     },
     "/v1/payment-intents/networks": {
       "get": {
-        "description": "Every payment network, with whether a link can be created there with this key and why not. A `prod` key reaches every network on mainnet; a `dev` key reaches Stellar, Solana and Monad on their test networks, and the networks paid through deposit addresses where the sandbox settles them, each in its test stablecoin (`asset`). Read before offering a network in a form.\n\nRequires the `payments:read` scope. The shared public key may call it.",
+        "description": "Every payment network, with whether a link can be created there with this key and why not. A `prod` key reaches every network on mainnet; a `dev` key reaches the four chains settled natively (Arc, Monad, Solana, Stellar) on their test networks, and the networks paid through deposit addresses where the sandbox settles them, each in its test stablecoin (`asset`). On either tier Arc is available only where this deployment issues Arc deposit addresses. Read before offering a network in a form.\n\nRequires the `payments:read` scope. The shared public key may call it.",
         "operationId": "PaymentIntentsController_listNetworks_v1",
         "parameters": [],
         "responses": {
@@ -1166,7 +1168,8 @@
         "x-cosmos-upstream": [
           "Horizon",
           "Solana",
-          "Monad"
+          "Monad",
+          "Arc"
         ]
       },
       "delete": {
@@ -1277,7 +1280,7 @@
     },
     "/v1/payment-intents/{id}/validate": {
       "post": {
-        "description": "Looks `txHash` up on the intent's chain and checks it pays this intent (success, destination, asset, amount, memo or reference, age); a match settles it `SUCCEEDED` and emits `PAYMENT_INTENT_SUCCEEDED`. This intent's own payment that failed on-chain marks it `FAILED` (`PAYMENT_INTENT_FAILED`); any other mismatch answers `valid: false` with a `reason` and leaves the status unchanged. An `EXPIRED` intent still settles on a verified payment, a `SUCCEEDED` one answers as it is without asking the chain, and one transaction settles at most one intent of any consumer (the oldest it pays).\n\nRequires the `payments:write` scope.",
+        "description": "Looks `txHash` up on the intent's chain and checks it pays this intent (success, destination, asset, amount, memo or reference, age); a match settles it `SUCCEEDED` and emits `PAYMENT_INTENT_SUCCEEDED`. A failed transaction marks it `FAILED` (`PAYMENT_INTENT_FAILED`) only where it carries the intent's memo or reference (Stellar, Solana); on Monad and Arc it is a mismatch, and any mismatch answers `valid: false` with a `reason` and leaves the status unchanged. An `EXPIRED` intent still settles on a verified payment, a `SUCCEEDED` one answers as it is without asking the chain, and one transaction settles at most one intent of any consumer (the oldest it pays).\n\nRequires the `payments:write` scope.",
         "operationId": "PaymentIntentsController_validate_v1",
         "parameters": [
           {
@@ -1435,7 +1438,8 @@
         "x-cosmos-upstream": [
           "Horizon",
           "Solana",
-          "Monad"
+          "Monad",
+          "Arc"
         ]
       }
     },
@@ -2289,7 +2293,7 @@
             }
           },
           "400": {
-            "description": "The link cannot be paid from another network: a Stellar, Solana or Monad link on a test network or with a merchant fee, or one created without payments from other networks.",
+            "description": "The link cannot be paid from another network: an Arc link, a Stellar, Solana or Monad link on a test network or with a merchant fee, or one created without payments from other networks.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2943,7 +2947,7 @@
     },
     "/v1/customers": {
       "post": {
-        "description": "A customer holds up to 20 `wallets` on Stellar, Solana or Monad (the deprecated `account` counts as one of them), and a wallet named twice counts once. Payments settled from any of them count toward the customer. A wallet another of your customers already holds is `409 customer_wallet_taken`.\n\nRequires the `customers:write` scope.",
+        "description": "A customer holds up to 20 `wallets` on Stellar, Solana, Monad or Arc (the deprecated `account` counts as one of them), and a wallet named twice counts once. Payments settled from any of them count toward the customer. A wallet another of your customers already holds is `409 customer_wallet_taken`.\n\nRequires the `customers:write` scope.",
         "operationId": "CustomersController_create_v1",
         "parameters": [],
         "requestBody": {
@@ -3251,7 +3255,7 @@
     },
     "/v1/customers/{id}/wallets": {
       "post": {
-        "description": "A customer holds any number of wallets (up to 20), on Stellar, Solana or Monad; payments paid from any of them count toward it. A wallet the customer already holds answers as it is.\n\nRequires the `customers:write` scope.",
+        "description": "A customer holds any number of wallets (up to 20), on Stellar, Solana, Monad or Arc; payments paid from any of them count toward it. A wallet the customer already holds answers as it is.\n\nRequires the `customers:write` scope.",
         "operationId": "CustomersController_addWallet_v1",
         "parameters": [
           {
@@ -3929,7 +3933,7 @@
             "name": "chain",
             "required": false,
             "in": "query",
-            "description": "Which chain to list. Omitted means Stellar.",
+            "description": "Which chain to list. Omitted means Stellar. Only chains with a swap route (not Arc).",
             "schema": {
               "default": "stellar",
               "type": "string",
@@ -7583,7 +7587,8 @@
               "enum": [
                 "stellar",
                 "solana",
-                "monad"
+                "monad",
+                "arc"
               ],
               "type": "string"
             }
@@ -7679,7 +7684,7 @@
     },
     "/v1/aliases/by-address/{address}": {
       "get": {
-        "description": "The active aliases holding this address, oldest first, each with its `chain`, `network` and whether the address is its primary there, as `{ data }` (not paged). Without `chain` the chain is read off the address's own shape, and a Monad address matches whatever its letter case. An address no chain accepts answers an empty `data`, not an error.\n\nRequires the `payments:read` scope. The shared public key may call it.",
+        "description": "The active aliases holding this address, oldest first, each with its `chain`, `network` and whether the address is its primary there, as `{ data }` (not paged). Without `chain` the chain is read off the address's own shape (a 0x address is read as Monad: name `chain: arc` for Arc), and an EVM address matches whatever its letter case. An address no chain accepts answers an empty `data`, not an error.\n\nRequires the `payments:read` scope. The shared public key may call it.",
         "operationId": "AliasesController_byAddress_v1",
         "parameters": [
           {
@@ -7708,7 +7713,8 @@
               "enum": [
                 "stellar",
                 "solana",
-                "monad"
+                "monad",
+                "arc"
               ],
               "type": "string"
             }
@@ -9218,7 +9224,7 @@
     },
     "/v1/wallet/auth/finish": {
       "post": {
-        "description": "Send the session token as `X-Wallet-Session: {sessionToken}`. The gateway strips `Authorization`. The signature covers exactly:\n\n```\nCosmos Pay Wallet sign-in\nemail: {lowercased email}\naccount: {address}\nat: {signedAt}\n```\n\nsigned over those raw UTF-8 bytes with the account key, base64. The first line is one no Stellar transaction envelope can begin with, which is what makes signing it safe.\n\nOn Solana and Monad (`chain`), a `chain: {chain}` line follows the first one. Solana signs the bytes with ed25519 (`signMessage`; base64 or base58); Monad with EIP-191 `personal_sign` (0x-hex).\n\nRequires the `payments:write` scope. The shared public key may call it.",
+        "description": "Send the session token as `X-Wallet-Session: {sessionToken}`. The gateway strips `Authorization`. The signature covers exactly:\n\n```\nCosmos Pay Wallet sign-in\nemail: {lowercased email}\naccount: {address}\nat: {signedAt}\n```\n\nsigned over those raw UTF-8 bytes with the account key, base64. The first line is one no Stellar transaction envelope can begin with, which is what makes signing it safe.\n\nOn Solana, Monad and Arc (`chain`), a `chain: {chain}` line follows the first one. Solana signs the bytes with ed25519 (`signMessage`; base64 or base58); Monad and Arc with EIP-191 `personal_sign` (0x-hex).\n\nRequires the `payments:write` scope. The shared public key may call it.",
         "operationId": "WalletAuthController_finish_v1",
         "parameters": [
           {
@@ -9378,7 +9384,7 @@
     },
     "/v1/wallet/backup": {
       "put": {
-        "description": "What `changePassword` on the device sends. No session: the signature is the credential, and it covers the SHA-256 of the box, so one signature stores exactly one box and cannot be replayed to store another. The bytes are:\n\n```\nCosmos Pay Wallet backup\naccount: {address}\nbox: {sha256 hex of box}\nat: {signedAt}\n```\n\nOn Solana and Monad a `chain: {chain}` line follows the first one, and the bytes are signed as for sign-in.\n\nRequires the `payments:write` scope. The shared public key may call it.",
+        "description": "What `changePassword` on the device sends. No session: the signature is the credential, and it covers the SHA-256 of the box, so one signature stores exactly one box and cannot be replayed to store another. The bytes are:\n\n```\nCosmos Pay Wallet backup\naccount: {address}\nbox: {sha256 hex of box}\nat: {signedAt}\n```\n\nOn Solana, Monad and Arc a `chain: {chain}` line follows the first one, and the bytes are signed as for sign-in.\n\nRequires the `payments:write` scope. The shared public key may call it.",
         "operationId": "WalletBackupController_replaceBackup_v1",
         "parameters": [],
         "requestBody": {
@@ -16086,7 +16092,7 @@
     },
     "/v1/payment-links/fiat/{id}/direct/login": {
       "post": {
-        "description": "For a request whose `p2pDirect` is true: emails the payer a code (in the language `Accept-Language` prefers among Spanish, English and Portuguese; Spanish by default) and answers the `challenge` to send back with it. A new email also opens the payer’s account. Nothing about the payer is stored. `400 invalid_email`, `400 method_unavailable` when the request cannot be paid this way, `409 request_closed` unless it is open.",
+        "description": "For a request whose `p2pDirect` is true: emails the payer a code (in the language `Accept-Language` prefers among Spanish, English and Portuguese; Spanish by default) and answers the `challenge` to send back with it. A new email also opens the payer’s account. Nothing about the payer is stored. Besides the per-client budget, each email address and each request take a limited number of codes (`429 rate_limited` with `Retry-After` past either). `400 invalid_email`, `400 method_unavailable` when the request cannot be paid this way, `409 request_closed` unless it is open.",
         "operationId": "P2pDirectController_login_v1",
         "parameters": [
           {
@@ -18657,7 +18663,7 @@
     },
     "/v1/payment-links/fiat/{id}/transfers": {
       "post": {
-        "description": "For a request whose `methods` include `transfer`: the payer gives their CUIT/CUIL or DNI and is answered the exact amount, the alias and CVU to transfer it to and until when (an hour, never past the charge). The transfer must come from an account in the payer’s own name; it is detected on its own and the charge reads `processing`, then `paid`. The same document answers the same transfer (`200`), a new one `201`; only an HMAC of the document and its last three digits are kept. `400 invalid_document`, `400 method_unavailable` when the charge cannot be paid this way, `409 request_closed` unless it is open, `503 transfer_unavailable` when the account cannot be given right now.",
+        "description": "For a request whose `methods` include `transfer`: the payer gives their CUIT/CUIL or DNI and is answered the exact amount, the alias and CVU to transfer it to and until when (an hour, never past the charge). The transfer must come from an account in the payer’s own name; it is detected on its own and the charge reads `processing`, then `paid`. The same document answers the same transfer, with `200` whether it is new or not; only an HMAC of the document and its last three digits are kept. `400 invalid_document`, `400 method_unavailable` when the charge cannot be paid this way, `409 request_closed` unless it is open, `503 transfer_unavailable` when the account cannot be given right now.",
         "operationId": "BankTransferLinksController_open_v1",
         "parameters": [
           {
@@ -18683,40 +18689,7 @@
         },
         "responses": {
           "200": {
-            "description": "The transfer this document already has for the charge.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BankTransferEntity"
-                }
-              }
-            },
-            "headers": {
-              "ratelimit-limit": {
-                "description": "Requests allowed in the current window.",
-                "schema": {
-                  "type": "integer",
-                  "example": 30
-                }
-              },
-              "ratelimit-remaining": {
-                "description": "Requests left in the current window.",
-                "schema": {
-                  "type": "integer",
-                  "example": 0
-                }
-              },
-              "ratelimit-reset": {
-                "description": "Seconds until the window resets.",
-                "schema": {
-                  "type": "integer",
-                  "example": 42
-                }
-              }
-            }
-          },
-          "201": {
-            "description": "A new transfer was opened for this document.",
+            "description": "The transfer of this document for the charge, opened now or before (the answer does not say which).",
             "content": {
               "application/json": {
                 "schema": {
@@ -23038,7 +23011,7 @@
   },
   "info": {
     "title": "Cosmos Pay Payments API",
-    "description": "Payments API for merchants and wallets. It covers: payment intents on Stellar, Solana and Monad (with payment links, customers and a product catalog); swaps on Stellar (path payments), Solana and Monad, cross-chain swaps across Stellar, Solana, Monad and other networks, and USDT0 transfers from Stellar to EVM networks through a bridge; private payments with a hidden amount on Stellar; Stellar liquidity pools and yield vaults; fiat on/offramp and KYC through a fiat partner; and webhooks that notify your server of payment events. Liquidity pools, yield vaults, USDT0, private payments and the SEP-10 and SEP-30 routes are Stellar only. Paths already include the version (`/v1/...`). Pick the matching server and security scheme below. **Every failure returns the same envelope** (`ApiErrorBodyEntity`), and `code` is the part to branch on: `message` is prose and may be reworded. Each operation documents only the statuses it can really return: `429` appears where a budget is declared (the budget itself is published as `x-cosmos-rate-limit`), `502`/`503`/`504` where the route calls a provider (`x-cosmos-upstream`), and neither `401` nor `403` on the probes that need no credentials (`x-cosmos-public`). **Every operation says who may call it.** On a route that takes an API key, the description ends with the scope the key must hold, also published as `x-cosmos-scopes` (all of) and `x-cosmos-scopes-any` (one of); a key with the `admin` role passes every scope check, and `x-cosmos-public-key` marks the routes the shared public key may call. A route that takes no API key (`x-cosmos-public`) says in its description how it is called. Authenticate every request with your secret API key in the `Authorization: Bearer <apiKey>` header.",
+    "description": "Payments API for merchants and wallets. It covers: payment intents on every network payment links settle on (with payment links, customers and a product catalog); swaps on Stellar (path payments), Solana and Monad, cross-chain swaps across Stellar, Solana, Monad and other networks, and USDT0 transfers from Stellar to EVM networks through a bridge; private payments with a hidden amount on Stellar; Stellar liquidity pools and yield vaults; fiat on/offramp and KYC through a fiat partner; and webhooks that notify your server of payment events. Liquidity pools, yield vaults, USDT0, private payments and the SEP-10 and SEP-30 routes are Stellar only. Paths already include the version (`/v1/...`). Pick the matching server and security scheme below. **Every failure returns the same envelope** (`ApiErrorBodyEntity`), and `code` is the part to branch on: `message` is prose and may be reworded. Each operation documents only the statuses it can really return: `429` appears where a budget is declared (the budget itself is published as `x-cosmos-rate-limit`), `502`/`503`/`504` where the route calls a provider (`x-cosmos-upstream`), and neither `401` nor `403` on the probes that need no credentials (`x-cosmos-public`). **Every operation says who may call it.** On a route that takes an API key, the description ends with the scope the key must hold, also published as `x-cosmos-scopes` (all of) and `x-cosmos-scopes-any` (one of); a key with the `admin` role passes every scope check, and `x-cosmos-public-key` marks the routes the shared public key may call. A route that takes no API key (`x-cosmos-public`) says in its description how it is called. Authenticate every request with your secret API key in the `Authorization: Bearer <apiKey>` header.",
     "version": "1.0",
     "contact": {
       "name": "Cosmos Pay",
@@ -23489,6 +23462,7 @@
               "stellar",
               "solana",
               "monad",
+              "arc",
               "eth",
               "base",
               "arb",
@@ -23523,12 +23497,12 @@
               "fogo"
             ],
             "example": "stellar",
-            "description": "Network the payment settles on. TX intents are always Stellar; a link on a network other than Stellar, Solana and Monad is paid through deposit addresses (`GET /v1/payment-intents/{id}/deposits`)."
+            "description": "Network the payment settles on. TX intents are always Stellar; a link on a network other than Stellar, Solana, Monad and Arc is paid through deposit addresses (`GET /v1/payment-intents/{id}/deposits`)."
           },
           "network": {
             "type": "string",
             "example": "testnet",
-            "description": "Network tier, on every chain: `public` (mainnet) or `testnet` (Stellar testnet, Solana devnet, Monad testnet), the one the API key is for."
+            "description": "Network tier, on every chain: `public` (mainnet) or `testnet` (Stellar testnet, Solana devnet, Monad testnet, Arc Testnet), the one the API key is for."
           },
           "source": {
             "type": "string",
@@ -23565,13 +23539,13 @@
             "type": "object",
             "nullable": true,
             "example": null,
-            "description": "How the payment is found off Stellar. Solana: the Solana Pay `reference` key. Monad with deposit addresses: the intent’s own deposit address, which the link pays. Null otherwise."
+            "description": "How the payment is found off Stellar. Solana: the Solana Pay `reference` key. Monad and Arc with deposit addresses: the intent’s own deposit address, which the link pays. Null otherwise."
           },
           "networkFee": {
             "type": "object",
             "nullable": true,
             "example": null,
-            "description": "Deducted before the merchant is paid, in the asset’s units: the relayer’s fee for forwarding a Monad deposit. Null when nothing is."
+            "description": "Deducted before the merchant is paid, in the asset’s units: the relayer’s fee for forwarding a Monad or Arc deposit. Null when nothing is."
           },
           "merchantFee": {
             "nullable": true,
@@ -23783,6 +23757,7 @@
               "stellar",
               "solana",
               "monad",
+              "arc",
               "eth",
               "base",
               "arb",
@@ -23817,7 +23792,7 @@
               "fogo"
             ],
             "default": "stellar",
-            "description": "Network the payment settles on. Omit for Stellar. On Stellar, Solana and Monad the network tier (mainnet or test network) is the one your API key is for. Every other network settles through a cross-chain payment: it needs an `amount` and takes no `callback` or `merchantFee`. With a `dev` key it settles in the sandbox, on the networks `GET /v1/payment-intents/networks` marks available, in the network's test stablecoin."
+            "description": "Network the payment settles on. Omit for Stellar. On Stellar, Solana, Monad and Arc the network tier (mainnet or test network) is the one your API key is for. Every other network settles through a cross-chain payment: it needs an `amount` and takes no `callback` or `merchantFee`. With a `dev` key it settles in the sandbox, on the networks `GET /v1/payment-intents/networks` marks available, in the network's test stablecoin."
           },
           "destination": {
             "type": "string",
@@ -23826,17 +23801,17 @@
           },
           "amount": {
             "type": "string",
-            "description": "Amount the destination should receive, in the asset’s own units (XLM, SOL, MON, or the token). Omit to let the user enter it (e.g. donations), except on Monad, where the amount is part of how the payment is recognised, and on the networks paid through deposit addresses, where it is what the payment is quoted for. At most 7 decimals on Stellar; elsewhere, at most the asset’s own decimals.",
+            "description": "Amount the destination should receive, in the asset’s own units (XLM, SOL, MON, or the token). Omit to let the user enter it (e.g. donations), except on Monad without deposit addresses, where the amount is part of how the payment is recognised, and on the networks paid through deposit addresses, where it is what the payment is quoted for. At most 7 decimals on Stellar; elsewhere, at most the asset’s own decimals.",
             "example": "120.1234567"
           },
           "assetCode": {
             "type": "string",
-            "description": "Asset code the destination receives. Omit for the network’s coin (XLM, SOL, MON, ETH, BTC, ...). For a Solana or Monad token, the ticker it is labelled with, alongside `assetIssuer`. On the networks paid through deposit addresses, a symbol the cross-chain route lists once on that network (`GET /v1/cross-chain-swaps/assets`), or name the token by `assetIssuer`.",
+            "description": "Asset code the destination receives. Omit for the network’s coin (XLM, SOL, MON, ETH, BTC, ...). For a Solana or Monad token, the ticker it is labelled with, alongside `assetIssuer`. On Arc the coin is USDC, charged through its ERC-20 contract (6 decimals): omit it, or name `USDC` or `EURC` without `assetIssuer`; any other ERC-20 by `assetIssuer`, as on Monad. On the networks paid through deposit addresses, a symbol the cross-chain route lists once on that network (`GET /v1/cross-chain-swaps/assets`), or name the token by `assetIssuer`.",
             "example": "USDC"
           },
           "assetIssuer": {
             "type": "string",
-            "description": "Stellar: the issuer account. Solana: the SPL mint. Monad: the ERC-20 contract. Any other network: the token’s `contract` as `GET /v1/cross-chain-swaps/assets` lists it. Omit for the network’s coin.",
+            "description": "Stellar: the issuer account. Solana: the SPL mint. Monad and Arc: the ERC-20 contract (omit it on Arc for USDC and EURC). Any other network: the token’s `contract` as `GET /v1/cross-chain-swaps/assets` lists it. Omit for the network’s coin.",
             "example": "GCRCUE2C5TBNIPYHMEP7NK5RWTT2WBSZ75CMARH7GDOHDDCQH3XANFOB"
           },
           "memo": {
@@ -23846,7 +23821,7 @@
           },
           "msg": {
             "type": "string",
-            "description": "Shown to the user in their wallet (≤ 300 chars): SEP-7 `msg` on Stellar, the Solana Pay `message`. Not supported on Monad. On the networks paid through deposit addresses it is shown on the hosted checkout only.",
+            "description": "Shown to the user in their wallet (≤ 300 chars): SEP-7 `msg` on Stellar, the Solana Pay `message`. Not supported on Monad or Arc. On the networks paid through deposit addresses it is shown on the hosted checkout only.",
             "example": "pay me with lumens"
           },
           "callback": {
@@ -23867,7 +23842,7 @@
             "example": "ticket"
           },
           "merchantFee": {
-            "description": "Only with an `amount`: your own fee on this payment, paid in its asset to `wallet` (an account on the link's chain, not `destination`). `paidBy: recipient` takes the fee from `amount`; `payer` adds it on top. Stellar: a SEP-7 `pay` link pays one account, so `uri` is the hosted checkout, which asks for the payer and has `POST /v1/payment-links/{id}/transaction` build the envelope with both payments. Solana: `uri` is a Solana Pay transaction request (`/v1/payment-links/{id}/solana-pay`); a SOL fee goes to an existing account. Monad: needs deposit addresses (`merchant_fee_unsupported` without them); the deposit address pays the fee (PaymentSplitForwarder) and the link asks for the amount, plus the fee when the payer pays it. Not supported on the networks paid through deposit addresses (`merchant_fee_unsupported`).",
+            "description": "Only with an `amount`: your own fee on this payment, paid in its asset to `wallet` (an account on the link's chain, not `destination`). `paidBy: recipient` takes the fee from `amount`; `payer` adds it on top. Stellar: a SEP-7 `pay` link pays one account, so `uri` is the hosted checkout, which asks for the payer and has `POST /v1/payment-links/{id}/transaction` build the envelope with both payments. Solana: `uri` is a Solana Pay transaction request (`/v1/payment-links/{id}/solana-pay`); a SOL fee goes to an existing account. Monad and Arc: need deposit addresses (`merchant_fee_unsupported` without them); the deposit address pays the fee (PaymentSplitForwarder) and the link asks for the amount, plus the fee when the payer pays it. Not supported on the networks paid through deposit addresses (`merchant_fee_unsupported`).",
             "allOf": [
               {
                 "$ref": "#/components/schemas/MerchantFeeDto"
@@ -23883,7 +23858,7 @@
             ]
           }
         },
-        "description": "Request to create a `pay` intent: a payment link on any network payment links settle on (`chain`). Stellar, Solana and Monad links are wallet links (SEP-7, Solana Pay, EIP-681); a link on any other network is the hosted checkout, paid through a deposit address made for each payment.",
+        "description": "Request to create a `pay` intent: a payment link on any network payment links settle on (`chain`). Stellar, Solana, Monad and Arc links are wallet links (SEP-7, Solana Pay, EIP-681); a link on any other network is the hosted checkout, paid through a deposit address made for each payment.",
         "required": [
           "destination"
         ]
@@ -23924,6 +23899,7 @@
               "stellar",
               "solana",
               "monad",
+              "arc",
               "eth",
               "base",
               "arb",
@@ -23958,12 +23934,12 @@
               "fogo"
             ],
             "example": "stellar",
-            "description": "Network the payment settles on. TX intents are always Stellar; a link on a network other than Stellar, Solana and Monad is paid through deposit addresses (`GET /v1/payment-intents/{id}/deposits`)."
+            "description": "Network the payment settles on. TX intents are always Stellar; a link on a network other than Stellar, Solana, Monad and Arc is paid through deposit addresses (`GET /v1/payment-intents/{id}/deposits`)."
           },
           "network": {
             "type": "string",
             "example": "testnet",
-            "description": "Network tier, on every chain: `public` (mainnet) or `testnet` (Stellar testnet, Solana devnet, Monad testnet), the one the API key is for."
+            "description": "Network tier, on every chain: `public` (mainnet) or `testnet` (Stellar testnet, Solana devnet, Monad testnet, Arc Testnet), the one the API key is for."
           },
           "source": {
             "type": "object",
@@ -23974,7 +23950,7 @@
           "destination": {
             "type": "string",
             "example": "GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO",
-            "description": "Payee account on the intent's chain (Stellar G..., Solana base58, Monad 0x...)."
+            "description": "Payee account on the intent's chain (Stellar G..., Solana base58, Monad and Arc 0x...)."
           },
           "amount": {
             "type": "object",
@@ -23991,7 +23967,7 @@
             "type": "object",
             "nullable": true,
             "example": null,
-            "description": "Stellar: the issuer. Solana: the SPL mint. Monad: the ERC-20 contract. Null for the native coin."
+            "description": "Stellar: the issuer. Solana: the SPL mint. Monad and Arc: the ERC-20 contract. Null for the native coin."
           },
           "memo": {
             "type": "string",
@@ -24002,13 +23978,13 @@
             "type": "object",
             "nullable": true,
             "example": null,
-            "description": "How the payment is found off Stellar. Solana: the Solana Pay `reference` key. Monad with deposit addresses: the intent’s own deposit address, which the link pays. Null otherwise."
+            "description": "How the payment is found off Stellar. Solana: the Solana Pay `reference` key. Monad and Arc with deposit addresses: the intent’s own deposit address, which the link pays. Null otherwise."
           },
           "networkFee": {
             "type": "object",
             "nullable": true,
             "example": null,
-            "description": "Deducted before the merchant is paid, in the asset’s units: the relayer’s fee for forwarding a Monad deposit. Null when nothing is."
+            "description": "Deducted before the merchant is paid, in the asset’s units: the relayer’s fee for forwarding a Monad or Arc deposit. Null when nothing is."
           },
           "merchantFee": {
             "nullable": true,
@@ -24079,7 +24055,7 @@
           "uri": {
             "type": "string",
             "example": "web+stellar:pay?destination=GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO&amount=120.1234567",
-            "description": "The payment link: SEP-7 `web+stellar:pay` on Stellar, Solana Pay on Solana, EIP-681 on Monad, the hosted checkout on every other network. With a merchant fee it is the hosted checkout on Stellar and a Solana Pay transaction request on Solana."
+            "description": "The payment link: SEP-7 `web+stellar:pay` on Stellar, Solana Pay on Solana, EIP-681 on Monad and Arc, the hosted checkout on every other network. With a merchant fee it is the hosted checkout on Stellar and a Solana Pay transaction request on Solana."
           },
           "qr": {
             "type": "string",
@@ -24152,7 +24128,7 @@
             "description": "When the intent itself last changed (ISO 8601)."
           }
         },
-        "description": "A `pay` intent as created: a payment link and its QR. On Stellar, Solana and Monad a wallet link (SEP-7 `pay`, Solana Pay, EIP-681); on every other network the hosted checkout, paid through a deposit address made for each payment.",
+        "description": "A `pay` intent as created: a payment link and its QR. On Stellar, Solana, Monad and Arc a wallet link (SEP-7 `pay`, Solana Pay, EIP-681); on every other network the hosted checkout, paid through a deposit address made for each payment.",
         "required": [
           "id",
           "kind",
@@ -24226,6 +24202,7 @@
               "stellar",
               "solana",
               "monad",
+              "arc",
               "eth",
               "base",
               "arb",
@@ -24260,12 +24237,12 @@
               "fogo"
             ],
             "example": "stellar",
-            "description": "Network the payment settles on. TX intents are always Stellar; a link on a network other than Stellar, Solana and Monad is paid through deposit addresses (`GET /v1/payment-intents/{id}/deposits`)."
+            "description": "Network the payment settles on. TX intents are always Stellar; a link on a network other than Stellar, Solana, Monad and Arc is paid through deposit addresses (`GET /v1/payment-intents/{id}/deposits`)."
           },
           "network": {
             "type": "string",
             "example": "testnet",
-            "description": "Network tier, on every chain: `public` (mainnet) or `testnet` (Stellar testnet, Solana devnet, Monad testnet), the one the API key is for."
+            "description": "Network tier, on every chain: `public` (mainnet) or `testnet` (Stellar testnet, Solana devnet, Monad testnet, Arc Testnet), the one the API key is for."
           },
           "source": {
             "type": "object",
@@ -24276,7 +24253,7 @@
           "destination": {
             "type": "string",
             "example": "GASMERCHANT…56charpublickey",
-            "description": "Payee account on the intent's chain (Stellar G..., Solana base58, Monad 0x...)."
+            "description": "Payee account on the intent's chain (Stellar G..., Solana base58, Monad and Arc 0x...)."
           },
           "amount": {
             "type": "object",
@@ -24293,7 +24270,7 @@
             "type": "object",
             "nullable": true,
             "example": null,
-            "description": "Stellar: the issuer. Solana: the SPL mint. Monad: the ERC-20 contract."
+            "description": "Stellar: the issuer. Solana: the SPL mint. Monad and Arc: the ERC-20 contract."
           },
           "memo": {
             "type": "string",
@@ -24304,13 +24281,13 @@
             "type": "object",
             "nullable": true,
             "example": null,
-            "description": "How the payment is found off Stellar. Solana: the Solana Pay `reference` key. Monad with deposit addresses: the intent’s own deposit address, which the link pays. Null otherwise."
+            "description": "How the payment is found off Stellar. Solana: the Solana Pay `reference` key. Monad and Arc with deposit addresses: the intent’s own deposit address, which the link pays. Null otherwise."
           },
           "networkFee": {
             "type": "object",
             "nullable": true,
             "example": null,
-            "description": "Deducted before the merchant is paid, in the asset’s units: the relayer’s fee for forwarding a Monad deposit. Null when nothing is."
+            "description": "Deducted before the merchant is paid, in the asset’s units: the relayer’s fee for forwarding a Monad or Arc deposit. Null when nothing is."
           },
           "merchantFee": {
             "nullable": true,
@@ -24380,7 +24357,7 @@
           },
           "uri": {
             "type": "string",
-            "description": "The payment link: SEP-7 on Stellar (`tx` for TX intents, `pay` for PAY), a Solana Pay transfer request on Solana, EIP-681 on Monad, the hosted checkout on every other network.",
+            "description": "The payment link: SEP-7 on Stellar (`tx` for TX intents, `pay` for PAY), a Solana Pay transfer request on Solana, EIP-681 on Monad and Arc, the hosted checkout on every other network.",
             "example": "web+stellar:tx?xdr=AAAAAgAAAABx…"
           },
           "qr": {
@@ -24454,7 +24431,7 @@
             "description": "When the intent itself last changed (ISO 8601)."
           }
         },
-        "description": "A payment intent: one expected payment to a merchant on Stellar, Solana or Monad, with its payment link and lifecycle status.",
+        "description": "A payment intent: one expected payment to a merchant on any network payment links settle on, with its payment link and lifecycle status.",
         "required": [
           "id",
           "kind",
@@ -24560,6 +24537,7 @@
               "stellar",
               "solana",
               "monad",
+              "arc",
               "eth",
               "base",
               "arb",
@@ -24612,7 +24590,7 @@
           "settlesThroughDeposits": {
             "type": "boolean",
             "example": true,
-            "description": "True when a link here is paid through a deposit address made for each payment (every network but Stellar, Solana and Monad)."
+            "description": "True when a link here is paid through a deposit address made for each payment (every network but Stellar, Solana, Monad and Arc)."
           },
           "available": {
             "type": "boolean",
@@ -25187,7 +25165,7 @@
         "properties": {
           "txHash": {
             "type": "string",
-            "description": "The transaction to validate against this intent, in its chain’s own form: a Stellar hash (64 hex), a Solana signature (base58) or a Monad hash (0x + 64 hex). It must be the one the intent’s chain uses.",
+            "description": "The transaction to validate against this intent, in its chain’s own form: a Stellar hash (64 hex), a Solana signature (base58) or a Monad or Arc hash (0x + 64 hex). It must be the one the intent’s chain uses.",
             "example": "3389e9f0d6b3e3f1c2a1b0c9d8e7f6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9"
           }
         },
@@ -25255,7 +25233,7 @@
           },
           "txHash": {
             "type": "string",
-            "description": "The transaction once it is submitted, in its chain’s own form: a Stellar hash (64 hex), a Solana signature (base58) or a Monad hash (0x + 64 hex). Hex is stored lowercase. A transaction already recorded on another of your payment intents is refused with 409 `idempotency_conflict`.",
+            "description": "The transaction once it is submitted, in its chain’s own form: a Stellar hash (64 hex), a Solana signature (base58) or a Monad or Arc hash (0x + 64 hex). Hex is stored lowercase. A transaction already recorded on another of your payment intents is refused with 409 `idempotency_conflict`.",
             "example": "3389e9f0d6b3e3f1c2a1b0c9d8e7f6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9",
             "pattern": "^(?:[0-9a-fA-F]{64}|0x[0-9a-fA-F]{64}|[1-9A-HJ-NP-Za-km-z]{80,90})$"
           },
@@ -25329,6 +25307,7 @@
               "stellar",
               "solana",
               "monad",
+              "arc",
               "eth",
               "base",
               "arb",
@@ -25372,7 +25351,7 @@
               "testnet"
             ],
             "example": "public",
-            "description": "Network tier: `public` (mainnet) or `testnet` (Stellar testnet, Solana devnet, Monad testnet)."
+            "description": "Network tier: `public` (mainnet) or `testnet` (Stellar testnet, Solana devnet, Monad testnet, Arc Testnet)."
           },
           "status": {
             "type": "string",
@@ -25391,7 +25370,7 @@
             "type": "string",
             "nullable": true,
             "example": "GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO",
-            "description": "The address the payer sends to, always the one inside `uri`. Stellar and Solana: the merchant’s account. Monad with a relayer: the intent’s own deposit address, which forwards the payment to the merchant less `networkFee`. Null on every other network: the payer pays a deposit address made for the payment (`POST /v1/payment-links/{id}/deposits`), never the merchant directly."
+            "description": "The address the payer sends to, always the one inside `uri`. Stellar and Solana: the merchant’s account. Monad and Arc with a relayer: the intent’s own deposit address, which forwards the payment to the merchant less `networkFee`. Null on every other network: the payer pays a deposit address made for the payment (`POST /v1/payment-links/{id}/deposits`), never the merchant directly."
           },
           "amount": {
             "type": "string",
@@ -25408,7 +25387,7 @@
             "type": "string",
             "nullable": true,
             "example": null,
-            "description": "Stellar: the issuer. Solana: the SPL mint. Monad: the ERC-20 contract. Null for the native coin."
+            "description": "Stellar: the issuer. Solana: the SPL mint. Monad and Arc: the ERC-20 contract. Null for the native coin."
           },
           "memo": {
             "type": "string",
@@ -25424,7 +25403,7 @@
           "uri": {
             "type": "string",
             "example": "web+stellar:pay?destination=GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO&amount=25.5&memo=4127759120438726917&memo_type=MEMO_ID&msg=Order+%2324",
-            "description": "The payment link, exactly as the wallet opens it: SEP-7 on Stellar, Solana Pay on Solana, EIP-681 on Monad, the hosted checkout on every other network. It is the same link the merchant handed out, so it carries what the wallet needs: a SEP-7 `callback` the merchant set and, for a `TX` intent, the unsigned envelope."
+            "description": "The payment link, exactly as the wallet opens it: SEP-7 on Stellar, Solana Pay on Solana, EIP-681 on Monad and Arc, the hosted checkout on every other network. It is the same link the merchant handed out, so it carries what the wallet needs: a SEP-7 `callback` the merchant set and, for a `TX` intent, the unsigned envelope."
           },
           "qr": {
             "type": "string",
@@ -25441,7 +25420,7 @@
             "type": "string",
             "nullable": true,
             "example": null,
-            "description": "Deducted before the merchant is paid, in the asset’s units: the relayer’s fee for forwarding a Monad deposit. Null when nothing is."
+            "description": "Deducted before the merchant is paid, in the asset’s units: the relayer’s fee for forwarding a Monad or Arc deposit. Null when nothing is."
           },
           "merchantFee": {
             "nullable": true,
@@ -25461,7 +25440,7 @@
           "crossChainPayment": {
             "type": "boolean",
             "example": true,
-            "description": "True when the payer may pay from another network and asset, through a deposit address made for the payment (`/v1/payment-links/{id}/deposit-assets`, `/quote`, `/deposits`). Always true on the networks with no wallet link of their own, where it is the way to pay; on Stellar, Solana and Monad, true for a mainnet link with an amount and no merchant fee."
+            "description": "True when the payer may pay from another network and asset, through a deposit address made for the payment (`/v1/payment-links/{id}/deposit-assets`, `/quote`, `/deposits`). Always true on the networks with no wallet link of their own, where it is the way to pay; on Stellar, Solana and Monad, true for a mainnet link with an amount and no merchant fee; never on Arc, which the cross-chain route does not reach."
           },
           "expiresAt": {
             "type": "string",
@@ -26171,7 +26150,8 @@
             "enum": [
               "stellar",
               "solana",
-              "monad"
+              "monad",
+              "arc"
             ],
             "example": "solana",
             "description": "The chain the wallet is on."
@@ -26179,7 +26159,7 @@
           "address": {
             "type": "string",
             "example": "7EcDhSYGxXyscszYEp35KHN8vvw3svAuLKTzXwCFLtV",
-            "description": "The address on that chain: a Stellar account (G..., checksum verified), a Solana address (base58, 32 bytes) or a Monad address (0x + 40 hex, any case; stored EIP-55 checksummed). Payment intents whose payer (`source`) is this address count toward the customer."
+            "description": "The address on that chain: a Stellar account (G..., checksum verified), a Solana address (base58, 32 bytes) or a Monad or Arc address (0x + 40 hex, any case; stored EIP-55 checksummed). Payment intents whose payer (`source`) is this address count toward the customer."
           },
           "label": {
             "type": "string",
@@ -26220,7 +26200,7 @@
             "type": "string",
             "example": "GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO",
             "deprecated": true,
-            "description": "Deprecated: use `wallets`. One wallet, its chain read from its shape: a Stellar account (G..., checksum verified), a Solana address (base58, 32 bytes) or a Monad address (0x + 40 hex, any case; stored EIP-55 checksummed). It is added to `wallets`."
+            "description": "Deprecated: use `wallets`. One wallet, its chain read from its shape: a Stellar account (G..., checksum verified), a Solana address (base58, 32 bytes) or a Monad address (0x + 40 hex, any case; stored EIP-55 checksummed; a 0x address is read as Monad: add an Arc wallet through `wallets` with `chain: arc`). It is added to `wallets`."
           },
           "wallets": {
             "description": "The customer's wallets, on any chain payments settle on, up to 20. Payment intents paid from any of them count toward the customer. A wallet belongs to one customer: one that another customer of yours already holds answers `409 customer_wallet_taken`.",
@@ -26253,7 +26233,8 @@
             "enum": [
               "stellar",
               "solana",
-              "monad"
+              "monad",
+              "arc"
             ],
             "example": "stellar",
             "description": "The chain the wallet is on."
@@ -26261,7 +26242,7 @@
           "address": {
             "type": "string",
             "example": "GCALNQQBXAPZ2WIRSDDBMSTAKCUH5SG6U76YBFLQLIXJTF7FE5AX7AOO",
-            "description": "The address, in its chain's stored spelling (EIP-55 on Monad)."
+            "description": "The address, in its chain's stored spelling (EIP-55 on Monad and Arc)."
           },
           "label": {
             "type": "object",
@@ -27736,7 +27717,7 @@
               "monad"
             ],
             "default": "stellar",
-            "description": "The chain to swap on. Omitted means Stellar. solana → the Solana swap route, monad → the Monad swap route; both mainnet only. Swaps between chains are /v1/cross-chain-swaps."
+            "description": "The chain to swap on. Omitted means Stellar. solana → the Solana swap route, monad → the Monad swap route; both mainnet only. Arc has no swap route and is refused. Swaps between chains are /v1/cross-chain-swaps."
           },
           "sourceAssetCode": {
             "type": "string",
@@ -27992,7 +27973,7 @@
               "monad"
             ],
             "default": "stellar",
-            "description": "The chain to swap on. Omitted means Stellar. solana → the Solana swap route, monad → the Monad swap route; both mainnet only. Swaps between chains are /v1/cross-chain-swaps."
+            "description": "The chain to swap on. Omitted means Stellar. solana → the Solana swap route, monad → the Monad swap route; both mainnet only. Arc has no swap route and is refused. Swaps between chains are /v1/cross-chain-swaps."
           },
           "sourceAssetCode": {
             "type": "string",
@@ -31307,7 +31288,8 @@
             "enum": [
               "stellar",
               "solana",
-              "monad"
+              "monad",
+              "arc"
             ],
             "description": "Chain the payments settled on.",
             "example": "stellar"
@@ -31418,7 +31400,8 @@
             "enum": [
               "stellar",
               "solana",
-              "monad"
+              "monad",
+              "arc"
             ],
             "description": "Chain the payment settled on.",
             "example": "stellar"
@@ -32252,7 +32235,8 @@
             "enum": [
               "stellar",
               "solana",
-              "monad"
+              "monad",
+              "arc"
             ],
             "description": "Chain the payment intents are on.",
             "example": "stellar"
@@ -33156,14 +33140,15 @@
             "enum": [
               "stellar",
               "solana",
-              "monad"
+              "monad",
+              "arc"
             ],
             "example": "stellar",
             "description": "The chain the address is on."
           },
           "address": {
             "type": "string",
-            "description": "On `chain`: Stellar G…, Solana base58, Monad 0x… (EIP-55)."
+            "description": "On `chain`: Stellar G…, Solana base58, Monad and Arc 0x… (EIP-55)."
           },
           "network": {
             "type": "string",
@@ -33211,7 +33196,8 @@
             "enum": [
               "stellar",
               "solana",
-              "monad"
+              "monad",
+              "arc"
             ],
             "description": "The chain resolved on: the one asked for, else Stellar."
           },
@@ -33277,7 +33263,8 @@
             "enum": [
               "stellar",
               "solana",
-              "monad"
+              "monad",
+              "arc"
             ],
             "example": "stellar",
             "description": "The chain the address is on."
@@ -33330,14 +33317,15 @@
             "enum": [
               "stellar",
               "solana",
-              "monad"
+              "monad",
+              "arc"
             ],
             "default": "stellar",
-            "description": "Chain the address is on. Omit for Stellar. Stellar signs the challenge digest (ed25519); Solana signs the challenge text (ed25519, `signMessage`); Monad signs it with EIP-191 `personal_sign`."
+            "description": "Chain the address is on. Omit for Stellar. Stellar signs the challenge digest (ed25519); Solana signs the challenge text (ed25519, `signMessage`); Monad and Arc sign it with EIP-191 `personal_sign`."
           },
           "address": {
             "type": "string",
-            "description": "The address on `chain`: Stellar G…, Solana base58, Monad 0x….",
+            "description": "The address on `chain`: Stellar G…, Solana base58, Monad and Arc 0x….",
             "example": "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"
           },
           "network": {
@@ -33372,7 +33360,7 @@
           },
           "message": {
             "type": "string",
-            "description": "The EXACT string to sign: digested first on Stellar, signed as text on Solana and Monad. Returned rather than described so a client never rebuilds it from prose. A client that assembles the fields itself is one field-order change away from producing signatures nothing accepts."
+            "description": "The EXACT string to sign: digested first on Stellar, signed as text on Solana, Monad and Arc. Returned rather than described so a client never rebuilds it from prose. A client that assembles the fields itself is one field-order change away from producing signatures nothing accepts."
           },
           "domain": {
             "type": "string",
@@ -33421,7 +33409,7 @@
           },
           "signature": {
             "type": "string",
-            "description": "Stellar: base64 ed25519 over the challenge digest. Solana: base64 or base58 ed25519 over the challenge text. Monad: 0x-hex EIP-191 signature over the challenge text."
+            "description": "Stellar: base64 ed25519 over the challenge digest. Solana: base64 or base58 ed25519 over the challenge text. Monad and Arc: 0x-hex EIP-191 signature over the challenge text."
           },
           "label": {
             "type": "string",
@@ -33533,14 +33521,15 @@
             "enum": [
               "stellar",
               "solana",
-              "monad"
+              "monad",
+              "arc"
             ],
             "default": "stellar",
-            "description": "Chain the address is on. Omit for Stellar. Stellar signs the challenge digest (ed25519); Solana signs the challenge text (ed25519, `signMessage`); Monad signs it with EIP-191 `personal_sign`."
+            "description": "Chain the address is on. Omit for Stellar. Stellar signs the challenge digest (ed25519); Solana signs the challenge text (ed25519, `signMessage`); Monad and Arc sign it with EIP-191 `personal_sign`."
           },
           "address": {
             "type": "string",
-            "description": "The address on `chain`: Stellar G…, Solana base58, Monad 0x…."
+            "description": "The address on `chain`: Stellar G…, Solana base58, Monad and Arc 0x…."
           },
           "network": {
             "type": "string",
@@ -33553,7 +33542,7 @@
           },
           "signature": {
             "type": "string",
-            "description": "Stellar: base64 ed25519 over the challenge digest. Solana: base64 or base58 ed25519 over the challenge text. Monad: 0x-hex EIP-191 signature over the challenge text."
+            "description": "Stellar: base64 ed25519 over the challenge digest. Solana: base64 or base58 ed25519 over the challenge text. Monad and Arc: 0x-hex EIP-191 signature over the challenge text."
           },
           "label": {
             "type": "string",
@@ -33632,10 +33621,11 @@
             "enum": [
               "stellar",
               "solana",
-              "monad"
+              "monad",
+              "arc"
             ],
             "default": "stellar",
-            "description": "Chain the address is on. Omit for Stellar. Stellar signs the challenge digest (ed25519); Solana signs the challenge text (ed25519, `signMessage`); Monad signs it with EIP-191 `personal_sign`."
+            "description": "Chain the address is on. Omit for Stellar. Stellar signs the challenge digest (ed25519); Solana signs the challenge text (ed25519, `signMessage`); Monad and Arc sign it with EIP-191 `personal_sign`."
           },
           "address": {
             "type": "string",
@@ -33652,7 +33642,7 @@
           },
           "signature": {
             "type": "string",
-            "description": "Stellar: base64 ed25519 over the challenge digest. Solana: base64 or base58 ed25519 over the challenge text. Monad: 0x-hex EIP-191 signature over the challenge text."
+            "description": "Stellar: base64 ed25519 over the challenge digest. Solana: base64 or base58 ed25519 over the challenge text. Monad and Arc: 0x-hex EIP-191 signature over the challenge text."
           }
         },
         "description": "Request to finish an email recovery: the emailed token and a signature over a RECOVER challenge by the address that takes ownership.",
@@ -33707,14 +33697,15 @@
             "enum": [
               "stellar",
               "solana",
-              "monad"
+              "monad",
+              "arc"
             ],
             "example": "stellar",
             "description": "The chain of the backed-up account."
           },
           "address": {
             "type": "string",
-            "description": "The account this box restores to, on `chain` (Stellar G…, Solana base58, Monad 0x…)."
+            "description": "The account this box restores to, on `chain` (Stellar G…, Solana base58, Monad and Arc 0x…)."
           },
           "stellarAddress": {
             "type": "string",
@@ -34169,14 +34160,15 @@
             "enum": [
               "stellar",
               "solana",
-              "monad"
+              "monad",
+              "arc"
             ],
             "default": "stellar",
-            "description": "Chain the account is on. Omit for Stellar. Solana signs the challenge with ed25519 over its UTF-8 bytes; Monad with EIP-191 `personal_sign`."
+            "description": "Chain the account is on. Omit for Stellar. Solana signs the challenge with ed25519 over its UTF-8 bytes; Monad and Arc with EIP-191 `personal_sign`."
           },
           "address": {
             "type": "string",
-            "description": "The account on `chain`: Stellar G…, Solana base58, Monad 0x…. Send this or `stellarAddress`, not both.",
+            "description": "The account on `chain`: Stellar G…, Solana base58, Monad and Arc 0x…. Send this or `stellarAddress`, not both.",
             "example": "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"
           },
           "stellarAddress": {
@@ -34192,7 +34184,7 @@
           },
           "signature": {
             "type": "string",
-            "description": "Signature over the sign-in challenge: base64 ed25519 on Stellar, base64 or base58 ed25519 on Solana, 0x-hex EIP-191 on Monad. The exact bytes are documented on the operation; a client that rebuilds them from prose is one field-order change away from producing signatures nothing accepts."
+            "description": "Signature over the sign-in challenge: base64 ed25519 on Stellar, base64 or base58 ed25519 on Solana, 0x-hex EIP-191 on Monad and Arc. The exact bytes are documented on the operation; a client that rebuilds them from prose is one field-order change away from producing signatures nothing accepts."
           },
           "backup": {
             "type": "string",
@@ -34226,14 +34218,15 @@
             "enum": [
               "stellar",
               "solana",
-              "monad"
+              "monad",
+              "arc"
             ],
             "default": "stellar",
-            "description": "Chain the account is on. Omit for Stellar. Solana signs the challenge with ed25519 over its UTF-8 bytes; Monad with EIP-191 `personal_sign`."
+            "description": "Chain the account is on. Omit for Stellar. Solana signs the challenge with ed25519 over its UTF-8 bytes; Monad and Arc with EIP-191 `personal_sign`."
           },
           "address": {
             "type": "string",
-            "description": "The account on `chain`: Stellar G…, Solana base58, Monad 0x…. Send this or `stellarAddress`, not both.",
+            "description": "The account on `chain`: Stellar G…, Solana base58, Monad and Arc 0x…. Send this or `stellarAddress`, not both.",
             "example": "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"
           },
           "stellarAddress": {
@@ -34286,14 +34279,15 @@
             "enum": [
               "stellar",
               "solana",
-              "monad"
+              "monad",
+              "arc"
             ],
             "example": "stellar",
             "description": "The chain of the account whose box was replaced."
           },
           "address": {
             "type": "string",
-            "description": "The account whose box was replaced, on `chain` (Stellar G…, Solana base58, Monad 0x…)."
+            "description": "The account whose box was replaced, on `chain` (Stellar G…, Solana base58, Monad and Arc 0x…)."
           },
           "stellarAddress": {
             "type": "string",

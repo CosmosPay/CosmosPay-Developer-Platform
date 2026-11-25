@@ -99,9 +99,11 @@ _openapi:
           the language `Accept-Language` prefers among Spanish, English and
           Portuguese; Spanish by default) and answers the `challenge` to send
           back with it. A new email also opens the payer’s account. Nothing
-          about the payer is stored. `400 invalid_email`, `400
-          method_unavailable` when the request cannot be paid this way, `409
-          request_closed` unless it is open.'
+          about the payer is stored. Besides the per-client budget, each email
+          address and each request take a limited number of codes (`429
+          rate_limited` with `Retry-After` past either). `400 invalid_email`,
+          `400 method_unavailable` when the request cannot be paid this way,
+          `409 request_closed` unless it is open.'
         heading: start-verifying-a-payer-by-email-no-api-key
       - content: Trades the emailed code for the payer’s `session` on this request, to
           send in `X-Payer-Session` on the other `.../direct/*` routes until
@@ -161,10 +163,10 @@ _openapi:
           CVU to transfer it to and until when (an hour, never past the charge).
           The transfer must come from an account in the payer’s own name; it is
           detected on its own and the charge reads `processing`, then `paid`.
-          The same document answers the same transfer (`200`), a new one `201`;
-          only an HMAC of the document and its last three digits are kept. `400
-          invalid_document`, `400 method_unavailable` when the charge cannot be
-          paid this way, `409 request_closed` unless it is open, `503
+          The same document answers the same transfer, with `200` whether it is
+          new or not; only an HMAC of the document and its last three digits are
+          kept. `400 invalid_document`, `400 method_unavailable` when the charge
+          cannot be paid this way, `409 request_closed` unless it is open, `503
           transfer_unavailable` when the account cannot be given right now.'
         heading: get-bank-transfer-instructions-for-a-charge-no-api-key
 ---
