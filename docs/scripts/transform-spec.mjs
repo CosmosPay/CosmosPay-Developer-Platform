@@ -107,7 +107,20 @@ export const TAGS = [
       'The payer’s view of one payment link, served without a key to the hosted checkout ' +
       'on payments.cosmospay.lat. The link id is the capability: anyone holding it can read ' +
       'the amount, the address to pay and the live status, and nothing about the merchant. ' +
-      'A charge in local money shown as a QR is read and paid the same way, under `/fiat/{id}`.',
+      'A charge in local money shown as a QR has its own page, Charges in Local Money.',
+  },
+  {
+    // Not a server tag: transformSpec moves the operations under /v1/payment-links/fiat/ here
+    // (FIAT_CHARGES), so neither page passes the 500 KB HTML budget (scripts/build-docs.mjs): the
+    // payment links page reached 571 KB with the cross-chain deposit routes and the direct
+    // transfer routes on it.
+    name: 'fiat-charges',
+    title: 'Charges in Local Money',
+    meta: 'Pay a Cosmos Pay charge in local money without an API key: read it, pay it by bank transfer or open the payment window.',
+    description:
+      'The payer’s side of a charge in local money shown as a QR, served without a key to its payer ' +
+      'page on payments.cosmospay.lat. The charge id is the capability: anyone holding it can read ' +
+      'the amount and how it can be paid, and nothing about the seller’s account.',
   },
   {
     name: 'public-key',
@@ -141,6 +154,14 @@ export const TAGS = [
     name: 'p2p-onramp',
     title: 'P2P On-ramp',
     description: 'Local money in through P2P sellers: the market, a firm quote, purchase sessions that open a hosted purchase delivered to the address you name, and charges in local money shown as a QR that the payer pays on a hosted page.',
+  },
+  {
+    name: 'bank-transfers',
+    title: 'Bank transfers',
+    description:
+      'Your account for charges paid by bank transfer: open it in your name, complete its ' +
+      'verification on a hosted form, and once it is approved the payers of your charges in ' +
+      'pesos transfer to its alias and CVU, and the money is converted to your token.',
   },
   {
     name: 'p2p-offramp',
@@ -245,6 +266,8 @@ const KEPT_SCHEMES = new Set(['sep-token']);
 const HTTP_METHODS = new Set(['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace']);
 /** The KYC operations the docs show on their own page (the `kyc-accounts` tag above). */
 const KYC_ACCOUNTS = /\/(?:wallets|bank-accounts)(?:\/|$)|^\/v1\/kyc\/(?:rails|bank-details)$/;
+/** The payment-links operations the docs show on their own page (the `fiat-charges` tag above). */
+const FIAT_CHARGES = /^\/v1\/payment-links\/fiat\//;
 
 /** Every tag the operations use, in document order. */
 export function tagsUsed(spec) {
@@ -275,6 +298,14 @@ export function transformSpec(source, options = {}) {
     );
   }
   spec.tags = TAGS.map((t) => ({ name: t.name, description: t.description }));
+  for (const [route, methods] of Object.entries(spec.paths || {})) {
+    if (!FIAT_CHARGES.test(route)) continue;
+    for (const [m, op] of Object.entries(methods)) {
+      if (HTTP_METHODS.has(m) && Array.isArray(op?.tags) && op.tags.includes('payment-links')) {
+        op.tags = op.tags.map((t) => (t === 'payment-links' ? 'fiat-charges' : t));
+      }
+    }
+  }
   for (const [route, methods] of Object.entries(spec.paths || {})) {
     if (!KYC_ACCOUNTS.test(route)) continue;
     for (const [m, op] of Object.entries(methods)) {

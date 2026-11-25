@@ -1,8 +1,12 @@
 /* QrChargesView: the Fiat group's "QR charges" (product owner, 2026-11-12: "the QR system with the
    P2P we already have"). A charge is an amount in local money shown as a QR: the payer opens its
-   page on the payments domain (/fiat/{id}), pays with a local method in the P2P marketplace's secure
-   window, and the marketplace delivers the token straight to the organization's own EVM account.
-   Cosmos Pay never holds the money; the marketplace is never named ("Never name a provider").
+   page on the payments domain (/fiat/{id}) and pays by bank transfer to an alias and a CVU (the
+   charge reads `processing` once the transfer arrived, while the token is on its way) or with a
+   local method in the P2P marketplace's secure window; either way the token is delivered to the
+   organization's own EVM account. No provider is named ("Never name a provider"). The detail says
+   which ways the payer has (`methods`) and, once paid, which one paid it (`paidMethod`). Under the
+   figures, the "Bank transfers" card (TransferAccountCard): the organization's own receiving account
+   for transfers, which a charge in pesos needs before it can be paid that way.
 
    The Payments API's /v1/onramp/p2p/payment-requests (list, create, read, cancel), reached through
    the dashboard's /api/onramp proxy like the on-ramp's sessions. The Payments table: figures counted
@@ -39,6 +43,7 @@ import { Select } from "@/components/cosmos/dashboard/components/Select";
 import { CopyBlock } from "@/components/cosmos/dashboard/components/PayLinkDetail";
 import { NetworkMark, useOrgWallets } from "@/components/cosmos/dashboard/components/OrgWallets";
 import { FormSteps, FormStep, FormStepsFooter, useFormSteps } from "@/components/cosmos/dashboard/components/FormSteps";
+import { TransferAccountCard } from "@/components/cosmos/dashboard/components/TransferAccountCard";
 import {
   CurrencyMark, RampPicker, RampTokenMark, RampTokenSheet, currencyName, rampChainMark, rampChainName, rampExplorer, rampTxExplorer, tokenUsd,
   type RampMarket, type RampToken,
@@ -46,8 +51,8 @@ import {
 import { DATE_RANGES, countBy, inRange, matchesQuery } from "@/lib/dashboard-filters";
 import {
   CHARGE_POLL_MS, CHARGE_STATUSES, DEFAULT_EXPIRY, EXPIRY_PRESETS,
-  chargeAmountProblem, chargeBody, chargeEstimate, chargeIsLive, chargePhase, descriptionProblem, evmAddressProblem,
-  safeChargeUrl, safeQrDataUrl, sameEvmAccount, type ChargeStatus, type QrCharge,
+  chargeAmountProblem, chargeBody, chargeEstimate, chargeIsLive, chargeIsPayable, chargeMethods, chargePaidMethod, chargePhase,
+  descriptionProblem, evmAddressProblem, safeChargeUrl, safeQrDataUrl, sameEvmAccount, type ChargeStatus, type QrCharge,
 } from "@/lib/qr-charges";
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
@@ -59,6 +64,8 @@ const ALLOWED = { status: ["all", ...CHARGE_STATUSES], date: DATE_RANGES };
 /* A status as the Payments table draws it: its colour and its mark. */
 const PILL: Record<ChargeStatus, { st: string; tone: StatusTone }> = {
   open: { st: "pend", tone: "wait" },
+  // The money arrived by bank transfer and the token is on its way: still pending, not final.
+  processing: { st: "pend", tone: "wait" },
   paid: { st: "ok", tone: "ok" },
   expired: { st: "fail", tone: "fail" },
   cancelled: { st: "ref", tone: "off" },
@@ -180,7 +187,7 @@ export function QrChargesView({ canManage = false, orgId, env = "dev" }: { canMa
     (skip === "currency" || filters.currency === "all" || x.currency === filters.currency) &&
     (skip === "chain" || filters.chain === "all" || String(x.chainId) === filters.chain) &&
     inRange(x.createdAt, filters.date) &&
-    matchesQuery([x.id, x.description, x.amount, x.currency, x.token, x.tokenAddress, x.address, x.paidTxHash, statusLabel(x), currencyName(x.currency, f.lang), chainName(x)], filters.q);
+    matchesQuery([x.id, x.description, x.amount, x.currency, x.token, x.tokenAddress, x.address, x.paidTxHash, statusLabel(x), currencyName(x.currency, f.lang), chainName(x), ...chargeMethods(x).map((m) => c.methods[m])], filters.q);
   const view = rows.filter((x) => matches(x, null));
   const statusRows = rows.filter((x) => matches(x, "status"));
   const statusCounts = countBy(statusRows, (x) => phaseOf(x));
@@ -236,6 +243,8 @@ export function QrChargesView({ canManage = false, orgId, env = "dev" }: { canMa
       <ViewHead title={c.title} />
       <ViewFigures items={figures} loading={loading} failed={error} label={c.figuresLabel} />
       {!canManage && <div className="note-bar" style={{ marginBottom: 16 }}>{DI.charges}<span>{c.readOnly}</span></div>}
+      {/* The organization's own account for bank transfers: what a charge in pesos needs to take them. */}
+      <TransferAccountCard canManage={canManage} orgId={orgId} env={env} />
       <FilterBar
         label={fl.label}
         query={filters.q} onQuery={(v) => set("q", v)} placeholder={c.searchPlaceholder}
@@ -338,9 +347,10 @@ export function QrChargesView({ canManage = false, orgId, env = "dev" }: { canMa
 
 /* A charge's detail: while it is open, its QR (the API's PNG, shown only when it is one) and the
    payer page's link to copy or open; what the payer pays and what the organization receives, the
-   receiving account, the deadline; once paid, what was delivered and its transaction. An open
+   ways the payer can pay, the receiving account, the deadline; once paid, how it was paid, what was
+   delivered and its transaction (a bank transfer's delivery may report none). An open or processing
    charge is read again every 5 s while this is on screen (and the tab is visible), so it turns
-   paid here on its own. */
+   processing and paid here on its own. */
 function ChargeDetail({ charge, networks, env, orgId, canManage, onUpdate, onCancel, onClose }: {
   charge: QrCharge;
   networks?: RampMarket["networks"];
@@ -359,6 +369,7 @@ function ChargeDetail({ charge, networks, env, orgId, canManage, onUpdate, onCan
   const [, copy] = useCopy();
   const phase = chargePhase(charge);
   const live = chargeIsLive(charge);
+  const payable = chargeIsPayable(charge);
 
   // Read it again on opening (the list may be older), then every 5 s while it is open.
   useEffect(() => {
@@ -375,26 +386,32 @@ function ChargeDetail({ charge, networks, env, orgId, canManage, onUpdate, onCan
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [charge.id, live, env, orgId]);
 
-  // Paid while on screen: say so once.
+  // Received or paid while on screen: say so once.
   const was = useRef(charge.status);
   useEffect(() => {
     if (was.current !== "paid" && charge.status === "paid") showToast(d.paid);
+    else if (was.current === "open" && charge.status === "processing") showToast(d.processing);
     was.current = charge.status;
-  }, [charge.status, d.paid]);
+  }, [charge.status, d.paid, d.processing]);
 
   const st = PILL[phase];
-  const qr = live ? safeQrDataUrl(charge.qr) : null;
+  const qr = payable ? safeQrDataUrl(charge.qr) : null;
   const link = safeChargeUrl(charge.url, charge.id);
   const chain = rampChainName(charge.chainId, networks);
   const tx = rampTxExplorer(charge.chainId, charge.paidTxHash);
   const token = (amount: string) => (
     <span className="cell-mark"><RampTokenMark token={{ symbol: charge.token, chainId: charge.chainId }} networks={networks} size={20} /><span>{amount}</span></span>
   );
+  // The ways the payer has, in the server's order, one per line.
+  const methods = chargeMethods(charge);
+  const methodList = methods.length ? <span className="qrc-methods">{methods.map((m) => <span key={m}>{c.methods[m]}</span>)}</span> : null;
+  const paidWith = chargePaidMethod(charge);
   const fields: [string, ReactNode][] = [
     [d.pays, <span className="cell-mark"><CurrencyMark id={charge.currency} size={20} /><span>{f.fiat(charge.amount, charge.currency)}</span></span>],
     charge.status === "paid" && charge.paidAmount
       ? [d.received, token([f.units(charge.paidAmount), charge.token].join(NBSP))]
       : [d.estimate, charge.estimatedAmountOut == null ? null : token(["≈", f.units(charge.estimatedAmountOut), charge.token].join(NBSP))],
+    paidWith ? [d.payment, paidWith === "transfer" ? d.paidTransfer : d.paidP2p] : [d.methods, methodList],
     [d.network, <span className="cell-mark"><NetworkMark chain={rampChainMark(charge.chainId)} size={18} /><span>{chain}</span></span>],
     [d.address, <AddressLink chain={rampChainMark(charge.chainId)} address={charge.address} label={d.address} networkName={chain} explorer={rampExplorer(charge.chainId, charge.address)} />],
     [d.created, fmtDateTime(charge.createdAt)],
@@ -409,8 +426,8 @@ function ChargeDetail({ charge, networks, env, orgId, canManage, onUpdate, onCan
         <div className="modal-eyebrow">{c.eyebrow}</div>
         <h3>{charge.description || f.fiat(charge.amount, charge.currency)}</h3>
         <p className="qrc-state" role="status" aria-live="polite"><Pill st={st.st} tone={st.tone} label={c.status[phase]} /></p>
-        <div className={`qrc-body${live ? " has-qr" : ""}`}>
-          {live && (
+        <div className={`qrc-body${payable ? " has-qr" : ""}`}>
+          {payable && (
             <figure className="qrc-qr">
               {qr
                 ? <img className="paylink-qr" src={qr} alt={d.scan} width={220} height={220} />
@@ -420,7 +437,7 @@ function ChargeDetail({ charge, networks, env, orgId, canManage, onUpdate, onCan
             </figure>
           )}
           <div className="qrc-info">
-            {live && link && <CopyBlock label={d.link} value={link} />}
+            {payable && link && <CopyBlock label={d.link} value={link} />}
             <div className="paylink-fields">
               {fields.filter(([, v]) => v !== null && v !== undefined && v !== "").map(([k, v]) => (
                 <div className="paylink-field" key={k}><span className="pf-k">{k}</span><span className="pf-v">{v}</span></div>
@@ -429,11 +446,11 @@ function ChargeDetail({ charge, networks, env, orgId, canManage, onUpdate, onCan
           </div>
         </div>
         <div className="paylink-actions">
-          {live && link && <a className="btn btn-dark btn-sm" href={link} target="_blank" rel="noopener noreferrer">{DI.payments} {d.openPage}</a>}
-          {live && link && <button type="button" className="btn btn-soft btn-sm" onClick={() => copy(link, t.toasts.copied)}><IcCopy /> {d.copyLink}</button>}
+          {payable && link && <a className="btn btn-dark btn-sm" href={link} target="_blank" rel="noopener noreferrer">{DI.payments} {d.openPage}</a>}
+          {payable && link && <button type="button" className="btn btn-soft btn-sm" onClick={() => copy(link, t.toasts.copied)}><IcCopy /> {d.copyLink}</button>}
           {tx && <a className="btn btn-soft btn-sm" href={tx} target="_blank" rel="noopener noreferrer">{DI.network} {d.viewTx}</a>}
           <button type="button" className="btn btn-soft btn-sm" onClick={() => copy(charge.id, t.toasts.copied)}><IcCopy /> {cm.copyId}</button>
-          {canManage && live && <button type="button" className="btn btn-soft danger-soft btn-sm" onClick={onCancel}>{DI.trash} {d.cancel}</button>}
+          {canManage && payable && <button type="button" className="btn btn-soft danger-soft btn-sm" onClick={onCancel}>{DI.trash} {d.cancel}</button>}
         </div>
       </div>
     </Modal>

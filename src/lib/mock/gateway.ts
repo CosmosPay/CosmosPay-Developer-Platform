@@ -28,7 +28,7 @@ const MOCK_SESSION_TOKENS = new Map<string, PaymentPayerEmail>();
 const CORS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-  "Access-Control-Allow-Headers": "Authorization, Content-Type, X-Record-Token",
+  "Access-Control-Allow-Headers": "Authorization, Content-Type, X-Record-Token, X-Payer-Session",
   "Access-Control-Max-Age": "600",
 };
 
