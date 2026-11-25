@@ -2,6 +2,9 @@ import { z } from "zod";
 import { requestSession } from "@/lib/request-session";
 import { jsonError, jsonForbidden, jsonNotFound, jsonSuccess, jsonUnauthorized, parseJson } from "@/lib/http";
 import { canManageOrg, deleteOrg, getMembership, listForUser, renameOrg } from "@/lib/organizations";
+import { discordConfig } from "@/lib/discord-env";
+import { storedDiscordLinks } from "@/lib/discord-links-store";
+import { unlinkDiscordServer } from "@/lib/discord-unlink";
 import type { APIRoute } from "astro";
 
 const paramsSchema = z.object({ id: z.string().min(1) });
@@ -43,7 +46,10 @@ export const PATCH: APIRoute = async (ctx) => {
   return jsonSuccess({ data: { id: updated.id, name: updated.name }, message: "Organization updated" });
 };
 
-/* DELETE /api/organizations/:id: delete (org owner only). */
+/* DELETE /api/organizations/:id: delete (org owner only). Its linked Discord servers are unlinked
+   first (the bot told, their keys revoked: src/lib/discord-unlink.ts), since deleting the rows alone
+   would leave the bot a live key nobody could revoke from here; a key that cannot be revoked keeps
+   the organization, so the delete can be asked again. */
 export const DELETE: APIRoute = async (ctx) => {
   const session = await requestSession(ctx.request.headers);
   if (!session) return jsonUnauthorized("Session required");
@@ -58,6 +64,17 @@ export const DELETE: APIRoute = async (ctx) => {
   // Every user must keep at least one organization.
   const myOrgs = await listForUser(session.user.id).catch(() => []);
   if (myOrgs.length <= 1) return jsonForbidden("You must keep at least one organization");
+
+  const links = await storedDiscordLinks(params.data.id).catch(() => null);
+  if (links === null) return jsonError({ message: "Failed to read the organization's Discord servers", code: 500, status: "internal_error" });
+  if (links.length) {
+    const config = discordConfig();
+    for (const link of links) {
+      if (!(await unlinkDiscordServer(link, config))) {
+        return jsonError({ message: "Failed to revoke the API key of a linked Discord server. Try again.", code: 500, status: "internal_error" });
+      }
+    }
+  }
 
   const deleted = await deleteOrg(params.data.id).catch(() => null);
   if (!deleted) return jsonError({ message: "Failed to delete organization", code: 500, status: "internal_error" });

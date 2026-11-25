@@ -69,3 +69,13 @@ test('the input is not mutated', () => {
   transformSpec(input);
   assert.equal(JSON.stringify(input), before);
 });
+
+test('charges in local money get a reference page of their own, away from payment links', () => {
+  const out = transformSpec(
+    spec({ '/v1/payment-links/{id}': {}, '/v1/payment-links/fiat/{id}': {}, '/v1/payment-links/fiat/{id}/direct/orders': {} }, ['payment-links']),
+  );
+  assert.deepEqual(out.paths['/v1/payment-links/{id}'].get.tags, ['payment-links']);
+  assert.deepEqual(out.paths['/v1/payment-links/fiat/{id}'].get.tags, ['fiat-charges']);
+  assert.deepEqual(out.paths['/v1/payment-links/fiat/{id}/direct/orders'].get.tags, ['fiat-charges']);
+  assert.ok(out.tags.some((t: { name: string }) => t.name === 'fiat-charges'));
+});

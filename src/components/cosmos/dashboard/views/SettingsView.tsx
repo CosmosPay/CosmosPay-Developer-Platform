@@ -21,6 +21,7 @@ import { PreviewCard } from "@/components/cosmos/dashboard/components/RecordPrev
 import { Pill } from "@/components/cosmos/dashboard/components/Pill";
 import { StatusIcon } from "@/components/cosmos/dashboard/components/StatusIcon";
 import { OrgWalletsSection, useOrgWallets } from "@/components/cosmos/dashboard/components/OrgWallets";
+import { DiscordSection } from "@/components/cosmos/dashboard/components/DiscordLinks";
 import { countBy, matchesQuery } from "@/lib/dashboard-filters";
 import { Field } from "@/components/cosmos/dashboard/components/Field";
 import { FormSteps, FormStep, FormStepsFooter, useFormSteps } from "@/components/cosmos/dashboard/components/FormSteps";
@@ -358,8 +359,11 @@ function TeamSection({ org, team, meId }) {
 
 /* Settings as every view (product owner, 2026-10-27): its figures first (members and seats,
    pending invitations, wallets, API keys), the organization's details and plan, then its lists:
-   the team and the wallets, each the Payments table with its own filter bar. */
-export function SettingsView({ org, orgCount, limits, keyCount, env = "dev", meId = null, walletPerms = { create: false, edit: false, remove: false }, onRenameOrg, onDeleteOrg }) {
+   the team, the wallets and the linked Discord servers (drawn only where the deployment has
+   Discord), each the Payments table with its own filter bar. `discord` carries what linking needs
+   from the shell: the API key rules (a link mints a key) and the plan dialog. */
+const NO_DISCORD = { perms: { create: false, removeTest: false, removeLive: false }, keyLimitReached: false, liveLocked: false, onUpgrade: null, onKeysRemoved: () => {} };
+export function SettingsView({ org, orgCount, limits, keyCount, env = "dev", meId = null, walletPerms = { create: false, edit: false, remove: false }, discord = NO_DISCORD, onRenameOrg, onDeleteOrg }) {
   const t = useT();
   const sv = t.dash.settings;
   const sf = sv.figures;
@@ -400,6 +404,14 @@ export function SettingsView({ org, orgCount, limits, keyCount, env = "dev", meI
       </div>
       <TeamSection org={org} team={team} meId={meId} />
       {org.id && <OrgWalletsSection orgId={org.id} wallets={wallets} perms={walletPerms} network={env === "prod" ? "public" : "testnet"} />}
+      {org.id && (
+        <DiscordSection
+          key={org.id} orgId={org.id} env={env === "prod" ? "prod" : "dev"}
+          perms={{ ...discord.perms, connectWallets: walletPerms.create }}
+          keyLimitReached={discord.keyLimitReached} liveLocked={discord.liveLocked}
+          onUpgrade={discord.onUpgrade} onKeysRemoved={discord.onKeysRemoved}
+        />
+      )}
     </>
   );
 }

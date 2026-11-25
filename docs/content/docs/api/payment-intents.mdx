@@ -116,10 +116,12 @@ _openapi:
       - content: >-
           Every payment network, with whether a link can be created there with
           this key and why not. A `prod` key reaches every network on mainnet; a
-          `dev` key reaches Stellar, Solana, Monad and Arc on their test
-          networks, and the networks paid through deposit addresses where the
-          sandbox settles them, each in its test stablecoin (`asset`). Read
-          before offering a network in a form.
+          `dev` key reaches the four chains settled natively (Arc, Monad,
+          Solana, Stellar) on their test networks, and the networks paid through
+          deposit addresses where the sandbox settles them, each in its test
+          stablecoin (`asset`). On either tier Arc is available only where this
+          deployment issues Arc deposit addresses. Read before offering a
+          network in a form.
 
 
           Requires the `payments:read` scope. The shared public key may call it.

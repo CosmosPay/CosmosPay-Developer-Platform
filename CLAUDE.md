@@ -51,7 +51,30 @@ Payments API. The pages that read the database on the server (`dashboard.astro`,
   and mainnet rows for production, and kept on `globalThis`, so what is created or deleted survives
   a hot reload and is gone after a restart. Sign-out works (a `cosmos-mock-signed-out` cookie) and
   `/login` signs back in. `/invite/<token>` takes `expired`, `accepted`, `mismatch`, `seat_limit` or
-  `invalid` as the token to show those states.
+  `invalid` as the token to show those states. Charges in local money ("QR charges") are one
+  store, `src/lib/mock/fiat-requests.ts`, for the payer page (`/fiat/<id>` on the payments host)
+  and the dashboard's Fiat > QR charges (`/api/onramp/p2p/payment-requests`, answered in
+  `handlers/p2p-ramp.ts`): fixed ids per environment (production: open ARS with one method, open
+  COP with three, paid, expired, cancelled; the sandbox: open, paid, expired, cancelled; plus the
+  bank transfer's: `methods` both ways, transfer only and window only, a processing one, one paid by
+  transfer with no transaction; the sandbox's open one answers a transfer 37 cents above its
+  amount). An open one turns paid 20 s after its first session; after a bank
+  transfer is started it reads processing 8 s later and paid 20 s later (the DNI 99999999 answers
+  503 `transfer_unavailable`); one created in the dashboard does the same by itself (it opens on the
+  local payer page too), and a session opens the marketplace's sandbox window. The transfer to a
+  verified person inside the page (`p2pDirect`, `src/lib/mock/fiat-direct.ts`) has two demos:
+  `cqrdemoarsdirect00000013` (bank transfer or direct; a returning payer, identity done, two saved
+  accounts, the Brubank one's orders end disputed) and `cqrdemoarsdirectnew00014` (direct only; a new
+  payer who walks every step). Any email signs in (one starting with `ready` is the returning payer
+  anywhere, `rejected` ends the identity check rejected); the code is any 8 letters and digits but
+  00000000; the phone 1111111111 answers `phone_taken`; the texted code is 1234; the ID step reads
+  `review` 10 s after it starts and done 10 s later. An order is `matching` for 8 s, then `pay` (30
+  minutes to transfer), `confirming` once the payer says they transferred (the charge processing) and
+  `completed` 12 s later (the charge paid). A charge created in the dashboard in pesos takes it too.
+  The organization's
+  bank-transfer account (`/api/onramp/transfer/account`, `src/lib/mock/transfer-account.ts`) has a
+  fixture per status by organization and environment; the sandbox's Andes Commerce is none, and
+  activating it goes pending, then approved 20 s later.
 - **One handler module per area** (`src/lib/mock/handlers/`: `platform`, `payments`, `swaps`,
   `fiat-admin`), each exporting `routes` built with `route()` from `src/lib/mock/http.ts`, typed
   against the interfaces in `src/lib/cosmos.ts`. Shared identities (organizations, their wallets,
@@ -85,6 +108,14 @@ Payments API. The pages that read the database on the server (`dashboard.astro`,
 - Wallet proofs are not checked in mock mode (a challenge is issued, any proof over it is taken), and nothing else reaches a chain: QR codes are PNG
   drawings that encode nothing, and the other transactions and XDRs (payment links, liquidity,
   private payments) are sample strings.
+- **The Discord link can run live** (`src/lib/mock/discord-live.ts`): with `DISCORD_CLIENT_ID`,
+  `DISCORD_CLIENT_SECRET`, `DISCORD_BOT_LINK_SECRET` and `COSMOS_MOCK_DISCORD_KEY` (a real `dv_` or
+  `prod_` key from a real platform) in the shell or `.env`, "Connect Discord" goes through the real
+  Discord application, and the callback hands that key to the real bot (`DISCORD_BOT_LINK_URL`,
+  default `http://127.0.0.1:3800`) and lists the real server. Nothing is minted (the key is the one
+  given, links only in its environment); an unlink tells the bot. The application must list
+  `http://localhost:<port>/api/integrations/discord/callback` as a redirect. Without them the
+  sample flow links a made-up server at once.
 
 ## Languages: seven, everywhere
 
@@ -165,7 +196,7 @@ These were said more than once; breaking one is a bug, whatever the task was.
 - **Never name a provider** (product owner, 2026-11-03: "no deben saber quiénes son nuestros
   proveedores"): no copy a customer reads names the services Cosmos Pay is built on: NEAR Intents
   (and 1Click), LayerZero (and LayerZero Scan), Jupiter, Kuru Flow, OpenZeppelin, BlindPay,
-  Trustless Work. The landing, the company site, the dashboard, the guides, llms.txt, the JSON-LD
+  Trustless Work, El Dorado (the P2P marketplace) and Koywe (the bank-transfer rail). The landing, the company site, the dashboard, the guides, llms.txt, the JSON-LD
   and the docs home say what happens instead: a cross-chain swap, the USDT0 bridge and its fee,
   Solana's or Monad's market (the dashboard's route labels: "Solana DEX", "Monad DEX",
   "Cross-chain", "USDT0 bridge"), a confidential token on Stellar, a deposit address made for the
@@ -191,7 +222,7 @@ These were said more than once; breaking one is a bug, whatever the task was.
 | :--- | :--- | :--- |
 | `cosmospay.lat` | `site` | `src/pages/site/`: landing, `/pricing`, `/swaps`, `/tos`, `/about`, `/brand` |
 | `dev.cosmospay.lat` | `dev` | everything else in `src/pages/`: `/login`, dashboard, onboarding, invite, kyc, `/docs`, `/swagger`, `/api/*` |
-| `payments.cosmospay.lat` | `payments` | `src/pages/payments/`: `/` home, the content pages `/integrations`, `/use-cases`, `/security`, `/fees`, `/compare`, `/faq`, the network pages `/stellar`, `/solana`, `/monad`, `/arc`, the guides `/learn` and `/learn/{slug}`, `/{id}` hosted checkout, `/pay` SEP-7 handler, `/contact` (the contact form's POST), `/preview/{design}` |
+| `payments.cosmospay.lat` | `payments` | `src/pages/payments/`: `/` home, the content pages `/integrations`, `/use-cases`, `/security`, `/fees`, `/compare`, `/faq`, the network pages `/arc`, `/monad`, `/solana`, `/stellar`, the guides `/learn` and `/learn/{slug}`, `/{id}` hosted checkout, `/fiat/{id}` a charge in local money, `/pay` SEP-7 handler, `/contact` (the contact form's POST), `/preview/{design}` |
 
 One build, one process, one Better Auth. `src/middleware.ts` applies `routeRequest` from
 `src/lib/hosts.ts` (fully covered by `tests/unit/hosts.test.ts`) before any database work:
@@ -423,6 +454,46 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   covers that exact string).
 - **`EXPIRED` is not final** on the server; the page keeps reading expired links slowly and
   stops on paid, failed and cancelled (`nextPollDelay`).
+- **A charge in local money ("charge with QR") has its own payer page, `/fiat/{id}`**
+  (`src/pages/payments/fiat/[id].astro`, `components/payments/FiatCharge.astro`, vanilla
+  `src/scripts/payments/fiat-request.ts`): a seller's QR for an amount in local money, paid with a
+  local method in the P2P marketplace's secure window, which delivers the crypto to the seller's
+  own wallet. The browser reads `GET /v1/payment-links/fiat/{id}` and opens a session with
+  `POST /v1/payment-links/fiat/{id}/sessions` (both keyless under the payment-links route); the tab
+  is claimed on the click and sent to the window with no opener, a blocked popup becomes a link to
+  tap, and the page waits (reopen, change method; the session kept in sessionStorage) and polls
+  until the server marks the charge paid from the marketplace's webhook. `src/lib/payments/fiat-request.ts`
+  is its trust boundary (`parseFiatRequest`, tested): every field checked, and the window's URL
+  followed only over https on `WIDGET_HOSTS`, the marketplace's own hosts (code, never copy: the
+  marketplace is never named, `noProviderNames.test.ts`). Paid is final; expired and cancelled keep
+  being read slowly (the money can still arrive). Copy in the payments catalog's `fiat` block.
+  **Two ways to pay, the charge's `methods`** (`transfer`, `p2p`; absent from an older server means
+  `p2p`): with both, the payer chooses first (bank transfer first, recommended); with one, the page
+  goes straight to it. By bank transfer the payer types their CUIT/CUIL or DNI (check digit checked
+  here and on the server), `POST /v1/payment-links/fiat/{id}/transfers` answers the deposit
+  instructions (`parseBankTransfer`: the CVU's check digits too) and the page shows the exact
+  amount, the alias and the CVU with copy buttons, the holder (the seller's name) and how long they
+  hold. The amount is always the transfer's own, never the charge's: the server may add a few cents
+  to tell two transfers of the same payer apart, and then the card says to send the cents too; the instructions, never the document, stay in sessionStorage per charge, and the page reads
+  the charge every 5 s: `processing` once the transfer arrived (never expired, not cancellable),
+  then `paid`. **The other way inside the page** (product owner, 2026-11-13: the payer never sees
+  the marketplace's window, quotes or "buy" flow): when the charge's read says `p2pDirect: true`, the
+  `p2p` choice (labelled a transfer to a verified person, never crypto, a token or "buy") runs in
+  `src/scripts/payments/fiat-direct.ts` over the keyless `/v1/payment-links/fiat/{id}/direct/*`
+  routes (`src/lib/payments/p2p-direct.ts`, its trust boundary, tested in `p2pDirect.test.ts`):
+  email, its 8-character code, city and phone, the texted 4-digit code, the ID check in its own tab
+  (an https link only; read every 5 s while shown, "I'm done" reads it at once), review or rejected,
+  then the account the payer pays from (a saved one, or holder, CVU/CBU with both check digits,
+  CUIT/CUIL with its check digit, bank and account type, in their own name), the order: `matching`
+  (read every 4 s), `pay` (the verified person's account and alias to copy, the exact amount, a clock
+  to `dueAt`, "I transferred" behind a confirmation dialog), `confirming`, then `completed` (the paid
+  view), `cancelled` (start again) or `disputed` (support, with the reference). The server's opaque
+  session travels in `X-Payer-Session` and is the only thing kept, with the order's id, in
+  sessionStorage per charge (`fiatStorageKey`); a 401 goes back to the email and resumes the order
+  after; paid or closed forgets it. An order on its way is followed past the charge's deadline and
+  through `processing`. With `p2pDirect` false the window stays. The bank-transfer provider is never named either; its webhook,
+  `POST /v1/onramp/transfer/webhooks`, has its own keyless gateway route (`<route>-transfer-webhooks`,
+  POST only, no CORS, like `-p2p-webhooks`).
 - **Never framable**: the middleware adds `X-Frame-Options: DENY` and `frame-ancestors 'none'`
   to every payments response.
 - **Only the page's own scripts run on the payments domain** (`src/lib/payments/csp.ts`, security
@@ -1115,6 +1186,31 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   not one of the organization's wallets (`orgHasWallet`), failing closed if the table cannot be
   read. Requests made with an API key straight to the Payments API are not affected.
 
+### Linking a Discord server
+
+- **Settings > Discord links a server to the organization** (`components/DiscordLinks.tsx`, routes
+  under `src/pages/api/organizations/[id]/discord/` and `src/pages/api/integrations/discord/callback.ts`,
+  the pure rules in `src/lib/discord-link.ts`, tested in `tests/unit/discordLink.test.ts`). The
+  callback mints an API key for the organization and hands it to the bot over a signed request; the
+  key never reaches a browser and is never stored here, only its id and its SHA-256.
+- **Least privilege** (`DISCORD_KEY_SCOPES`): `payments:read/write`, `webhooks:read/write`,
+  `products:read`, `activity:read`. The bot's commands that need more (swaps, liquidity and vaults,
+  plugins, fiat, customers, editing products) answer 403 with the missing scope; an organization that
+  wants them links a key of its own with the bot's `/setup`.
+- **No takeover**: a server linked to another organization is refused (`linked_elsewhere`) until it
+  is unlinked there, checked before any key is minted and again in the save's transaction; replacing
+  this organization's own link takes the delete permission of the old key's environment
+  (`replace_forbidden`). An old key that cannot be revoked is said on Settings (`warning=old_key_kept`)
+  and in a notification, never left in the log.
+- **`DISCORD_BOT_LINK_URL` is https, or http on a loopback host, with no path** (the bot verifies
+  the signature over its own `/links` path): anything else turns linking off (503 `not_configured`)
+  and logs why once.
+- **Every unlink goes through `src/lib/discord-unlink.ts`**: the bot is told with
+  `DELETE /links/{guildId}` and `{"apiKeySha256"}` in the signed body (a 404 or a 409, linked since
+  with another key, is fine), then the key is revoked, then the row goes, failing closed. Settings'
+  unlink, deleting the organization and removing the wallet a link pays into all use it; the wallet
+  removal needs the key's delete permission too (409 without it).
+
 ### Public swaps (no account)
 
 - **Product owner: Cosmos Pay offers public swaps and a public swap API without an account.**
@@ -1256,6 +1352,44 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
 - Mock mode: `src/lib/mock/handlers/p2p-ramp.ts` over `p2p-ramp-market.ts`, the marketplace's
   market recorded on 2026-11-05 for both environments (each network's main assets, in the API's
   order, then a few others).
+- **QR charges (`?view=charges`, `views/QrChargesView.tsx`, third in the Fiat group)**: a charge in
+  local money shown as a QR, which the payer pays on `/fiat/{id}` (see "The payments domain") and
+  the marketplace delivers to the organization's own EVM account. The Payments API's
+  `/v1/onramp/p2p/payment-requests` (list, create, read, cancel) through the same `/api/onramp`
+  proxy, so no route of its own. The Payments table (figures counted from the list, status,
+  currency, network and date filters, rows opening the detail); the detail draws the API's QR only
+  when it is a PNG data URL (`safeQrDataUrl`) and the link only when it is that charge's
+  `/fiat/<id>` (`safeChargeUrl`), reads an open charge every 5 s until it is paid, and cancel asks
+  first. "New charge" is a dialog in three steps: the amount in local money (two decimals, at least
+  the market's minimum) with the market price's estimate of the token; the token on its network and
+  the receiving account, one of the organization's EVM wallets (Monad's, proven with a
+  `personal_sign`, are plain EVM accounts with the same address on every EVM network) or a typed
+  address checked against its EIP-55 checksum (the one place a payment form takes a typed address:
+  the server does not verify it either, so the hint says it must be an account the merchant controls
+  on that network); then the description (one line, 140 characters) and how long it can be paid
+  (1 hour, 24 hours, 7 days, 30 days), with who does each step once the QR is shown. The checks are
+  `src/lib/qr-charges.ts` (`tests/unit/qrCharges.test.ts`, which also holds the mock's answers
+  against `docs/openapi.json`'s `P2pPaymentRequestEntity`). A charge reads `processing` while a
+  bank transfer's token is on its way (followed like an open one, but no QR, link or cancel), and
+  the detail lists the ways the payer has (`methods`) and, once paid, how (`paidMethod`).
+  **Bank transfers need the organization's own account** (product owner, 2026-11-12: the money lands
+  in the seller's name): `components/TransferAccountCard.tsx` under the figures reads
+  `GET /v1/onramp/transfer/account` through `/api/onramp` (none, pending, in review, approved with
+  its alias and CVU to copy, rejected with the reason) and activates it in a three-step dialog
+  (holder: person or company, name, CUIT/CUIL for that kind of holder, a person's date of birth;
+  contact; address; phone, city and postal code optional, as on the server), `payments:create` only; pending and in review link the provider's hosted
+  verification form and refresh. A server without the rail or with it off (404, 501, 503), or a
+  failed read before any account was read, draws no card at all (`transferAccountReadFailure`):
+  never a standing error for a rail the organization cannot turn on. Checks in `src/lib/transfer-account.ts`
+  (`tests/unit/transferAccount.test.ts`). One account per consumer and network (Sandbox and
+  Production each have theirs); its routes are the API reference's "Bank transfers" page (the
+  server's `bank-transfers` tag, in `TAGS` of `docs/scripts/transform-spec.mjs`).
+  **The entry shows only where the server has charges**: they ship with a Payments API release,
+  so the shell reads the list once per environment (`take=1`, kept for the session) and keeps
+  "QR charges" out of the sidebar and the search until that read goes through or the route itself
+  refuses it (`chargesAvailable` in `src/lib/qr-charges.ts`: a 404, 501, 503, any other 5xx or no
+  answer keep it out), and a `?view=charges` link on such a server opens the overview. Not a
+  `DISABLED_VIEWS` entry: it turns on by itself once the server ships the routes.
 
 ### The payments landing
 
@@ -2138,7 +2272,13 @@ What this app still does for them:
     CORS from `COSMOS_API_CORS_ORIGINS`.
   - `<route>-payment-links`: the public payment-link read (`/v1/payment-links/*`, GET/OPTIONS),
     made from payers' browsers by the hosted and the embedded checkout, so its CORS is `*`
-    without credentials. No other keyless route lists that URI. The old `<route>-pollar-callback` route is only ever
+    without credentials. No other keyless route lists that URI. Its preflight allows
+    `X-Payer-Session` (the direct flow's sealed payer session, `PAYMENT_LINKS_CORS`) and
+    `Accept-Language`, never an API key header.
+  - `<route>-p2p-webhooks`: exactly `POST /v1/onramp/p2p/webhooks`, the P2P marketplace's order
+    webhook (server to server, verified by the community server from the marketplace's signature
+    over the raw body), which marks a charge in local money paid. No CORS; every other
+    `/v1/onramp` route stays on the key-auth route. The old `<route>-pollar-callback` route is only ever
     DELETED at boot, never created.
   - `<route>-sep`: `/.well-known/stellar.toml`, `/v1/sep10/*`, `/v1/sep30/*`. It carries NO
     `cors` plugin, because the community server answers CORS itself for those prefixes and two

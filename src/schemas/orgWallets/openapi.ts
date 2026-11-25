@@ -172,14 +172,25 @@ registerRoutes([
     path: "/api/organizations/{id}/wallets/{walletId}",
     tags: [TAG],
     summary: "Remove a wallet",
-    description: "Needs `wallets:delete`. Payment links already created keep their address; new ones can no longer choose it.",
+    description:
+      "Needs `wallets:delete`. Payment links already created keep their address; new ones can no longer choose it. " +
+      "A Discord server linked to pay into the wallet is unlinked first (the bot told, its API key revoked), which also needs the delete permission of that key's environment " +
+      "(`apiKeysTest:delete` or `apiKeysLive:delete`): without it the wallet stays and the answer is 409.",
     security: sessionSecurity,
     request: { params: walletParams },
     responses: {
-      200: jsonOk(z.object({ id: z.string().openapi({ example: "clx9z8a1b0000wllt1234abcd" }) }), "RemoveOrganizationWalletResponse", "Wallet removed"),
+      200: jsonOk(
+        z.object({
+          id: z.string().openapi({ example: "clx9z8a1b0000wllt1234abcd" }),
+          discordUnlinked: z.array(z.string()).openapi({ description: "The Discord links unlinked with the wallet", example: [] }),
+        }),
+        "RemoveOrganizationWalletResponse",
+        "Wallet removed",
+      ),
       401: errors.unauthorized,
       403: errors.forbidden,
       404: errors.notFound,
+      409: { description: "A linked Discord server pays into the wallet, and unlinking it needs a permission the member lacks", content: errors.badRequest.content },
       500: errors.internalError,
     },
   },

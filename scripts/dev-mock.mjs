@@ -167,6 +167,11 @@ const env = { ...process.env, COSMOS_MOCK: '1', COSMOS_MOCK_ROLE: opts.role, COS
 for (const name of requiredEnvFields()) {
   if (read(name) === undefined || read(name) === '') env[name] = placeholder(name, origins.dev);
 }
+// The live Discord link (src/lib/mock/discord-live.ts) reads its settings from process.env, so the
+// ones only in .env are handed on.
+const DISCORD_LIVE_VARS = ['DISCORD_CLIENT_ID', 'DISCORD_CLIENT_SECRET', 'DISCORD_BOT_LINK_URL', 'DISCORD_BOT_LINK_SECRET', 'COSMOS_MOCK_DISCORD_KEY'];
+for (const name of DISCORD_LIVE_VARS) if (env[name] === undefined && dotenv[name] !== undefined) env[name] = dotenv[name];
+const discordLive = Boolean(env.DISCORD_CLIENT_ID && env.DISCORD_CLIENT_SECRET && env.DISCORD_BOT_LINK_SECRET && /^(dv|prod)_/.test(env.COSMOS_MOCK_DISCORD_KEY ?? ''));
 Object.assign(env, {
   BETTER_AUTH_URL: origins.dev,
   PUBLIC_BETTER_AUTH_URL: origins.dev,
@@ -196,6 +201,7 @@ console.log(
     `  Company site:  ${origins.site}/`,
     `  Account:    ${opts.role} on ${opts.plan}${opts.fresh ? ', no organization yet (onboarding)' : ''}`,
     opts.latency ? `  Latency:    ${opts.latency} ms per API answer` : null,
+    discordLive ? `  Discord:    LIVE (the real application and bot; redirect http://localhost:${port}/api/integrations/discord/callback)` : null,
     '  Sign out works; /login signs back in.',
     '  Better Auth logging "Discovery fetch failed" is expected: there is no Authentik here.',
     '',

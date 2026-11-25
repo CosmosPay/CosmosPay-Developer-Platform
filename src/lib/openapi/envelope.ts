@@ -13,6 +13,8 @@ export const apiStatusSchema = z
     ApiStatus.CONFLICT,
     ApiStatus.UNPROCESSABLE,
     ApiStatus.INTERNAL_ERROR,
+    ApiStatus.PLAN_LIMIT,
+    ApiStatus.NOT_CONFIGURED,
   ])
   .openapi('ApiStatus', {
     description: 'Application-level status string',
