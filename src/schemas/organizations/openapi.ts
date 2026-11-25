@@ -193,7 +193,8 @@ registerRoutes([
     tags: [TAG],
     summary: 'Delete an organization',
     description:
-      'Owner only, and refused with 403 when it is the last organization the account has: everyone keeps at least one.',
+      'Owner only, and refused with 403 when it is the last organization the account has: everyone keeps at least one. ' +
+      'Its linked Discord servers are unlinked first (the bot told, their API keys revoked); a key that cannot be revoked keeps the organization (500), so the delete can be asked again.',
     security: sessionSecurity,
     request: { params: orgIdParam },
     responses: {

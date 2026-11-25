@@ -996,6 +996,20 @@ export async function getApiKey(
   }
 }
 
+/* Whether a credential is still at the gateway, telling "gone" (404) apart from "could not ask":
+   a revocation is only confirmed by the former, so a caller that must not leave a live key behind
+   fails closed on "unknown". */
+export async function apiKeyPresence(apiKeyId: string, userId: string): Promise<"present" | "absent" | "unknown"> {
+  const username = userId.includes(keyPrefix) ? userId : `${keyPrefix}${userId}`;
+  const key = apiKeyId.includes(keyPrefix) ? apiKeyId : `${keyPrefix}${apiKeyId}`;
+  try {
+    await apisix.get(`/consumers/${username}/credentials/${key}`);
+    return "present";
+  } catch (error: any) {
+    return error?.response?.status === 404 ? "absent" : "unknown";
+  }
+}
+
 export async function apiKeyExists(
   apiKeyId: string,
   userId: string,
