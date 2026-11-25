@@ -21,6 +21,28 @@ test('every locale has exactly the English keys, none empty', () => {
   }
 });
 
+test('every locale keeps the English placeholders, string for string', () => {
+  const at = (catalog: unknown, p: string) => p.split('.').reduce<unknown>((o, k) => (o as Record<string, unknown>)[k], catalog);
+  const placeholders = (s: string) => (s.match(/\{\w+\}/g) ?? []).sort().join();
+  for (const { code } of LOCALES) {
+    for (const p of paths(MESSAGES.en)) {
+      assert.equal(placeholders(at(MESSAGES[code], p) as string), placeholders(at(MESSAGES.en, p) as string), `${code}.${p}`);
+    }
+  }
+});
+
+test('the payer page of a charge in local money says it in every language', () => {
+  for (const { code } of LOCALES) {
+    const t = MESSAGES[code].fiat;
+    assert.match(t.pay, /\{amount\}/, code);
+    assert.match(t.receives, /\{amount\}/, code);
+    assert.match(t.receives, /\{token\}/, code);
+    assert.match(t.receives, /\{network\}/, code);
+    // Its own words in each language, never English left behind (but in English itself).
+    if (code !== 'en') for (const key of ['title', 'pay', 'step2', 'reopen', 'notFoundTitle'] as const) assert.notEqual(t[key], MESSAGES.en.fiat[key], `${code}.fiat.${key}`);
+  }
+});
+
 test('resolveLocale prefers ?lang, then the cookie, then Accept-Language, then English', () => {
   assert.equal(resolveLocale({ query: 'de', cookie: 'es', acceptLanguage: 'fr' }), 'de');
   assert.equal(resolveLocale({ query: 'xx', cookie: 'es', acceptLanguage: 'fr' }), 'es');

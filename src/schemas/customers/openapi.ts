@@ -24,7 +24,7 @@ const TAG = 'Customers';
 const customerWalletSchema = z
   .object({
     id: z.string().openapi({ example: 'cw4f0c2a9d1b7e83c5a6f9d2e1b0c3a7f8' }),
-    chain: z.enum(['stellar', 'solana', 'monad']).openapi({ example: 'stellar' }),
+    chain: z.enum(['stellar', 'solana', 'monad', 'arc']).openapi({ example: 'stellar' }),
     address: z.string().openapi({ example: 'GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ' }),
     label: z.string().nullable().openapi({ example: 'Freighter' }),
     createdAt: z.string().openapi({ example: '2026-09-17T12:34:56.000Z' }),
@@ -40,7 +40,7 @@ const customerSchema = z
     email: z.string().nullable().openapi({ example: 'ada@example.com' }),
     wallets: z
       .array(customerWalletSchema)
-      .openapi({ description: "The customer's wallets, oldest first, on Stellar, Solana or Monad." }),
+      .openapi({ description: "The customer's wallets, oldest first, on Stellar, Solana, Monad or Arc." }),
     account: z
       .string()
       .nullable()
@@ -163,7 +163,7 @@ registerRoutes([
     tags: [TAG],
     summary: 'Add a wallet to a customer',
     description:
-      'Adds a wallet on Stellar, Solana or Monad (up to 20 per customer); payments paid from it count toward the customer. Requires `customers:edit` when `org` is supplied.',
+      'Adds a wallet on Stellar, Solana, Monad or Arc (up to 20 per customer); payments paid from it count toward the customer. Requires `customers:edit` when `org` is supplied.',
     security: sessionSecurity,
     request: {
       params: idParam,

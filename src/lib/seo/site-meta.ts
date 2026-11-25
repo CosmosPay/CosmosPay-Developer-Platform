@@ -10,7 +10,7 @@
 import { LOCALES } from "@/lib/i18n/locales";
 import { messages } from "@/lib/i18n/messages/index";
 import { TOS_LANGS } from "@/lib/seo/lang-urls";
-import { NETWORK_IDS } from "@/lib/chains";
+import { withNetworkCounts } from "@/lib/chains";
 
 /** The company site's languages, in the language picker's order. */
 export const SITE_LANGS: readonly string[] = LOCALES.map((l) => l.code);
@@ -192,7 +192,7 @@ export function siteMeta(page: MetaPage, lang: string | null | undefined): PageM
   // page it describes. Its description counts the networks (`{n}`), filled here as /swaps fills its own.
   if (page === "home") {
     const { title, description } = (messages[code as keyof typeof messages] ?? messages.en).landing.meta;
-    return { title, description: description.replace(/\{n\}/g, String(NETWORK_IDS.length)) };
+    return { title, description: withNetworkCounts(description) };
   }
   return META[code][page] ?? (META.en[page] as PageMeta);
 }

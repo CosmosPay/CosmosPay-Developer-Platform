@@ -8,9 +8,14 @@ import { CHAINS, type Chain } from "@/lib/chains";
 
 /* The topic pages, in the order the section bar (Subnav.astro) lists them. */
 export const SECTION_PAGES = ["integrations", "swaps", "use-cases", "security", "fees", "compare", "faq"] as const;
-/* One page per network a payment settles on (src/lib/chains.ts), at /stellar, /solana and
-   /monad. The footer and the home's networks marquee link them, not the section bar. */
+/* One page per network a payment settles on with a wallet link of its own (src/lib/chains.ts), at
+   /stellar, /solana, /monad and /arc. The footer and the home's networks marquee link them, not
+   the section bar. */
 export const NETWORK_PAGES: readonly Chain[] = CHAINS;
+/* The networks the "Stellar vs Solana vs Monad" guide compares, as its title says
+   (NetworkTable.astro and its Markdown twin). */
+export const COMPARED_CHAINS = ["stellar", "solana", "monad"] as const satisfies readonly Chain[];
+export type ComparedChain = (typeof COMPARED_CHAINS)[number];
 
 /* The guides (/learn/<slug>), in the order the hub (/learn) lists them. The slugs are the words
    people search for, in English in every language (URLs are not copy). */
@@ -38,17 +43,17 @@ export const LEARN_PAGES: readonly LearnPage[] = ["learn", ...GUIDES.map((g): Gu
 /* The day each guide was first published and last changed (ISO dates). The page shows the
    second, its JSON-LD states both and the sitemap gives it as lastmod: change it with the text. */
 export const GUIDE_DATES: Record<Guide, { published: string; modified: string }> = {
-  "accept-usdc-payments": { published: "2026-11-01", modified: "2026-11-03" },
+  "accept-usdc-payments": { published: "2026-11-01", modified: "2026-11-18" },
   "whatsapp-payment-links": { published: "2026-11-01", modified: "2026-11-01" },
-  "stablecoin-payment-gateway": { published: "2026-11-01", modified: "2026-11-03" },
-  "stellar-vs-solana-vs-monad": { published: "2026-11-01", modified: "2026-11-03" },
+  "stablecoin-payment-gateway": { published: "2026-11-01", modified: "2026-11-18" },
+  "stellar-vs-solana-vs-monad": { published: "2026-11-01", modified: "2026-11-18" },
   "accept-usdc-with-solana-pay": { published: "2026-11-02", modified: "2026-11-02" },
   "confirm-stablecoin-payments": { published: "2026-11-02", modified: "2026-11-02" },
   "usdt0-from-stellar": { published: "2026-11-02", modified: "2026-11-02" },
   "accept-usdc-on-stellar": { published: "2026-11-02", modified: "2026-11-02" },
   "accept-usdc-on-monad": { published: "2026-11-02", modified: "2026-11-02" },
   "crypto-payment-button": { published: "2026-11-02", modified: "2026-11-02" },
-  "cross-chain-swaps": { published: "2026-11-02", modified: "2026-11-03" },
+  "cross-chain-swaps": { published: "2026-11-02", modified: "2026-11-18" },
   "crypto-donations": { published: "2026-11-02", modified: "2026-11-02" },
 };
 
@@ -58,6 +63,8 @@ export const NETWORK_GUIDES: Record<Chain, readonly Guide[]> = {
   stellar: ["accept-usdc-on-stellar", "stellar-vs-solana-vs-monad", "usdt0-from-stellar"],
   solana: ["accept-usdc-with-solana-pay", "stellar-vs-solana-vs-monad", "accept-usdc-payments"],
   monad: ["accept-usdc-on-monad", "stellar-vs-solana-vs-monad", "accept-usdc-payments"],
+  // No guide is about Arc yet: the general USDC guide, how a payment is confirmed, the pay button.
+  arc: ["accept-usdc-payments", "confirm-stablecoin-payments", "crypto-payment-button"],
 };
 
 /* The guides /integrations and /swaps link at their end (the page and its Markdown twin). */

@@ -51,7 +51,30 @@ Payments API. The pages that read the database on the server (`dashboard.astro`,
   and mainnet rows for production, and kept on `globalThis`, so what is created or deleted survives
   a hot reload and is gone after a restart. Sign-out works (a `cosmos-mock-signed-out` cookie) and
   `/login` signs back in. `/invite/<token>` takes `expired`, `accepted`, `mismatch`, `seat_limit` or
-  `invalid` as the token to show those states.
+  `invalid` as the token to show those states. Charges in local money ("QR charges") are one
+  store, `src/lib/mock/fiat-requests.ts`, for the payer page (`/fiat/<id>` on the payments host)
+  and the dashboard's Fiat > QR charges (`/api/onramp/p2p/payment-requests`, answered in
+  `handlers/p2p-ramp.ts`): fixed ids per environment (production: open ARS with one method, open
+  COP with three, paid, expired, cancelled; the sandbox: open, paid, expired, cancelled; plus the
+  bank transfer's: `methods` both ways, transfer only and window only, a processing one, one paid by
+  transfer with no transaction; the sandbox's open one answers a transfer 37 cents above its
+  amount). An open one turns paid 20 s after its first session; after a bank
+  transfer is started it reads processing 8 s later and paid 20 s later (the DNI 99999999 answers
+  503 `transfer_unavailable`); one created in the dashboard does the same by itself (it opens on the
+  local payer page too), and a session opens the marketplace's sandbox window. The transfer to a
+  verified person inside the page (`p2pDirect`, `src/lib/mock/fiat-direct.ts`) has two demos:
+  `cqrdemoarsdirect00000013` (bank transfer or direct; a returning payer, identity done, two saved
+  accounts, the Brubank one's orders end disputed) and `cqrdemoarsdirectnew00014` (direct only; a new
+  payer who walks every step). Any email signs in (one starting with `ready` is the returning payer
+  anywhere, `rejected` ends the identity check rejected); the code is any 8 letters and digits but
+  00000000; the phone 1111111111 answers `phone_taken`; the texted code is 1234; the ID step reads
+  `review` 10 s after it starts and done 10 s later. An order is `matching` for 8 s, then `pay` (30
+  minutes to transfer), `confirming` once the payer says they transferred (the charge processing) and
+  `completed` 12 s later (the charge paid). A charge created in the dashboard in pesos takes it too.
+  The organization's
+  bank-transfer account (`/api/onramp/transfer/account`, `src/lib/mock/transfer-account.ts`) has a
+  fixture per status by organization and environment; the sandbox's Andes Commerce is none, and
+  activating it goes pending, then approved 20 s later.
 - **One handler module per area** (`src/lib/mock/handlers/`: `platform`, `payments`, `swaps`,
   `fiat-admin`), each exporting `routes` built with `route()` from `src/lib/mock/http.ts`, typed
   against the interfaces in `src/lib/cosmos.ts`. Shared identities (organizations, their wallets,
@@ -82,9 +105,17 @@ Payments API. The pages that read the database on the server (`dashboard.astro`,
   organization behind the sample account the gateway charges the public consumer's rate, so in
   mock mode `/swaps` does not swap as the visitor's organization (`accountSwaps`) and the
   dashboard's form waits for the quote to name the rate (`publicSwaps`).
-- Wallet proofs are not checked in mock mode, and nothing else reaches a chain: QR codes are PNG
+- Wallet proofs are not checked in mock mode (a challenge is issued, any proof over it is taken), and nothing else reaches a chain: QR codes are PNG
   drawings that encode nothing, and the other transactions and XDRs (payment links, liquidity,
   private payments) are sample strings.
+- **The Discord link can run live** (`src/lib/mock/discord-live.ts`): with `DISCORD_CLIENT_ID`,
+  `DISCORD_CLIENT_SECRET`, `DISCORD_BOT_LINK_SECRET` and `COSMOS_MOCK_DISCORD_KEY` (a real `dv_` or
+  `prod_` key from a real platform) in the shell or `.env`, "Connect Discord" goes through the real
+  Discord application, and the callback hands that key to the real bot (`DISCORD_BOT_LINK_URL`,
+  default `http://127.0.0.1:3800`) and lists the real server. Nothing is minted (the key is the one
+  given, links only in its environment); an unlink tells the bot. The application must list
+  `http://localhost:<port>/api/integrations/discord/callback` as a redirect. Without them the
+  sample flow links a made-up server at once.
 
 ## Languages: seven, everywhere
 
@@ -165,7 +196,7 @@ These were said more than once; breaking one is a bug, whatever the task was.
 - **Never name a provider** (product owner, 2026-11-03: "no deben saber quiénes son nuestros
   proveedores"): no copy a customer reads names the services Cosmos Pay is built on: NEAR Intents
   (and 1Click), LayerZero (and LayerZero Scan), Jupiter, Kuru Flow, OpenZeppelin, BlindPay,
-  Trustless Work. The landing, the company site, the dashboard, the guides, llms.txt, the JSON-LD
+  Trustless Work, El Dorado (the P2P marketplace) and Koywe (the bank-transfer rail). The landing, the company site, the dashboard, the guides, llms.txt, the JSON-LD
   and the docs home say what happens instead: a cross-chain swap, the USDT0 bridge and its fee,
   Solana's or Monad's market (the dashboard's route labels: "Solana DEX", "Monad DEX",
   "Cross-chain", "USDT0 bridge"), a confidential token on Stellar, a deposit address made for the
@@ -191,7 +222,7 @@ These were said more than once; breaking one is a bug, whatever the task was.
 | :--- | :--- | :--- |
 | `cosmospay.lat` | `site` | `src/pages/site/`: landing, `/pricing`, `/swaps`, `/tos`, `/about`, `/brand` |
 | `dev.cosmospay.lat` | `dev` | everything else in `src/pages/`: `/login`, dashboard, onboarding, invite, kyc, `/docs`, `/swagger`, `/api/*` |
-| `payments.cosmospay.lat` | `payments` | `src/pages/payments/`: `/` home, the content pages `/integrations`, `/use-cases`, `/security`, `/fees`, `/compare`, `/faq`, the network pages `/stellar`, `/solana`, `/monad`, the guides `/learn` and `/learn/{slug}`, `/{id}` hosted checkout, `/pay` SEP-7 handler, `/contact` (the contact form's POST), `/preview/{design}` |
+| `payments.cosmospay.lat` | `payments` | `src/pages/payments/`: `/` home, the content pages `/integrations`, `/use-cases`, `/security`, `/fees`, `/compare`, `/faq`, the network pages `/arc`, `/monad`, `/solana`, `/stellar`, the guides `/learn` and `/learn/{slug}`, `/{id}` hosted checkout, `/fiat/{id}` a charge in local money, `/pay` SEP-7 handler, `/contact` (the contact form's POST), `/preview/{design}` |
 
 One build, one process, one Better Auth. `src/middleware.ts` applies `routeRequest` from
 `src/lib/hosts.ts` (fully covered by `tests/unit/hosts.test.ts`) before any database work:
@@ -423,6 +454,46 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   covers that exact string).
 - **`EXPIRED` is not final** on the server; the page keeps reading expired links slowly and
   stops on paid, failed and cancelled (`nextPollDelay`).
+- **A charge in local money ("charge with QR") has its own payer page, `/fiat/{id}`**
+  (`src/pages/payments/fiat/[id].astro`, `components/payments/FiatCharge.astro`, vanilla
+  `src/scripts/payments/fiat-request.ts`): a seller's QR for an amount in local money, paid with a
+  local method in the P2P marketplace's secure window, which delivers the crypto to the seller's
+  own wallet. The browser reads `GET /v1/payment-links/fiat/{id}` and opens a session with
+  `POST /v1/payment-links/fiat/{id}/sessions` (both keyless under the payment-links route); the tab
+  is claimed on the click and sent to the window with no opener, a blocked popup becomes a link to
+  tap, and the page waits (reopen, change method; the session kept in sessionStorage) and polls
+  until the server marks the charge paid from the marketplace's webhook. `src/lib/payments/fiat-request.ts`
+  is its trust boundary (`parseFiatRequest`, tested): every field checked, and the window's URL
+  followed only over https on `WIDGET_HOSTS`, the marketplace's own hosts (code, never copy: the
+  marketplace is never named, `noProviderNames.test.ts`). Paid is final; expired and cancelled keep
+  being read slowly (the money can still arrive). Copy in the payments catalog's `fiat` block.
+  **Two ways to pay, the charge's `methods`** (`transfer`, `p2p`; absent from an older server means
+  `p2p`): with both, the payer chooses first (bank transfer first, recommended); with one, the page
+  goes straight to it. By bank transfer the payer types their CUIT/CUIL or DNI (check digit checked
+  here and on the server), `POST /v1/payment-links/fiat/{id}/transfers` answers the deposit
+  instructions (`parseBankTransfer`: the CVU's check digits too) and the page shows the exact
+  amount, the alias and the CVU with copy buttons, the holder (the seller's name) and how long they
+  hold. The amount is always the transfer's own, never the charge's: the server may add a few cents
+  to tell two transfers of the same payer apart, and then the card says to send the cents too; the instructions, never the document, stay in sessionStorage per charge, and the page reads
+  the charge every 5 s: `processing` once the transfer arrived (never expired, not cancellable),
+  then `paid`. **The other way inside the page** (product owner, 2026-11-13: the payer never sees
+  the marketplace's window, quotes or "buy" flow): when the charge's read says `p2pDirect: true`, the
+  `p2p` choice (labelled a transfer to a verified person, never crypto, a token or "buy") runs in
+  `src/scripts/payments/fiat-direct.ts` over the keyless `/v1/payment-links/fiat/{id}/direct/*`
+  routes (`src/lib/payments/p2p-direct.ts`, its trust boundary, tested in `p2pDirect.test.ts`):
+  email, its 8-character code, city and phone, the texted 4-digit code, the ID check in its own tab
+  (an https link only; read every 5 s while shown, "I'm done" reads it at once), review or rejected,
+  then the account the payer pays from (a saved one, or holder, CVU/CBU with both check digits,
+  CUIT/CUIL with its check digit, bank and account type, in their own name), the order: `matching`
+  (read every 4 s), `pay` (the verified person's account and alias to copy, the exact amount, a clock
+  to `dueAt`, "I transferred" behind a confirmation dialog), `confirming`, then `completed` (the paid
+  view), `cancelled` (start again) or `disputed` (support, with the reference). The server's opaque
+  session travels in `X-Payer-Session` and is the only thing kept, with the order's id, in
+  sessionStorage per charge (`fiatStorageKey`); a 401 goes back to the email and resumes the order
+  after; paid or closed forgets it. An order on its way is followed past the charge's deadline and
+  through `processing`. With `p2pDirect` false the window stays. The bank-transfer provider is never named either; its webhook,
+  `POST /v1/onramp/transfer/webhooks`, has its own keyless gateway route (`<route>-transfer-webhooks`,
+  POST only, no CORS, like `-p2p-webhooks`).
 - **Never framable**: the middleware adds `X-Frame-Options: DENY` and `frame-ancestors 'none'`
   to every payments response.
 - **Only the page's own scripts run on the payments domain** (`src/lib/payments/csp.ts`, security
@@ -952,21 +1023,84 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
     phones. To see it locally, sign in through local Authentik with the `.env` test account
     (`DEV_TEST_*`).
 
-### Payment links on every chain
+### Payment links on every network
 
-- **A payment link settles on Stellar, Solana or Monad**, on the environment's network (Solana
-  devnet and Monad testnet in the sandbox). The form is composed, not a stack of fields: the network
-  as three choice cards, the amount with its asset dropdown in one well (as the swap widget), the
-  destination, and memo / message under "more options"; transaction intents
-  (a known payer) are Stellar's only, Monad needs an amount and takes no wallet message. The schema
-  (`src/schemas/payment-intents.ts`, tested) checks each chain's address shape and decimals; the
-  Payments API checks the rest.
-- **`src/lib/chains.ts` is the chain vocabulary** for every screen and route: names, native coins,
-  test-network names, address shapes, explorers (transactions and accounts, per network) and the
-  token presets. Presets are only addresses we verified: Solana USDC (mainnet `EPjF…Dt1v`, devnet
-  Circle's `4zMM…ncDU`) and Monad mainnet USDC (`0x7547…b603`, from NEAR Intents' list); Monad's
-  test network has none. Other tokens go by ticker and mint / contract (`TokenSelect`).
-  `payment-link.ts` re-exports its chain list and explorer from there.
+- **A payment link settles on any network of `PAYMENT_NETWORK_IDS`** (36): the 35 of `NETWORK_IDS`
+  (the swap platform's; the community server's `CROSS_CHAIN_NETWORK_IDS`) plus **Arc**, Circle's EVM
+  chain, which no swap reaches and is not in `NETWORK_IDS`. Stellar, Solana, Monad and Arc are the
+  chains with their own wallet links (SEP-7, Solana Pay, EIP-681 for Monad and Arc) and test networks
+  (Solana devnet, Monad testnet and Arc Testnet in the sandbox); every other network is paid through a **deposit address made for each payment**, on
+  mainnet and on the test networks the community server's sandbox settles (it lists the others,
+  off, saying why), in one of the tokens the Payments API
+  lists there, with or without an amount (product owner, 2026-11-16: the payer types it in the
+  checkout), and with a merchant fee paid as the cross-chain route's own app fee to a route account
+  (an organization wallet on NEAR, or an EVM one). The payer pays from any network and token, the
+  commission on top; the merchant receives exactly the amount on the link's network. A mainnet
+  Stellar, Solana or Monad link with no fee can be paid that way too, with or without an amount
+  (`crossChainPayment` on the public read). Which deposit-network links can be paid is the server's
+  call: `parsePaymentLink` accepts a test network, an open amount and a merchant fee there whenever
+  the public read says `crossChainPayment` (it refused all three until 2026-11-17, so those links
+  failed to load). The form is composed, not a stack of fields: the network
+  as a `Select` of every network by name (none first for being ours), the amount with its asset
+  dropdown in one well (as the swap widget; on the other networks the real cross-chain asset list,
+  never sampled), the destination, and memo / message under "more options"; transaction intents
+  (a known payer) are Stellar's only, Monad and Arc need an amount and take no wallet message, and a link
+  that can be paid from another network has its own limits under "more options" (`depositLimits`). The schema (`src/schemas/payment-intents.ts`, tested) checks each network's
+  address shape and decimals; the Payments API checks the rest.
+- **The hosted checkout pays from another network** (`CrossChainStep.astro` in every design,
+  `src/lib/payments/deposits.ts`, keyless `/v1/payment-links/{id}/deposit-assets`, `/quote`,
+  `/deposits`, `/deposits/{depositId}`): network and token, the payer's refund address there, the
+  quote, then the deposit address with its QR, wallet link where the network has one, memo and
+  deadline, followed until paid (the open deposit's id is kept in sessionStorage so a reload shows
+  the same address). Every answer goes through its parser: the deposit address must be one of its
+  origin network, the wallet link one of the known standards, the QR a PNG, explorer links https. A
+  route's refusal (a minimum, a token it cannot take now) is shown in the server's words, which name
+  no provider. The token list comes with `routes`, the server's check of the main origins for the
+  link's amount: a token the route cannot take for it is listed disabled, with the reason under the
+  lists, before anyone picks it. On a link without an amount the payer types it first (`amount` on
+  the quote and the deposit). Mock mode never fakes it: the token list is the real one, a quote or
+  a deposit answers that mock mode cannot make one.
+- **No way to pay before the payer's email** (product owner, 2026-11-16: a receipt always goes out).
+  Every design's `EmailStep.astro` asks for it on an open link; until it is in, the page holds no
+  QR, wallet link, manual transfer or deposit form (`emailGated` in `checkout.ts`, the QR's `src`
+  and the links' `href` removed, not only hidden). The keyless `POST /v1/payment-links/{id}/payer`
+  (`recordPayer`) records it as one checkout session and answers that session's `payerToken`, which
+  the page keeps in memory and sessionStorage (per link: a reload neither asks again nor opens
+  another session) and sends on its later calls: a changed email, the wallet events
+  (`reportCheckoutEvent`) and every deposit (`createDeposit`). Every session keeps its own email, so
+  another visitor never blocks the payer. The wallet events also carry what the session's wallet
+  said it pays from (`address`: Freighter's account, sent when Freighter opens, before the payment
+  exists) or the transaction it answered (`txHash`: the extension's): the receipt and the customer
+  link go to the deposit's session, else the one session whose proof matches the settlement and
+  was registered before the transaction closed on-chain; a bare `sent` decides nothing. A deposit refused as `payer_session_unknown` brings the email
+  step back (a new session). The payment's view lists every email given (`payer-emails`). The embedded checkout
+  (`<cosmos-pay-checkout>`) asks the same way before its QR; its strings are the hosted page's,
+  word for word. A wallet link scanned outside these pages carries no email: nothing here can
+  force one there.
+- **`src/lib/chains.ts` is the network vocabulary** for every screen and route: names, native coins,
+  test-network names (the four chains'), address shapes for all 36 (mirroring the server's rules),
+  explorers (transactions and accounts, per network; mainnet only off the four) and the token
+  presets. Presets are only addresses we verified: Solana USDC (mainnet `EPjF…Dt1v`, devnet
+  Circle's `4zMM…ncDU`), Monad mainnet USDC (`0x7547…b603`, from NEAR Intents' list; Monad's test
+  network has none) and Arc's USDC (`0x3600…0000`, the ERC-20 interface to its gas coin, one address
+  on both networks) and EURC (`0xbEf5…21c1`, testnet `0x89B5…D72a`), all 6 decimals. Other tokens go
+  by ticker and mint / contract (`TokenSelect`). `payment-link.ts` re-exports its chain list and
+  explorer from there.
+- **Arc is a native payment chain, never a swap or deposit network** (product owner, 2026-11-18,
+  "implementala como se viene haciendo"). `CHAINS` has it beside Stellar, Solana and Monad;
+  `DEX_CHAINS` (the swap screens, `SWAP_CHAINS`, the swap catalogue) does not, nor `NETWORK_IDS`,
+  the deposit routes (`isSwapNetwork`, `takesDeposits`, `EVM_NETWORK_IDS`) or the public swap
+  pages, and `parsePaymentLink` never takes `crossChainPayment` there. `EVM_CHAINS` (Monad, Arc)
+  share the EIP-681 link, EIP-191 proofs and the deposit address per payment. Its gas coin is USDC
+  (18 decimals), charged through the 6-decimal interface: `offersNativeCoin("arc")` is false, so
+  no screen offers it beside the USDC preset, and the Payments API stores that interface for an
+  Arc link with no asset, `USDC` or `native`. An EIP-681 link must carry its chain's id for the
+  link's tier (`isWalletUri`: 5042 / 5042002 on Arc, 143 / 10143 on Monad), and
+  `EVM_CHAIN_PARAMS` is what a wallet gets to add the chain (`wallet_addEthereumChain`). On a
+  Monad or Arc link the hosted checkout shows a "Pay with <wallet>" button per EVM wallet the
+  browser announces (EIP-6963, through the SDK's wallets module, loaded only there): it switches
+  the wallet to the link's chain, adding it when unknown, sends what the EIP-681 link says and
+  reports the account and hash as the session's proof.
 
 ### Customers and their wallets
 
@@ -983,23 +1117,62 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
 - **The organization's receiving wallets live in Settings** (product owner, 2026-10-25: asking people
   to connect a wallet from the payments views is impractical, and members without the permission
   must not be able to remove one or pick an address outside the list). Model `OrganizationWallet`
-  (chain, address, optional name, the wallet that proved it); routes
-  `/api/organizations/{id}/wallets` (list: any member; connect: `wallets:create`) and
+  (chain, address, optional name, what proved it); routes
+  `/api/organizations/{id}/wallets` (list: any member; connect: `wallets:create`),
+  `/api/organizations/{id}/wallets/challenge` (`wallets:create`) and
   `/api/organizations/{id}/wallets/{walletId}` (rename: `wallets:edit`; remove:
   `wallets:delete`). `wallets` is a permission resource like the others (owners and admins hold
   it implicitly). UI: `components/OrgWallets.tsx` (`OrgWalletsSection` in Settings,
   `ConnectWalletDialog`, `WalletSelect`, `useOrgWallets`).
-- **Connecting proves the wallet**: it signs `walletProofMessage` (`src/lib/org-wallets.ts`: the
-  organization, the network, the address and `issuedAt`), and the route checks the signature
-  against the address (`src/lib/org-wallets-verify.ts`): SEP-53 on Stellar (Freighter), Ed25519 on
-  Solana (Phantom, Solflare), EIP-191 `personal_sign` on Monad (any injected EVM wallet; the
-  signer is recovered with `@noble/curves` + `@noble/hashes`, pinned). A proof is accepted for 10
-  minutes; replaying one only connects the same wallet again. Tested against SEP-53's own vectors
-  and web3.js's documented `personal_sign` example (`tests/unit/orgWallets.test.ts`). The browser
-  side is `src/lib/wallets/prove.ts`.
+- **Every wallet is proven by a signature over a server challenge** (2026-11-16). The member asks
+  for a challenge (`POST .../wallets/challenge`: 32 random bytes, for that member, organization,
+  network and address, valid ten minutes, at most 20 open per member and organization; model
+  `WalletProofChallenge`, `src/lib/org-wallet-challenges.ts`), the wallet signs it, and the connect
+  route checks the signature against the address, then uses the challenge up in one statement
+  (`usedAt`, so a replay or a race finds it used) before it stores the wallet. The text signed is
+  `walletProofMessage` (`src/lib/org-wallets.ts`: the organization, the network, the address, the
+  nonce, issued and expires). Verification is server-side only (`verifyOwnershipProof` in
+  `src/lib/org-wallets-verify.ts`, one verifier per scheme in `src/lib/wallet-proofs/`).
+- **One scheme per network, the one its wallets implement** (`WALLET_PROVIDERS`; `provider` stores
+  what proved the wallet, and "Proven with" shows it):
+
+  | Network | Proof | Browser wallets (one click) | Pasted |
+  | :--- | :--- | :--- | :--- |
+  | Stellar | SEP-53, or the proof transaction signed as an XDR | Freighter | the signed XDR, any wallet |
+  | Solana, Fogo | Ed25519 over the message | Phantom, Solflare | no |
+  | Monad, Arc and every EVM network | EIP-191 `personal_sign`, signer recovered | any injected EVM wallet | no |
+  | Tron | TIP-191 `signMessageV2` (`tip191`) | TronLink | the signature |
+  | TON | TON Connect `ton_proof` over the nonce, for this host (`tonproof`): the state init must hash to the address and hold the key | any TON Connect JS bridge (Tonkeeper, MyTonWallet...) | no |
+  | NEAR | NEP-413 with the nonce and this host as recipient, and the key must be a full-access key of the account (`view_access_key`; an implicit account not on chain yet is its key's) (`nep413`) | MyNearWallet's sign-message page in a popup | public key and signature |
+  | Sui | personal message, Ed25519 / Secp256k1 / Secp256r1 (`sui`); zkLogin and multisig refused | Wallet Standard `sui:signPersonalMessage` | the signature |
+  | Aptos, Movement | AIP-62 `signMessage` with the nonce, and the key must be the account's authentication key (legacy or single-key; an account not on chain is its address) (`aip62`) | Wallet Standard `aptos:signMessage` | public key, signature, full message |
+  | Starknet | SNIP-12 revision 1 typed data (domain Cosmos Pay / SN_MAIN; the organization, the nonce cut to 31 bytes, the expiry), validated by the account itself (`is_valid_signature`, Cairo 0's `isValidSignature`) (`snip12`) | injected `window.starknet_*` (Argent X, Braavos) | no |
+  | Cardano | CIP-30 `signData` (CIP-8 COSE_Sign1): EdDSA, the protected header names the address, the key hashes to its payment credential (`cip30`) | CIP-30 `window.cardano.*` | signature and key |
+  | XRP Ledger | keypairs signature of the message's hex, the master key of the address (`xrpl`) | none (no browser standard) | public key and signature |
+  | Bitcoin | BIP-322 simple (P2WPKH, P2TR, P2SH-P2WPKH) or BIP-137 (`bip322`, `signmessage`) | Unisat, OKX, Xverse, Leather | the signature |
+  | Litecoin, Dogecoin, Dash, Zcash (transparent), Bitcoin Cash | the wallet's legacy signmessage with the coin's own magic (`signmessage`) | none | the signature |
+
+  The chain reads (NEAR, Aptos, Movement, Starknet) go to `WALLET_PROOF_*_RPC_URL`
+  (`src/lib/wallet-proof-env.ts`, public mainnet endpoints by default); a node that cannot be reached
+  answers 503, never "wrong signature". TON's proof domain and NEAR's recipient are the platform's
+  host; TON wallets read `/api/wallet-proofs/tonconnect-manifest.json`. The browser side is
+  `src/lib/wallets/prove.ts` (Freighter, Solana, EVM) and `src/lib/wallets/prove-networks.ts` (the
+  rest, with `src/lib/wallets/standard.ts` for the Wallet Standard), in this app rather than the
+  SDK's `@cosmosapp/pay_sdk/wallets`, since an SDK change reaches this repository only once it is
+  published. Tested against signatures made by each network's own libraries
+  (`tests/unit/fixtures/wallet-proof-vectors.json`, `walletProofs.test.ts`, and every network through
+  the dispatcher in `orgWallets.test.ts`), SEP-53's vectors and web3.js's `personal_sign` example.
+- **Only an address that cannot sign a message is added by its address, typed twice**
+  (`addedByAddress`: a Bitcoin or Litecoin P2WSH address, a P2SH address on Dogecoin, Dash, Bitcoin
+  Cash or Zcash, a Zcash unified address, and every Aleo address), by members holding
+  `wallets:create`, stored as `provider: "address"` and listed as added by address. Rows stored as
+  `address` before 2026-11-16 stay as they are. **Aleo is address-only by decision** (product
+  owner, 2026-11-16): the only verifier of its signatures, snarkVM's WASM (`@provablehq/wasm`), is
+  GPL-3.0 and was declined; never add it back. Aleo signing is a possible follow-up only with a
+  verifier under a compatible licence.
 - **A Stellar wallet is added with a signed XDR, not a connected wallet** (product owner,
   2026-10-27: people hand over a signed XDR). `ConnectWalletForm`'s Stellar branch takes the address
-  and a name, then the proof transaction (`src/lib/wallets/wallet-proof-xdr.ts`: the same proof
+  and a name, then the proof transaction (`src/lib/wallets/wallet-proof-xdr.ts`: the challenge's
   message hashed into a manageData entry, sequence 1, never valid) signed with Freighter in one
   click or in any wallet and pasted back (`signedXdr` on the connect route, no `provider`); either
   network's signature counts, since it applies on neither. `src/lib/wallets/signed-xdr.ts` checks a
@@ -1012,6 +1185,31 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   it**: `POST /api/payment-intents` and `POST /api/zk-payments` answer 400 for an address that is
   not one of the organization's wallets (`orgHasWallet`), failing closed if the table cannot be
   read. Requests made with an API key straight to the Payments API are not affected.
+
+### Linking a Discord server
+
+- **Settings > Discord links a server to the organization** (`components/DiscordLinks.tsx`, routes
+  under `src/pages/api/organizations/[id]/discord/` and `src/pages/api/integrations/discord/callback.ts`,
+  the pure rules in `src/lib/discord-link.ts`, tested in `tests/unit/discordLink.test.ts`). The
+  callback mints an API key for the organization and hands it to the bot over a signed request; the
+  key never reaches a browser and is never stored here, only its id and its SHA-256.
+- **Least privilege** (`DISCORD_KEY_SCOPES`): `payments:read/write`, `webhooks:read/write`,
+  `products:read`, `activity:read`. The bot's commands that need more (swaps, liquidity and vaults,
+  plugins, fiat, customers, editing products) answer 403 with the missing scope; an organization that
+  wants them links a key of its own with the bot's `/setup`.
+- **No takeover**: a server linked to another organization is refused (`linked_elsewhere`) until it
+  is unlinked there, checked before any key is minted and again in the save's transaction; replacing
+  this organization's own link takes the delete permission of the old key's environment
+  (`replace_forbidden`). An old key that cannot be revoked is said on Settings (`warning=old_key_kept`)
+  and in a notification, never left in the log.
+- **`DISCORD_BOT_LINK_URL` is https, or http on a loopback host, with no path** (the bot verifies
+  the signature over its own `/links` path): anything else turns linking off (503 `not_configured`)
+  and logs why once.
+- **Every unlink goes through `src/lib/discord-unlink.ts`**: the bot is told with
+  `DELETE /links/{guildId}` and `{"apiKeySha256"}` in the signed body (a 404 or a 409, linked since
+  with another key, is fine), then the key is revoked, then the row goes, failing closed. Settings'
+  unlink, deleting the organization and removing the wallet a link pays into all use it; the wallet
+  removal needs the key's delete permission too (409 without it).
 
 ### Public swaps (no account)
 
@@ -1154,6 +1352,44 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
 - Mock mode: `src/lib/mock/handlers/p2p-ramp.ts` over `p2p-ramp-market.ts`, the marketplace's
   market recorded on 2026-11-05 for both environments (each network's main assets, in the API's
   order, then a few others).
+- **QR charges (`?view=charges`, `views/QrChargesView.tsx`, third in the Fiat group)**: a charge in
+  local money shown as a QR, which the payer pays on `/fiat/{id}` (see "The payments domain") and
+  the marketplace delivers to the organization's own EVM account. The Payments API's
+  `/v1/onramp/p2p/payment-requests` (list, create, read, cancel) through the same `/api/onramp`
+  proxy, so no route of its own. The Payments table (figures counted from the list, status,
+  currency, network and date filters, rows opening the detail); the detail draws the API's QR only
+  when it is a PNG data URL (`safeQrDataUrl`) and the link only when it is that charge's
+  `/fiat/<id>` (`safeChargeUrl`), reads an open charge every 5 s until it is paid, and cancel asks
+  first. "New charge" is a dialog in three steps: the amount in local money (two decimals, at least
+  the market's minimum) with the market price's estimate of the token; the token on its network and
+  the receiving account, one of the organization's EVM wallets (Monad's, proven with a
+  `personal_sign`, are plain EVM accounts with the same address on every EVM network) or a typed
+  address checked against its EIP-55 checksum (the one place a payment form takes a typed address:
+  the server does not verify it either, so the hint says it must be an account the merchant controls
+  on that network); then the description (one line, 140 characters) and how long it can be paid
+  (1 hour, 24 hours, 7 days, 30 days), with who does each step once the QR is shown. The checks are
+  `src/lib/qr-charges.ts` (`tests/unit/qrCharges.test.ts`, which also holds the mock's answers
+  against `docs/openapi.json`'s `P2pPaymentRequestEntity`). A charge reads `processing` while a
+  bank transfer's token is on its way (followed like an open one, but no QR, link or cancel), and
+  the detail lists the ways the payer has (`methods`) and, once paid, how (`paidMethod`).
+  **Bank transfers need the organization's own account** (product owner, 2026-11-12: the money lands
+  in the seller's name): `components/TransferAccountCard.tsx` under the figures reads
+  `GET /v1/onramp/transfer/account` through `/api/onramp` (none, pending, in review, approved with
+  its alias and CVU to copy, rejected with the reason) and activates it in a three-step dialog
+  (holder: person or company, name, CUIT/CUIL for that kind of holder, a person's date of birth;
+  contact; address; phone, city and postal code optional, as on the server), `payments:create` only; pending and in review link the provider's hosted
+  verification form and refresh. A server without the rail or with it off (404, 501, 503), or a
+  failed read before any account was read, draws no card at all (`transferAccountReadFailure`):
+  never a standing error for a rail the organization cannot turn on. Checks in `src/lib/transfer-account.ts`
+  (`tests/unit/transferAccount.test.ts`). One account per consumer and network (Sandbox and
+  Production each have theirs); its routes are the API reference's "Bank transfers" page (the
+  server's `bank-transfers` tag, in `TAGS` of `docs/scripts/transform-spec.mjs`).
+  **The entry shows only where the server has charges**: they ship with a Payments API release,
+  so the shell reads the list once per environment (`take=1`, kept for the session) and keeps
+  "QR charges" out of the sidebar and the search until that read goes through or the route itself
+  refuses it (`chargesAvailable` in `src/lib/qr-charges.ts`: a 404, 501, 503, any other 5xx or no
+  answer keep it out), and a `?view=charges` link on such a server opens the overview. Not a
+  `DISABLED_VIEWS` entry: it turns on by itself once the server ships the routes.
 
 ### The payments landing
 
@@ -1168,7 +1404,7 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   three paths), `/use-cases` (businesses, the comparison with cards), `/security`, `/fees`
   (plans and calculator; `/pricing` is the company site's), `/compare` and `/faq`. A sticky section bar
   (`Subnav.astro`) under the general nav links them (`SECTION_PAGES`) and ends with the main call to action.
-  **One page per network a payment settles on** (`NETWORK_PAGES`: `/stellar`, `/solana`, `/monad`,
+  **One page per network a payment settles on** (`NETWORK_PAGES`: `/stellar`, `/solana`, `/monad`, `/arc`,
   `NetworkPage.astro`), answer first: the link standard, the wallets, how a payment is matched,
   where the money goes, the test network, the presets (read from `stellar-assets.ts` and
   `chains.ts` through `src/lib/payments/network-pages.ts`, never written), the plans' rates, the
@@ -1460,12 +1696,18 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   with the Monad deposit address and the swap's deposit address described where they apply
   (catalogs and llms.txt alike), never naming who runs them: copy says "a deposit address made for
   the swap, until it settles or is refunded" (see "Never name a provider" above).
-- **Counts are computed**: the networks cross-chain swaps reach is `{n}` in the copy, filled from
-  `NETWORK_IDS.length` (`fillPageCopy` in `landing-i18n.ts`, `SWAP_NETWORKS`), never "35+".
+- **Counts are computed, two of them** (`withNetworkCounts` and `NETWORK_COUNTS` in
+  `src/lib/chains.ts`, never "35+"): `{n}` is how many networks Cosmos Pay works with (every network
+  a payment settles on, `PAYMENT_NETWORK_IDS`, Arc included) and `{swapN}` how many its swaps reach
+  (`NETWORK_IDS`, no Arc). A sentence about where Cosmos Pay works or where a payment settles says
+  `{n}`; one about swaps, a payer swapping first, moving funds between networks or the wallet says
+  `{swapN}`; a sentence about both names each ("{n} networks, with swaps across {swapN} of them").
+  Every surface that fills one fills both (`fillPageCopy`, `guideCopy`, `NETWORK_VARS`).
 - **Cosmos Pay works with every network of its swap platform, never "three networks"** (product
   owner, 2026-11-03): copy, the FAQ first, presents the whole collection (`NETWORK_IDS`), not
   Stellar, Solana and Monad as if they were the only networks Cosmos Pay serves. The FAQ counts it
-  with `{n}` and names it with `{networks}` (both filled in `landingContent`, the names joined with
+  with `{n}` and names it with `{networks}` (both filled in `landingContent` from
+  `PAYMENT_NETWORK_IDS`, Arc included, the names joined with
   `Intl.ListFormat` in the page's language), and its second question, "Which networks does Cosmos
   Pay work with?", lists them all. **No settlement exception in presenting copy** (product owner,
   the same day, when the hero and the FAQ still said "Stellar, Solana, Monad and every network our
@@ -1484,7 +1726,7 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   **The rule covers every surface** (product owner, 2026-11-03: "en todo"): the payments landing,
   the company site, the dashboard, the guides, the search titles and descriptions, llms.txt, the
   JSON-LD (`schema.ts`), the terms and the docs home. **Every string of the gateway's catalog can
-  carry `{n}`**: `landingContent` fills it across the whole catalog (`withNetworkCount`), except the
+  carry `{n}` and `{swapN}`**: `landingContent` fills them across the whole catalog (`withNetworkCount`), except the
   step counters (`counter` keys, whose `{n}` is the step). On the company site `{n}` is filled only
   where the component passes it (Solutions, the API cards, `/swaps`' facts, About's
   `facts.networksValue` and `products.items[].d`; every guide string through `guideCopy`; llms.ts
@@ -1512,7 +1754,8 @@ One build, one process, one Better Auth. `src/middleware.ts` applies `routeReque
   video they run for everyone, reduced motion included (the product owner's call). **Logos are official artwork only**, full colour, in
   `public/media/brands`: USDC, XLM, SOL from cryptocurrency-icons; Freighter, LOBSTR, xBull,
   Albedo, Rabet from the Stellar Wallets Kit; Phantom and Solflare from their Solana
-  wallet-adapter icons; Monad and EURC from Trust Wallet's assets. Single-colour marks (Stellar,
+  wallet-adapter icons; Monad and EURC from Trust Wallet's assets; Arc's network icon from Circle's
+  Brand Kit (its terms are in `src/assets/logos/networks/SOURCES.md`). Single-colour marks (Stellar,
   the Cosmos isotype) are inline in currentColor (`Mark.astro`) so they follow the theme. Never
   draw an approximation of someone else's logo. **Every token and network logo** (the landing's
   swap row, the dashboard's `TokenMark` everywhere an asset shows) comes from the generated manifest
@@ -2029,7 +2272,13 @@ What this app still does for them:
     CORS from `COSMOS_API_CORS_ORIGINS`.
   - `<route>-payment-links`: the public payment-link read (`/v1/payment-links/*`, GET/OPTIONS),
     made from payers' browsers by the hosted and the embedded checkout, so its CORS is `*`
-    without credentials. No other keyless route lists that URI. The old `<route>-pollar-callback` route is only ever
+    without credentials. No other keyless route lists that URI. Its preflight allows
+    `X-Payer-Session` (the direct flow's sealed payer session, `PAYMENT_LINKS_CORS`) and
+    `Accept-Language`, never an API key header.
+  - `<route>-p2p-webhooks`: exactly `POST /v1/onramp/p2p/webhooks`, the P2P marketplace's order
+    webhook (server to server, verified by the community server from the marketplace's signature
+    over the raw body), which marks a charge in local money paid. No CORS; every other
+    `/v1/onramp` route stays on the key-auth route. The old `<route>-pollar-callback` route is only ever
     DELETED at boot, never created.
   - `<route>-sep`: `/.well-known/stellar.toml`, `/v1/sep10/*`, `/v1/sep30/*`. It carries NO
     `cors` plugin, because the community server answers CORS itself for those prefixes and two

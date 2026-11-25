@@ -271,6 +271,27 @@ export default defineConfig({
       // Bing verifies each of the three sites. Public by design, a runtime read like INDEXNOW_KEY;
       // keep it set, or the sites stop being verified. Unset: the file answers 404.
       BING_SITE_AUTH: envField.string({ context: 'server', access: 'secret', optional: true }),
+      // --- Organization wallet proofs (src/lib/wallet-proof-env.ts) ---
+      // The mainnet nodes a wallet proof reads the chain from: NEAR's JSON-RPC (is the signing key a
+      // full-access key of the account?), Aptos's and Movement's REST API (the account's
+      // authentication key) and Starknet's JSON-RPC (the account contract checks its own
+      // signature). Public endpoints by default; point them at a provider's when the public ones
+      // rate-limit. Runtime reads, no rebuild.
+      WALLET_PROOF_NEAR_RPC_URL: envField.string({ context: 'server', access: 'secret', optional: true, default: 'https://free.rpc.fastnear.com' }),
+      WALLET_PROOF_APTOS_RPC_URL: envField.string({ context: 'server', access: 'secret', optional: true, default: 'https://api.mainnet.aptoslabs.com/v1' }),
+      WALLET_PROOF_MOVEMENT_RPC_URL: envField.string({ context: 'server', access: 'secret', optional: true, default: 'https://mainnet.movementnetwork.xyz/v1' }),
+      WALLET_PROOF_STARKNET_RPC_URL: envField.string({ context: 'server', access: 'secret', optional: true, default: 'https://starknet-rpc.publicnode.com' }),
+      // --- Discord link (Settings > Discord; src/lib/discord-env.ts, src/lib/discord-link.ts) ---
+      // The Discord application that adds the bot to a merchant's server: its public client id
+      // and its OAuth2 secret. Its redirect must list <PUBLIC_BETTER_AUTH_URL>/api/integrations/
+      // discord/callback. The bot's link endpoint (it runs on the same VPS) and the secret both
+      // sides sign its requests with (at least 32 characters, the bot's own value). Linking is
+      // off (the routes answer 503, Settings draws no Discord section) while the id, the client
+      // secret or the link secret is missing. Runtime reads, no rebuild.
+      DISCORD_CLIENT_ID: envField.string({ context: 'server', access: 'secret', optional: true }),
+      DISCORD_CLIENT_SECRET: envField.string({ context: 'server', access: 'secret', optional: true }),
+      DISCORD_BOT_LINK_URL: envField.string({ context: 'server', access: 'secret', optional: true, default: 'http://127.0.0.1:3800' }),
+      DISCORD_BOT_LINK_SECRET: envField.string({ context: 'server', access: 'secret', optional: true }),
     },
   },
 

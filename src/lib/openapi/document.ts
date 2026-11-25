@@ -77,6 +77,10 @@ export const openApiConfig: OpenAPIObjectConfig = {
       description: 'Workspaces, their members and invitations',
     },
     {
+      name: 'Integrations',
+      description: "Discord: link a merchant's server to an organization, so the Cosmos Pay bot charges into one of its wallets",
+    },
+    {
       name: 'Account',
       description: "The signed-in account's own plan and profile",
     },

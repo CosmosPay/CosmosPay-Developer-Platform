@@ -115,6 +115,17 @@ export function solanaAddress(label: string): string {
   return base58(bytes(`sol:${label}`));
 }
 
+/** A Tron address's shape: T and 33 base58 characters (no checksum: sample data only). */
+export function tronAddress(label: string): string {
+  return `T${base58(bytes(`tron:${label}`, 32)).slice(0, 33).padEnd(33, "1")}`;
+}
+
+/** A Bitcoin SegWit address's shape: bc1q and 38 bech32 characters (no checksum: sample data only). */
+export function bitcoinAddress(label: string): string {
+  const alphabet = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
+  return `bc1q${Array.from(bytes(`btc:${label}`, 38), (b) => alphabet[b % 32]).join("")}`;
+}
+
 /** A Solana transaction signature (64 bytes, base58). */
 export function solanaSignature(label: string): string {
   return base58(bytes(`solsig:${label}`, 64));

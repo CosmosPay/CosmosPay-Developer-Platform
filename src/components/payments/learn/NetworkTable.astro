@@ -6,7 +6,8 @@
 // src/lib/stellar-assets.ts (through src/lib/payments/network-pages.ts), the wallets each network
 // page names, and Starter's rate from src/lib/plans.ts. Each network's column heading links its page.
 import type { LandingData } from "@/components/payments/landing/data";
-import { CHAINS, CHAIN_NAMES, TEST_NETWORKS, type Chain } from "@/lib/chains";
+import { CHAIN_NAMES, TEST_NETWORKS, type Chain } from "@/lib/chains";
+import { COMPARED_CHAINS, type ComparedChain } from "@/lib/payments/site-pages";
 import { NETWORK_WALLETS, networkPresets } from "@/lib/payments/network-pages";
 import { PLAN_SPECS } from "@/lib/plans";
 import { fill } from "@/lib/payments/learn/index";
@@ -32,10 +33,10 @@ const rows = Object.entries(table.rows).map(([key, row]) => {
     if (key === "presets") return codes(chain, "public");
     if (key === "test") return `${TEST_NETWORKS[chain]} (${codes(chain, "testnet")})`;
     if ("value" in row) return fill(row.value, vars);
-    const text = (row as Record<Chain, string>)[chain];
+    const text = (row as Record<ComparedChain, string>)[chain as ComparedChain];
     return fill(text, { ...vars, wallets: wallets.format(NETWORK_WALLETS[chain]) });
   };
-  return { key, k: row.k, cells: CHAINS.map((chain) => ({ chain, text: cell(chain) })) };
+  return { key, k: row.k, cells: COMPARED_CHAINS.map((chain) => ({ chain, text: cell(chain) })) };
 });
 ---
 
@@ -45,7 +46,7 @@ const rows = Object.entries(table.rows).map(([key, row]) => {
     <thead>
       <tr>
         <th scope="col">{table.topic}</th>
-        {CHAINS.map((chain) => <th scope="col"><a href={pageLinks[chain]}>{CHAIN_NAMES[chain]}</a></th>)}
+        {COMPARED_CHAINS.map((chain) => <th scope="col"><a href={pageLinks[chain]}>{CHAIN_NAMES[chain]}</a></th>)}
       </tr>
     </thead>
     <tbody>

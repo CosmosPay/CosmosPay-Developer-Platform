@@ -141,12 +141,13 @@ export const TOKEN_LOGOS: Record<string, string> = {
   ZEC: "tokens/zec.webp",
 };
 
-/* Keyed by the network ids of NETWORK_NAMES and OFT_NETWORK_NAMES (src/lib/chains.ts). */
+/* Keyed by the network ids of PAYMENT_NETWORK_NAMES and OFT_NETWORK_NAMES (src/lib/chains.ts). */
 export const NETWORK_LOGOS: Record<string, string> = {
   abs: "networks/abs.webp",
   aleo: "networks/aleo.webp",
   aptos: "networks/aptos.webp",
   arb: "networks/arb.webp",
+  arc: "networks/arc.webp",
   avax: "networks/avax.webp",
   base: "networks/base.webp",
   bch: "networks/bch.webp",

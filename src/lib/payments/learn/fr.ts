@@ -5,7 +5,7 @@ export const fr: LearnMessages = {
   hub: {
     nav: "Guides",
     title: "Guides des paiements en stablecoins",
-    lede: "Des guides pour les entreprises qui encaissent en stablecoins avec Cosmos Pay : comment accepter l’USDC en ligne et avec le standard de lien de paiement de chaque réseau (SEP-7, Solana Pay, EIP-681), comment ajouter un bouton de paiement à votre site, comment recevoir des dons à montant libre, comment envoyer un lien de paiement sur WhatsApp, comment confirmer les paiements sur votre serveur, ce que fait une passerelle de paiement en stablecoins, comment se comparent les réseaux, comment faire des swaps entre {n} réseaux, et comment envoyer de l’USDT0 depuis Stellar vers des réseaux EVM.",
+    lede: "Des guides pour les entreprises qui encaissent en stablecoins avec Cosmos Pay : comment accepter l’USDC en ligne et avec le standard de lien de paiement de chaque réseau (SEP-7, Solana Pay, EIP-681), comment ajouter un bouton de paiement à votre site, comment recevoir des dons à montant libre, comment envoyer un lien de paiement sur WhatsApp, comment confirmer les paiements sur votre serveur, ce que fait une passerelle de paiement en stablecoins, comment se comparent les réseaux, comment faire des swaps entre {swapN} réseaux, et comment envoyer de l’USDT0 depuis Stellar vers des réseaux EVM.",
     meta: "Guides des paiements en stablecoins | Cosmos Pay",
     description: "Guides : accepter l’USDC en ligne et sur chaque réseau, boutons de paiement, dons, webhooks, liens WhatsApp, swaps entre réseaux, USDT0 depuis Stellar.",
   },
@@ -36,7 +36,7 @@ export const fr: LearnMessages = {
         payer: {
           title: "Ce qu’il faut à votre client",
           body: [
-            "Un wallet sur le même réseau, qui détient l’USDC et peut ouvrir le paiement : sur Stellar, tout wallet qui ouvre les liens SEP-7 ; sur Solana, tout wallet qui lit les liens Solana Pay ; sur Monad, tout wallet EVM qui lit les liens EIP-681. Son wallet règle aussi les frais de réseau.",
+            "Un wallet sur le même réseau, qui détient l’USDC et peut ouvrir le paiement : sur Stellar, tout wallet qui ouvre les liens SEP-7 ; sur Solana, tout wallet qui lit les liens Solana Pay ; sur Monad et Arc, tout wallet EVM qui lit les liens EIP-681. Son wallet règle aussi les frais de réseau.",
             "Aucun compte. Votre client ouvre le checkout, scanne le QR code ou touche le bouton de son wallet, puis approuve le paiement dans son wallet.",
           ],
         },
@@ -53,14 +53,14 @@ export const fr: LearnMessages = {
         network: {
           title: "Sur quel réseau encaisser",
           body: [
-            "Encaissez sur le réseau où vos clients détiennent déjà de l’USDC. L’USDC est préconfiguré sur Stellar et Solana, sur leurs réseaux principaux et de test, ainsi que sur le réseau principal de Monad. Sur les trois, tout autre jeton peut être encaissé en l’indiquant par son émetteur, son mint ou son contrat.",
+            "Encaissez sur le réseau où vos clients détiennent déjà de l’USDC. L’USDC est préconfiguré sur Stellar, Solana et Arc, sur leurs réseaux principaux et de test, ainsi que sur le réseau principal de Monad. Sur les quatre, tout autre jeton peut être encaissé en l’indiquant par son émetteur, son mint ou son contrat.",
           ],
           links: { networksGuide: "Stellar vs Solana vs Monad", stellar: "Paiements sur Stellar", solana: "Paiements sur Solana", monad: "Paiements sur Monad" },
         },
         cost: {
           title: "Ce que ça coûte",
           body: [
-            "Chaque paiement paie le tarif de votre offre, le même sur chaque réseau : {starterRate} avec Starter, sans abonnement mensuel. Le wallet du payeur règle les frais de réseau ; sur Monad, le relais qui vous transfère le paiement en déduit ses frais.",
+            "Chaque paiement paie le tarif de votre offre, le même sur chaque réseau : {starterRate} avec Starter, sans abonnement mensuel. Le wallet du payeur règle les frais de réseau ; sur Monad et Arc, le relais qui vous transfère le paiement en déduit ses frais.",
           ],
           links: { fees: "Tarifs et calculateur de frais", compare: "Nos frais comparés" },
         },
@@ -68,7 +68,7 @@ export const fr: LearnMessages = {
       steps: {
         title: "Acceptez votre premier paiement en USDC, étape par étape",
         items: {
-          sandbox: { title: "Créez votre compte et passez en Sandbox", body: "Connectez-vous au tableau de bord et choisissez Sandbox en haut. Ce que vous y créez fonctionne sur les réseaux de test (Stellar Testnet, Solana Devnet et Monad Testnet) et ne déplace aucun argent réel." },
+          sandbox: { title: "Créez votre compte et passez en Sandbox", body: "Connectez-vous au tableau de bord et choisissez Sandbox en haut. Ce que vous y créez fonctionne sur les réseaux de test (Stellar Testnet, Solana Devnet, Monad Testnet et Arc Testnet) et ne déplace aucun argent réel." },
           wallet: { title: "Ajoutez le wallet qui reçoit l’argent", body: "Dans les paramètres de votre organisation, ajoutez un wallet sur le réseau où vous encaisserez, puis signez ce que le tableau de bord demande pour prouver que ce wallet est à vous." },
           charge: { title: "Créez un paiement de test", body: "Dans Paiements, créez un lien de paiement avec le réseau, le montant, l’actif et le wallet qui le reçoit. Ou créez une clé d’API de test (elle commence par dv_) et appelez POST /v1/payment-intents/pay depuis votre serveur. Sur Stellar Testnet, vous pouvez encaisser en XLM, que Friendbot, le faucet de Testnet, envoie à un compte de test." },
           pay: { title: "Payez-le depuis un wallet de test", body: "Ouvrez la page de paiement : elle indique qu’elle fonctionne sur un réseau de test. Payez depuis un wallet sur ce réseau, puis regardez le checkout passer à Payé et le lien à Réussi dans le tableau de bord." },
@@ -185,7 +185,7 @@ export const fr: LearnMessages = {
         fit: {
           title: "Où se place Cosmos Pay",
           body: [
-            "Cosmos Pay est une passerelle de paiement en stablecoins non dépositaire qui fonctionne avec {n} réseaux : vos clients paient depuis n’importe lequel d’entre eux, et les swaps transfèrent ce que vous recevez vers n’importe lequel d’entre eux. Vous encaissez avec un lien de paiement, le checkout hébergé ou l’API de paiement, et vous choisissez les adresses de wallet qui reçoivent l’argent. Cosmos Pay ne stocke les clés de personne.",
+            "Cosmos Pay est une passerelle de paiement en stablecoins non dépositaire qui fonctionne avec {n} réseaux : vos clients paient sur n’importe lequel d’entre eux, et les swaps transfèrent ce que vous recevez entre les {swapN} réseaux qu’ils atteignent. Vous encaissez avec un lien de paiement, le checkout hébergé ou l’API de paiement, et vous choisissez les adresses de wallet qui reçoivent l’argent. Cosmos Pay ne stocke les clés de personne.",
             "Chaque paiement va directement à votre adresse ou, sur les réseaux qui en ont besoin, à une adresse de dépôt créée pour ce paiement, qui ne peut que le transférer à la vôtre (moins les frais du relais) : Cosmos Pay n’en détient aucune clé. Chaque paiement peut être vérifié sur le réseau, et chaque checkout payé renvoie à sa transaction dans un explorateur public.",
           ],
           links: { security: "Comment les paiements sont protégés", acceptGuide: "Comment accepter des paiements en USDC en ligne", integrations: "Options d’intégration" },
@@ -203,10 +203,10 @@ export const fr: LearnMessages = {
       title: "Stellar vs Solana vs Monad pour accepter des paiements",
       meta: "Stellar vs Solana vs Monad pour les paiements | Cosmos Pay",
       description: "Stellar, Solana et Monad comparés pour accepter des paiements en stablecoins avec Cosmos Pay : standard de lien, actifs, réseaux de test, frais et tarifs.",
-      summary: "Les trois réseaux où se règlent les paiements, côte à côte : format de lien, actifs, réseaux de test et frais.",
-      lede: "Avec Cosmos Pay, un paiement sur Stellar, Solana ou Monad arrive à votre adresse et paie le même tarif, celui de votre offre. Ce qui change : le lien que lit le wallet (SEP-7 sur Stellar, Solana Pay sur Solana, EIP-681 vers une adresse de dépôt sur Monad), la façon dont un paiement est rattaché à son lien et les actifs préconfigurés. Le tableau les compare tels que Cosmos Pay les prend en charge ; les swaps relient les trois au reste des {n} réseaux avec lesquels Cosmos Pay fonctionne.",
+      summary: "Trois réseaux dotés de leur propre standard de lien de paiement, côte à côte : format de lien, actifs, réseaux de test et frais.",
+      lede: "Avec Cosmos Pay, un paiement sur Stellar, Solana ou Monad arrive à votre adresse et paie le même tarif, celui de votre offre. Ce qui change : le lien que lit le wallet (SEP-7 sur Stellar, Solana Pay sur Solana, EIP-681 vers une adresse de dépôt sur Monad), la façon dont un paiement est rattaché à son lien et les actifs préconfigurés. Le tableau les compare tels que Cosmos Pay les prend en charge ; les swaps relient les trois au reste des {swapN} réseaux qu’ils atteignent.",
       table: {
-        title: "Les trois réseaux de règlement côte à côte",
+        title: "Trois réseaux de règlement côte à côte",
         caption: "Stellar, Solana et Monad comparés pour accepter des paiements avec Cosmos Pay",
         topic: "Critère",
         rows: {
@@ -635,11 +635,11 @@ export const fr: LearnMessages = {
     },
     crossChain: {
       nav: "Swaps entre réseaux",
-      title: "Comment échanger des jetons entre {n} réseaux",
-      meta: "Swaps de jetons entre {n} réseaux | Cosmos Pay",
-      description: "Échangez des jetons entre {n} réseaux avec Cosmos Pay : le devis, le dépôt, les frais, les remboursements et les délais.",
+      title: "Comment échanger des jetons entre {swapN} réseaux",
+      meta: "Swaps de jetons entre {swapN} réseaux | Cosmos Pay",
+      description: "Échangez des jetons entre {swapN} réseaux avec Cosmos Pay : le devis, le dépôt, les frais, les remboursements et les délais.",
       summary: "Demandez un devis, envoyez le dépôt et suivez le swap jusqu’à la livraison : des swaps entre réseaux, remboursés sur le réseau d’origine en cas d’échec.",
-      lede: "Cosmos Pay échange des jetons entre {n} réseaux. Vous obtenez un devis, envoyez le montant d’entrée à une adresse de dépôt avant l’expiration du devis, et le montant de sortie arrive à votre adresse sur l’autre réseau. Si le swap ne peut pas aboutir, le montant d’entrée est remboursé à votre adresse sur le réseau depuis lequel vous l’avez envoyé.",
+      lede: "Cosmos Pay échange des jetons entre {swapN} réseaux. Vous obtenez un devis, envoyez le montant d’entrée à une adresse de dépôt avant l’expiration du devis, et le montant de sortie arrive à votre adresse sur l’autre réseau. Si le swap ne peut pas aboutir, le montant d’entrée est remboursé à votre adresse sur le réseau depuis lequel vous l’avez envoyé.",
       sections: {
         how: {
           title: "Comment fonctionne un swap entre réseaux",
@@ -689,7 +689,7 @@ export const fr: LearnMessages = {
         links: { crossChainApi: "API des swaps entre réseaux", webhooksGuide: "Comment confirmer un paiement sur votre serveur" },
       },
       faq: {
-        networks: { q: "Entre quels réseaux puis-je faire des swaps ?", a: "{n} réseaux au total, toute la collection de la plateforme de swaps de Cosmos Pay. Une paire sur un même réseau est alors un swap sur un seul réseau." },
+        networks: { q: "Entre quels réseaux puis-je faire des swaps ?", a: "{swapN} réseaux au total, toute la collection de la plateforme de swaps de Cosmos Pay. Une paire sur un même réseau est alors un swap sur un seul réseau." },
         test: { q: "Puis-je tester un swap entre réseaux ?", a: "Pas sur un réseau de test : ces swaps fonctionnent uniquement sur les réseaux principaux. Une clé de test peut lister les actifs et obtenir des devis." },
         refund: { q: "Qu’advient-il de mon argent si le swap échoue ?", a: "Il est remboursé à l’adresse de remboursement que vous avez indiquée, sur le réseau depuis lequel vous avez envoyé." },
         account: { q: "Ai-je besoin d’un compte ?", a: "Pas sur la page publique de swaps. Avec votre propre compte, le tableau de bord et l’API appliquent le tarif de votre offre." },

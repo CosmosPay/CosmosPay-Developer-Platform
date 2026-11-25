@@ -93,6 +93,8 @@ body { min-height: 100vh; display: flex; flex-direction: column; }
 }
 .pp-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
 .pp-actions .btn { min-height: 44px; }
+/* The browser's EVM wallets, one button each, laid out with the other actions. */
+.pp-actions .ck-evm-wallets { display: contents; }
 
 /* ---- details ---- */
 .pp-details { margin: 22px 0 0; padding: 0; border-top: 1px solid var(--line); }

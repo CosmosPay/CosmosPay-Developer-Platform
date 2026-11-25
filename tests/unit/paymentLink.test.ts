@@ -2,7 +2,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   amountLabel,
+  assetSymbol,
   buildPayerTransaction,
+  chainName,
   canPayWithExtension,
   countdown,
   explorerTxUrl,
@@ -10,6 +12,7 @@ import {
   isPaymentLinkId,
   nextPollDelay,
   isStellarAccount,
+  opensCheckout,
   parsePaymentLink,
   payerTotal,
   phaseOf,
@@ -121,10 +124,63 @@ test('parsePaymentLink accepts Solana Pay and EIP-681 links', () => {
   }));
   assert.ok(sol);
   const monad = parsePaymentLink(stellarBody({
-    chain: 'monad', payTo: '0xC830f2b7A1d1F8F5e9fA7E0b0B5d1e4A3c2bc52F', asset: 'native',
+    chain: 'monad', network: 'public', payTo: '0xC830f2b7A1d1F8F5e9fA7E0b0B5d1e4A3c2bc52F', asset: 'native',
     uri: 'ethereum:0xC830f2b7A1d1F8F5e9fA7E0b0B5d1e4A3c2bc52F@143?value=1000000000000000000', networkFee: '0.02',
   }));
   assert.ok(monad);
+});
+
+/* Arc: an EIP-681 link with Arc's own chain id for the link's tier (5042 on mainnet, 5042002 on
+   Arc Testnet), paid to the payment's deposit address, in USDC or EURC through their ERC-20
+   contracts. The cross-chain route does not reach Arc, so no payment from another network. */
+const ARC_PAY_TO = '0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed';
+const ARC_USDC = '0x3600000000000000000000000000000000000000';
+const arcBody = (over: Record<string, unknown> = {}) => stellarBody({
+  chain: 'arc', payTo: ARC_PAY_TO, asset: 'USDC', assetIssuer: ARC_USDC, memo: '', networkFee: '0.01',
+  uri: `ethereum:${ARC_USDC}@5042002/transfer?address=${ARC_PAY_TO}&uint256=25500000`,
+  ...over,
+});
+
+test('parsePaymentLink accepts an Arc link with its chain id, on each tier', () => {
+  const testnet = parsePaymentLink(arcBody());
+  assert.ok(testnet);
+  assert.equal(testnet.chain, 'arc');
+  assert.equal(testnet.payTo, ARC_PAY_TO);
+  assert.equal(chainName(testnet.chain), 'Arc');
+  assert.equal(amountLabel(testnet), '25.5 USDC');
+  const mainnet = parsePaymentLink(arcBody({ network: 'public', uri: `ethereum:${ARC_USDC}@5042/transfer?address=${ARC_PAY_TO}&uint256=25500000` }));
+  assert.ok(mainnet);
+  assert.equal(explorerTxUrl({ ...mainnet, txHash: `0x${'a'.repeat(64)}` }), `https://explorer.arc.io/tx/0x${'a'.repeat(64)}`);
+  assert.equal(explorerTxUrl({ ...testnet, txHash: `0x${'a'.repeat(64)}` }), `https://explorer.testnet.arc.io/tx/0x${'a'.repeat(64)}`);
+  assert.equal(explorerTxUrl({ ...testnet, txHash: 'a'.repeat(64) }), null);
+  // A merchant fee is split by the deposit address, as on Monad.
+  const fee = { bps: 100, fixed: '0', amount: '0.255', asset: 'USDC', wallet: '0x2527D02599Ba641c19FEa793cD0F167589a0f10D', paidBy: 'payer' };
+  assert.equal(parsePaymentLink(arcBody({ merchantFee: fee }))?.merchantFee?.amount, '0.255');
+  assert.equal(opensCheckout(testnet), false);
+});
+
+test('parsePaymentLink refuses an Arc link that names another chain, or none', () => {
+  const uris = [
+    `ethereum:${ARC_USDC}@5042/transfer?address=${ARC_PAY_TO}&uint256=1`, // mainnet's id on Arc Testnet
+    `ethereum:${ARC_USDC}/transfer?address=${ARC_PAY_TO}&uint256=1`, // no id: the wallet's own chain
+    `ethereum:${ARC_USDC}@1/transfer?address=${ARC_PAY_TO}&uint256=1`,
+    `ethereum:${ARC_USDC}@50420020/transfer?address=${ARC_PAY_TO}&uint256=1`,
+    `ethereum:${ARC_PAY_TO}@10143?value=1`, // Monad's
+    'javascript:alert(1)',
+    `https://evil.example/${ARC_PAY_TO}`,
+  ];
+  for (const uri of uris) assert.equal(parsePaymentLink(arcBody({ uri })), null, uri);
+  assert.equal(parsePaymentLink(arcBody({ payTo: null })), null);
+  // A Monad link carries Monad's id too.
+  assert.equal(parsePaymentLink(stellarBody({ chain: 'monad', payTo: ARC_PAY_TO, asset: 'native', uri: `ethereum:${ARC_PAY_TO}@5042002?value=1` })), null);
+  assert.ok(parsePaymentLink(stellarBody({ chain: 'monad', payTo: ARC_PAY_TO, asset: 'native', uri: `ethereum:${ARC_PAY_TO}@10143?value=1` })));
+});
+
+test('an Arc link is never paid from another network, whatever the body says', () => {
+  const link = parsePaymentLink(arcBody({ network: 'public', crossChainPayment: true, uri: `ethereum:${ARC_USDC}@5042/transfer?address=${ARC_PAY_TO}&uint256=25500000` }));
+  assert.ok(link);
+  assert.equal(link.crossChainPayment, false);
+  assert.equal(assetSymbol({ chain: 'arc', asset: 'native' }), 'USDC');
 });
 
 test('parsePaymentLink accepts a Solana Pay transaction request, and refuses another scheme dressed as one', () => {
@@ -318,6 +374,74 @@ test('reportCheckoutEvent posts the event to the link and never throws', async (
   // It leaves while the page hands the payer to a wallet app.
   assert.equal(called!.keepalive, true);
   assert.equal(await reportCheckoutEvent('https://api.example', 'x', 'sent', fakeFetch(429, {})), false);
+  const sent: RequestInit[] = [];
+  const keep = (async (_url: string, init?: RequestInit) => {
+    sent.push(init ?? {});
+    return new Response(null, { status: 204 });
+  }) as unknown as typeof fetch;
+  await reportCheckoutEvent('https://api.example', 'x', 'sent', keep, 'q8V0n3cJxZr2m1bWk7yTt4uP9aLs6dEf0gHiJkLmNoQ');
+  assert.deepEqual(JSON.parse(String(sent[0].body)), { event: 'sent', payerToken: 'q8V0n3cJxZr2m1bWk7yTt4uP9aLs6dEf0gHiJkLmNoQ' });
+  // The session's proof rides with its token, and never without one.
+  await reportCheckoutEvent('https://api.example', 'x', 'sent', keep, 'q8V0n3cJxZr2m1bWk7yTt4uP9aLs6dEf0gHiJkLmNoQ', { address: 'GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ', txHash: null });
+  assert.deepEqual(JSON.parse(String(sent[1].body)), { event: 'sent', payerToken: 'q8V0n3cJxZr2m1bWk7yTt4uP9aLs6dEf0gHiJkLmNoQ', address: 'GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ' });
+  await reportCheckoutEvent('https://api.example', 'x', 'sent', keep, null, { txHash: 'abc' });
+  assert.deepEqual(JSON.parse(String(sent[2].body)), { event: 'sent' });
   const thrown = (async () => { throw new TypeError('offline'); }) as typeof fetch;
   assert.equal(await reportCheckoutEvent('https://api.example', 'x', 'walletClosed', thrown), false);
+});
+
+/* A link on a network paid through a deposit address made for the payment (here Tron). */
+function tronBody(over: Record<string, unknown> = {}) {
+  return stellarBody({
+    chain: 'tron',
+    network: 'public',
+    payTo: null,
+    amount: '25',
+    asset: 'USDT',
+    assetIssuer: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t',
+    uri: 'https://payments.cosmospay.lat/cmh4x2k9a0001l70g8v5q3z2w',
+    crossChainPayment: true,
+    ...over,
+  });
+}
+
+test('parsePaymentLink reads a link on any network, paid through a deposit address', () => {
+  const link = parsePaymentLink(tronBody());
+  assert.ok(link);
+  assert.equal(link.chain, 'tron');
+  assert.equal(link.payTo, null);
+  assert.equal(link.crossChainPayment, true);
+  assert.equal(amountLabel(link), '25 USDT');
+});
+
+test('parsePaymentLink refuses a deposit-network link that would show something to pay directly', () => {
+  assert.equal(parsePaymentLink(tronBody({ payTo: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t' })), null);
+  assert.equal(parsePaymentLink(tronBody({ uri: 'tron:TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t' })), null);
+  assert.equal(parsePaymentLink(tronBody({ crossChainPayment: false })), null);
+  assert.equal(parsePaymentLink(tronBody({ crossChainPayment: undefined })), null);
+  assert.equal(parsePaymentLink(tronBody({ payerAccountRequired: true })), null);
+  assert.equal(parsePaymentLink(tronBody({ kind: 'TX' })), null);
+});
+
+test('parsePaymentLink reads the deposit-network links the server offers: test network, open amount, merchant fee', () => {
+  const testnet = parsePaymentLink(tronBody({ network: 'testnet' }));
+  assert.equal(testnet?.network, 'testnet');
+  assert.equal(testnet?.crossChainPayment, true);
+  const open = parsePaymentLink(tronBody({ amount: null }));
+  assert.equal(open?.amount, null);
+  assert.equal(open && amountLabel(open), null);
+  const fee = parsePaymentLink(
+    tronBody({ merchantFee: { bps: 100, fixed: '0', amount: '0.25', asset: 'USDT', wallet: '0x52908400098527886E0F7030069857D2E4169EE7', paidBy: 'payer' } }),
+  );
+  assert.equal(fee?.merchantFee?.bps, 100);
+  assert.equal(fee?.crossChainPayment, true);
+});
+
+test('a native link offers paying from another network only on mainnet and with no fee', () => {
+  assert.equal(parsePaymentLink(stellarBody({ network: 'public', crossChainPayment: true }))?.crossChainPayment, true);
+  assert.equal(parsePaymentLink(stellarBody({ network: 'testnet', crossChainPayment: true }))?.crossChainPayment, false);
+  // The payer types the amount, and the quote pays exactly that.
+  assert.equal(parsePaymentLink(stellarBody({ network: 'public', amount: null, crossChainPayment: true }))?.crossChainPayment, true);
+  // A server that predates the field offers nothing more.
+  assert.equal(parsePaymentLink(stellarBody({ network: 'public' }))?.crossChainPayment, false);
 });

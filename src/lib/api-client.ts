@@ -14,6 +14,8 @@ async function request(url, options = {}) {
     const err = new Error(msg);
     err.status = res.status;
     err.code = json && json.code;
+    // The envelope's status string (`plan_limit`, `not_configured`...), for refusals a view acts on.
+    err.apiStatus = json && json.status;
     throw err;
   }
   return json ? json.data : null;
@@ -53,6 +55,11 @@ export const paymentIntents = {
   update: (id, env, body) => request(`/api/payment-intents/${encodeURIComponent(id)}?env=${env || "dev"}`, { method: "PATCH", body: JSON.stringify(body) }),
   remove: (id, env) => request(`/api/payment-intents/${encodeURIComponent(id)}?env=${env || "dev"}`, { method: "DELETE" }),
   validate: (id, env, txHash) => request(`/api/payment-intents/${encodeURIComponent(id)}/validate?env=${env || "dev"}`, { method: "POST", body: JSON.stringify({ txHash }) }),
+  /* The deposit addresses made for paying it from another network, newest first. */
+  deposits: (id: string, env?: string) => request(`/api/payment-intents/${encodeURIComponent(id)}/deposits?env=${env || "dev"}`),
+  /* How the main origins fare for its amount: the ones that cannot pay it, and why. */
+  routeCheck: (id: string, env?: string) => request(`/api/payment-intents/${encodeURIComponent(id)}/route-check?env=${env || "dev"}`),
+  payerEmails: (id: string, env?: string) => request(`/api/payment-intents/${encodeURIComponent(id)}/payer-emails?env=${env || "dev"}`),
 };
 
 /* Webhook endpoints, proxied to the Cosmos Payments API (per-user consumer).
@@ -359,6 +366,13 @@ export const organizations = {
   // The wallets the organization receives payments in (Settings); connecting one carries its signed proof.
   wallets: (id) => request(`/api/organizations/${encodeURIComponent(id)}/wallets`),
   connectWallet: (id, body) => request(`/api/organizations/${encodeURIComponent(id)}/wallets`, { method: "POST", body: JSON.stringify(body) }),
+  // A challenge to prove a wallet: the nonce and what the wallet signs (src/lib/org-wallets.ts).
+  walletChallenge: (id, body) => request(`/api/organizations/${encodeURIComponent(id)}/wallets/challenge`, { method: "POST", body: JSON.stringify(body) }),
   renameWallet: (id, walletId, label) => request(`/api/organizations/${encodeURIComponent(id)}/wallets/${encodeURIComponent(walletId)}`, { method: "PATCH", body: JSON.stringify({ label }) }),
   removeWallet: (id, walletId) => request(`/api/organizations/${encodeURIComponent(id)}/wallets/${encodeURIComponent(walletId)}`, { method: "DELETE" }),
+  // The Discord servers linked to the organization (Settings). Install answers { url } (Discord's
+  // authorize address) for the browser to open; the link itself is made by the callback.
+  discordLinks: (id) => request(`/api/organizations/${encodeURIComponent(id)}/discord`),
+  discordInstall: (id, body) => request(`/api/organizations/${encodeURIComponent(id)}/discord/install`, { method: "POST", body: JSON.stringify(body) }),
+  discordUnlink: (id, linkId) => request(`/api/organizations/${encodeURIComponent(id)}/discord/${encodeURIComponent(linkId)}`, { method: "DELETE" }),
 };

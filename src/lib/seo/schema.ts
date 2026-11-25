@@ -8,7 +8,7 @@
    carry. Pure (no astro:env), so tests/unit/seoSchema.test.ts covers it. */
 import { PLAN_IDS, PLAN_SPECS, type PlanId } from "@/lib/plans";
 import { CONTACT_ADDRESS } from "@/lib/payments/contact";
-import { NETWORK_IDS } from "@/lib/chains";
+import { NETWORK_COUNTS } from "@/lib/chains";
 
 export type JsonLdNode = Record<string, unknown>;
 
@@ -27,7 +27,7 @@ export function chromeStoreListing(url: string): string {
 }
 
 const ORG_DESCRIPTION =
-  `Cosmos Pay runs non-custodial payments, swaps, a payment gateway and private payments as a service on ${NETWORK_IDS.length} networks: a payments REST API, a JavaScript and TypeScript SDK, payment links with a hosted checkout, and the Cosmos Pay Wallet.`;
+  `Cosmos Pay runs non-custodial payments, swaps, a payment gateway and private payments as a service on ${NETWORK_COUNTS.n} networks: a payments REST API, a JavaScript and TypeScript SDK, payment links with a hosted checkout, and the Cosmos Pay Wallet.`;
 
 export const orgId = (site: string): string => `${site}/#organization`;
 export const websiteId = (origin: string): string => `${origin}/#website`;
@@ -53,7 +53,7 @@ export function organizationNode(site: string, sameAs: string[]): JsonLdNode {
     logo: { "@type": "ImageObject", "@id": `${site}/#logo`, url: logo, contentUrl: logo, width: 512, height: 512, caption: "Cosmos Pay" },
     image: { "@id": `${site}/#logo` },
     description: ORG_DESCRIPTION,
-    disambiguatingDescription: `The payments company at cosmospay.lat, working on ${NETWORK_IDS.length} networks; not the Cosmos Network (ATOM) blockchain, nor BitCanna's CosmosPay payment plugins.`,
+    disambiguatingDescription: `The payments company at cosmospay.lat, working on ${NETWORK_COUNTS.n} networks; not the Cosmos Network (ATOM) blockchain, nor BitCanna's CosmosPay payment plugins.`,
     email: CONTACT_ADDRESS,
     // The country only, as /about states it (its public source: the GitHub organization's
     // location). Product owner, 2026-11-01. No street, city or legal name until they provide them.
@@ -205,7 +205,7 @@ export function plansProductNode(site: string): JsonLdNode {
     "@type": "Product",
     "@id": plansProductId(site),
     name: "Cosmos Pay",
-    description: `Cosmos Pay's plans for payments, swaps and private payments as a service on ${NETWORK_IDS.length} networks: the rate per payment and per swap on each plan.`,
+    description: `Cosmos Pay's plans for payments, swaps and private payments as a service on ${NETWORK_COUNTS.n} networks: the rate per payment and per swap on each plan.`,
     brand: { "@id": orgId(site) },
     image: `${site}/og-image.png`,
     url,
@@ -262,7 +262,7 @@ export function apiNode({ site, docs, apiBase }: Pick<ProductNodesInput, "site" 
     "@id": `${site}/#api`,
     name: "Cosmos Pay Payments API",
     description:
-      `REST API to create payment intents and payment links that customers pay from any of the ${NETWORK_IDS.length} networks Cosmos Pay works with, swap between those networks, receive signed webhooks, and manage products and customers. API keys starting with dv_ run on testnet and prod_ keys on mainnet.`,
+      `REST API to create payment intents and payment links that customers pay from any of the ${NETWORK_COUNTS.n} networks Cosmos Pay works with, swap across the ${NETWORK_COUNTS.swapN} networks its swaps reach, receive signed webhooks, and manage products and customers. API keys starting with dv_ run on testnet and prod_ keys on mainnet.`,
     url: `${docs}api/`,
     documentation: docs,
     termsOfService: `${site}/tos`,
@@ -301,7 +301,7 @@ export function walletNode(site: string, wallet: ProductNodesInput["wallet"]): J
     applicationCategory: "FinanceApplication",
     operatingSystem: "Web, Android, Windows, macOS, Linux; extension for Chrome and Firefox",
     description:
-      `Non-custodial wallet for the ${NETWORK_IDS.length} networks Cosmos Pay works with: a web app, a browser extension and apps for Android, Windows, macOS and Linux. Keys are generated and encrypted on the device.`,
+      `Non-custodial wallet for ${NETWORK_COUNTS.swapN} networks: a web app, a browser extension and apps for Android, Windows, macOS and Linux. Keys are generated and encrypted on the device.`,
     url: wallet.webApp,
     downloadUrl: [wallet.chromeStore, WALLET_RELEASES],
     publisher: { "@id": orgId(site) },

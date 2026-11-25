@@ -9,7 +9,8 @@
    those same headers ourselves, scoping every payment intent to the signed-in
    user's consumer (`cosmos_<userId>`), exactly as a real API key would. */
 import { COSMOS_API_URL, COSMOS_GATEWAY_SECRET } from "astro:env/server";
-import type { Chain } from "@/lib/chains";
+import type { Chain, NetworkId } from "@/lib/chains";
+import type { PaymentDeposit } from "@/lib/payments/deposits";
 import { keyPrefix } from "@/utils/apisix";
 import { isSafeUpstreamPath } from "@/lib/upstream-path";
 import { upstreamBaseUrls } from "@/lib/apisix-upstream";
@@ -242,8 +243,8 @@ export async function proxyCosmosRequest(opts: {
 export interface PaymentIntent {
   id: string;
   kind: "TX" | "PAY";
-  /** Where it settles; `network` is the tier (public or testnet) on every chain. */
-  chain: Chain;
+  /** Where it settles (any network a payment settles on, Arc included); `network` is the tier (public or testnet). */
+  chain: NetworkId;
   status: "PENDING" | "SUBMITTED" | "SUCCEEDED" | "FAILED" | "CANCELLED" | "EXPIRED";
   network: string;
   source: string | null;
@@ -263,9 +264,62 @@ export interface PaymentIntent {
   checkoutTheme: CheckoutTheme;
   /** The organization's own fee on the payment, paid to its wallet in the same transaction. */
   merchantFee?: MerchantFee | null;
+  /** Set when a payment from another network settled it: where the payer paid from. */
+  paidFrom?: PaidFrom | null;
+  /** The limits on payments from another network for this link, defaults filled in. */
+  depositLimits?: DepositLimits;
+  /** Where the receipt went: an email a payer gave in the hosted checkout (unverified); null until sent. */
+  receiptTo?: string | null;
+  /** When the payment's receipt was emailed to the payer; null until it is. */
+  receiptSentAt?: string | null;
+  /** When it was decided no receipt goes out (no email given, or payers that cannot be told apart). */
+  receiptSkippedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
+
+/* The limits on payments from another network for one link (the Payments API's
+   `depositLimits`): open deposit addresses per payer, and new ones per window from all payers. */
+export interface DepositLimits {
+  perPayer: number;
+  perWindow: number;
+  windowSeconds: number;
+}
+
+/* What the merchant may set: either part, within the bounds in src/schemas/payment-intents.ts. */
+export interface DepositLimitsInput {
+  perPayer?: number;
+  perWindow?: number;
+}
+
+/* How one of the main origins fares for a link's amount (the Payments API's route check). */
+/* An email a payer gave in one hosted checkout session of a link (the Payments API's PaymentPayerEmail). */
+export interface PaymentPayerEmail {
+  email: string;
+  lang: string;
+  /** The last time that session reported its wallet sent the payment; null if it never did. */
+  sentAt: string | null;
+  recordedAt: string;
+}
+
+export interface PaymentRouteCheck {
+  chain: NetworkId;
+  asset: string;
+  available: boolean;
+  reason: string | null;
+  amount: string | null;
+}
+
+/* Where a payment from another network came from (the Payments API's `paidFrom`). */
+export interface PaidFrom {
+  depositId: string;
+  chain: NetworkId;
+  asset: string;
+  contract: string | null;
+  amount: string;
+}
+
+export type { PaymentDeposit };
 
 /* A merchant fee as the Payments API records it (amounts in the payment's asset). */
 export interface MerchantFee {
@@ -285,8 +339,8 @@ export interface PaymentIntentList {
 }
 
 export interface CreatePayInput {
-  /** Stellar when omitted; Solana and Monad take a payment link only. */
-  chain?: Chain;
+  /** Stellar when omitted; any other network takes a payment link only (and on most, mainnet only). */
+  chain?: NetworkId;
   destination: string;
   amount?: string;
   assetCode?: string;
@@ -297,6 +351,8 @@ export interface CreatePayInput {
   checkoutTheme?: CheckoutTheme;
   /** The organization's own fee: bps and/or fixed, to its wallet, paid by the recipient or the payer. */
   merchantFee?: { bps?: number; fixed?: string; wallet: string; paidBy?: "recipient" | "payer" };
+  /** Raised limits on payments from another network for this link. */
+  depositLimits?: DepositLimitsInput;
 }
 
 export interface CreateTxInput extends CreatePayInput {
@@ -306,8 +362,8 @@ export interface CreateTxInput extends CreatePayInput {
 
 export interface ListIntentsQuery {
   status?: string;
-  /** Only intents on this chain; every chain when omitted. */
-  chain?: Chain;
+  /** Only intents on this network; every network when omitted. */
+  chain?: NetworkId;
   /** ISO instant: only intents created at or after it (the dashboard's period views). */
   createdFrom?: string;
   take?: number;
@@ -330,11 +386,21 @@ export const cosmos = {
   get: (userId: string, env: CosmosEnv, id: string) =>
     cosmosFetch<PaymentIntent>(userId, env, `/v1/payment-intents/${encodeURIComponent(id)}`),
 
-  update: (userId: string, env: CosmosEnv, id: string, patch: { status?: string; txHash?: string; reference?: string; checkoutTheme?: CheckoutTheme }) =>
+  update: (userId: string, env: CosmosEnv, id: string, patch: { status?: string; txHash?: string; reference?: string; checkoutTheme?: CheckoutTheme; depositLimits?: DepositLimitsInput }) =>
     cosmosFetch<PaymentIntent>(userId, env, `/v1/payment-intents/${encodeURIComponent(id)}`, { method: "PATCH", body: patch }),
 
   remove: (userId: string, env: CosmosEnv, id: string) =>
     cosmosFetch<{ id: string; deleted: boolean }>(userId, env, `/v1/payment-intents/${encodeURIComponent(id)}`, { method: "DELETE" }),
+
+  /** The deposit addresses made for paying this intent from another network, newest first. */
+  deposits: (userId: string, env: CosmosEnv, id: string) =>
+    cosmosFetch<{ data: PaymentDeposit[] }>(userId, env, `/v1/payment-intents/${encodeURIComponent(id)}/deposits`),
+
+  /** How the main origins fare for this link's amount: the ones that cannot pay it, and why. */
+  routeCheck: (userId: string, env: CosmosEnv, id: string) =>
+    cosmosFetch<{ data: PaymentRouteCheck[] }>(userId, env, `/v1/payment-intents/${encodeURIComponent(id)}/route-check`),
+  payerEmails: (userId: string, env: CosmosEnv, id: string) =>
+    cosmosFetch<{ data: PaymentPayerEmail[] }>(userId, env, `/v1/payment-intents/${encodeURIComponent(id)}/payer-emails`),
 
   validate: (userId: string, env: CosmosEnv, id: string, txHash: string) =>
     cosmosFetch<{ valid: boolean; status: string; reason: string | null; paymentIntent?: PaymentIntent }>(
@@ -404,7 +470,7 @@ export const cosmosProducts = {
 /* ---- Customers (merchant-managed, with derived payment stats). ---- */
 export interface CustomerWallet {
   id: string;
-  chain: "stellar" | "solana" | "monad";
+  chain: Chain;
   address: string;
   label: string | null;
   createdAt: string;
@@ -420,6 +486,8 @@ export interface Customer {
   alias: string | null;
   note: string | null;
   email: string | null;
+  /** True when the email came from a payer in the hosted checkout (unverified), not the merchant. */
+  emailProvidedByPayer?: boolean;
   /** The customer's wallets, oldest first, on any network payments settle on. */
   wallets: CustomerWallet[];
   /** Deprecated upstream: the first wallet's address. */

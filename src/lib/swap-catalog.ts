@@ -12,7 +12,7 @@
    USDT0 on Stellar to USDT or USDT0 on a network LayerZero's OFT reaches (src/lib/usdt0.ts) goes
    through the OFT instead: 1:1, no slippage, LayerZero's fee in XLM. Its destinations join the
    catalogue, and a network NEAR Intents does not list gets its USDT0 as a token of its own. */
-import { CHAIN_NAMES, NATIVE_CODES, NATIVE_DECIMALS, TOKEN_PRESETS, isChain, networkName, type Chain, type Tier } from "@/lib/chains";
+import { CHAIN_NAMES, DEX_CHAINS, NATIVE_CODES, NATIVE_DECIMALS, TOKEN_PRESETS, isChain, isDexChain, networkName, type DexChain, type Tier } from "@/lib/chains";
 import { standardAssets } from "@/lib/stellar-assets";
 import { isUsdt0OnStellar, type Usdt0Route } from "@/lib/usdt0";
 
@@ -48,9 +48,10 @@ export interface SwapToken {
   usdt0?: boolean;
 }
 
-/* The chains with their own market for swaps within the chain. */
-export const DEX_CHAINS: readonly Chain[] = ["stellar", "solana", "monad"];
-const hasDex = (chain: string): chain is Chain => isChain(chain);
+/* The chains with their own market for swaps within the chain (src/lib/chains.ts; no swap of any
+   kind runs on Arc). */
+export { DEX_CHAINS };
+const hasDex = (chain: string): chain is DexChain => isDexChain(chain);
 
 /* NEAR Intents' spelling of an asset: a Stellar token as CODE:ISSUER, else its contract, or the
    coin's symbol. */
@@ -168,7 +169,7 @@ export function buildCatalog(near: readonly NearAsset[], tier: Tier, usdt0Routes
 }
 
 export type Route =
-  | { kind: "dex"; chain: Chain }
+  | { kind: "dex"; chain: DexChain }
   | { kind: "near" }
   | { kind: "usdt0"; chain: string }
   | { kind: "none"; reason: "same-token" | "production-only" | "unsupported" };

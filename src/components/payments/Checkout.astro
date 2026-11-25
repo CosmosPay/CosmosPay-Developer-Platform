@@ -37,6 +37,7 @@ const runtime = {
   extOpening: t.extOpening,
   extSent: t.extSent,
   extFailed: t.extFailed,
+  payWith: t.payWith,
   errorBody: t.errorBody,
   rateLimited: t.rateLimited,
   timerLabel: t.timerLabel,
@@ -54,6 +55,8 @@ const runtime = {
   signFailed: t.signFailed,
   signWrongNetwork: t.signWrongNetwork,
   freighterMissing: t.freighterMissing,
+  email: t.email,
+  xc: t.xc,
 };
 // `<` escaped so no string can close the JSON <script> block early.
 const runtimeJson = JSON.stringify(runtime).replace(/</g, "\\u003c");

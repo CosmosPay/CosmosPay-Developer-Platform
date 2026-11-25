@@ -30,7 +30,13 @@ import {
   takeQuery,
 } from '@/schemas/shared/openapi-params';
 import { CHECKOUT_THEMES } from '@/lib/payments/checkout-themes';
-import { CHAINS } from '@/lib/chains';
+import { NETWORK_IDS, PAYMENT_NETWORK_IDS, type NetworkId, type SwapNetworkId } from '@/lib/chains';
+import { DEPOSIT_STATUSES } from '@/lib/payments/deposits';
+
+// Where a payment settles (Arc included), and the swap platform's networks a payment from
+// another network travels between (Arc is not one).
+const NETWORKS = PAYMENT_NETWORK_IDS as [NetworkId, ...NetworkId[]];
+const SWAP_NETWORKS = NETWORK_IDS as [SwapNetworkId, ...SwapNetworkId[]];
 
 const TAG = 'Payment Intents';
 
@@ -41,11 +47,15 @@ export const paymentIntentSchema = z
       example: 'PAY',
       description: 'SEP-7 flavour: `PAY` is a payment link, `TX` carries an unsigned XDR.',
     }),
-    chain: z.enum(CHAINS).openapi({ example: 'stellar', description: 'Where the payment settles.' }),
+    chain: z.enum(NETWORKS).openapi({
+      example: 'stellar',
+      description:
+        'Where the payment settles: any network the Payments API reaches. Stellar, Solana, Monad and Arc have their own wallet links; every other network is paid through a deposit address made for each payment.',
+    }),
     status: z
       .enum(['PENDING', 'SUBMITTED', 'SUCCEEDED', 'FAILED', 'CANCELLED', 'EXPIRED'])
       .openapi({ example: 'PENDING' }),
-    network: z.string().openapi({ example: 'testnet', description: 'The tier on every chain: public (mainnet) or testnet (Solana devnet, Monad testnet).' }),
+    network: z.string().openapi({ example: 'testnet', description: 'The tier on every chain: public (mainnet) or testnet (Solana devnet, Monad testnet, Arc Testnet).' }),
     source: z.string().nullable().openapi({ example: null }),
     destination: z
       .string()
@@ -86,11 +96,120 @@ export const paymentIntentSchema = z
         description:
           'The organization\'s own fee on this payment, paid to its wallet in the same transaction; null without one. A Stellar payment link with one opens the hosted checkout, which asks for the payer\'s account.',
       }),
+    paidFrom: z
+      .object({
+        depositId: z.string().openapi({ example: 'cmh4x2k9a0002l70g8v5q3z2x' }),
+        chain: z.enum(SWAP_NETWORKS).openapi({ example: 'tron' }),
+        asset: z.string().openapi({ example: 'USDT' }),
+        contract: z.string().nullable().openapi({ example: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t' }),
+        amount: z.string().openapi({ example: '25.31' }),
+      })
+      .nullable()
+      .optional()
+      .openapi({ description: 'Where the payer paid from, when a payment from another network settled the intent; null otherwise.' }),
+    depositLimits: z
+      .object({
+        perPayer: z.number().int().openapi({ example: 2, description: 'Open deposit addresses one payer may have on the link.' }),
+        perWindow: z.number().int().openapi({ example: 20, description: 'New deposit addresses the link takes per window, from all payers.' }),
+        windowSeconds: z.number().int().openapi({ example: 300 }),
+      })
+      .optional()
+      .openapi({ description: 'The limits on payments from another network for this link, defaults filled in.' }),
+    receiptTo: z
+      .string()
+      .nullable()
+      .optional()
+      .openapi({ example: 'payer@example.com', description: 'Where the receipt went: an email a payer gave in the hosted checkout (unverified); null until one was sent.' }),
+    receiptSentAt: z
+      .string()
+      .nullable()
+      .optional()
+      .openapi({ example: null, description: 'When the receipt was emailed to the payer; null until it is.' }),
+    receiptSkippedAt: z
+      .string()
+      .nullable()
+      .optional()
+      .openapi({ example: null, description: 'When it was decided that no receipt goes out: no email was given, or several payers gave different ones and none reported paying.' }),
     createdAt: z.string().openapi({ example: '2026-09-17T12:34:56.000Z' }),
     updatedAt: z.string().openapi({ example: '2026-09-17T12:34:56.000Z' }),
   })
   .openapi('PaymentIntent', {
     description: 'A payment link or unsigned transaction built by the Payments API.',
+  });
+
+const chainTxSchema = z.object({
+  hash: z.string().openapi({ example: '0x9f2c...' }),
+  explorerUrl: z.string().openapi({ example: 'https://basescan.org/tx/0x9f2c...' }),
+});
+
+const paymentDepositSchema = z
+  .object({
+    id: z.string().openapi({ example: 'cmh4x2k9a0002l70g8v5q3z2x' }),
+    paymentLinkId: z.string().openapi({ example: 'cmh4x2k9a0001l70g8v5q3z2w' }),
+    status: z.enum(DEPOSIT_STATUSES as [string, ...string[]]).openapi({ example: 'AWAITING_DEPOSIT' }),
+    originChain: z.enum(SWAP_NETWORKS).openapi({ example: 'tron' }),
+    originAsset: z.string().openapi({ example: 'USDT' }),
+    originContract: z.string().nullable().openapi({ example: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t' }),
+    amountIn: z.string().openapi({ example: '25.31', description: 'What the payer sends; any surplus is refunded to `refundTo`.' }),
+    minAmountIn: z.string().openapi({ example: '25.06' }),
+    destinationChain: z.enum(SWAP_NETWORKS).openapi({ example: 'base' }),
+    destinationAsset: z.string().openapi({ example: 'USDC' }),
+    destinationContract: z.string().nullable().openapi({ example: '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913' }),
+    amountOut: z.string().openapi({ example: '25', description: 'What the merchant receives: the intent amount.' }),
+    feeBps: z.number().int().openapi({ example: 25 }),
+    feeAmount: z.string().openapi({ example: '0.063275', description: "Cosmos Pay's commission, in the origin token, inside `amountIn`." }),
+    refundTo: z.string().openapi({ example: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t' }),
+    depositAddress: z.string().openapi({ example: 'TXYZopYRdj2D9XRtbG411XZZ3kM5VkAeBf' }),
+    depositMemo: z.string().nullable().openapi({ example: null }),
+    depositUri: z.string().nullable().openapi({ example: null }),
+    qr: z.string().openapi({ example: 'data:image/png;base64,iVBORw0KGgo...' }),
+    amountOutPaid: z.string().nullable().openapi({ example: null }),
+    refundedAmount: z.string().nullable().openapi({ example: null }),
+    originTxHashes: z.array(chainTxSchema).nullable(),
+    destinationTxHashes: z.array(chainTxSchema).nullable(),
+    timeEstimateSeconds: z.number().int().openapi({ example: 90 }),
+    expiresAt: z.string().openapi({ example: '2026-11-16T14:00:00.000Z' }),
+    createdAt: z.string().openapi({ example: '2026-11-16T13:00:00.000Z' }),
+    updatedAt: z.string().openapi({ example: '2026-11-16T13:00:00.000Z' }),
+  })
+  .openapi('PaymentDeposit', {
+    description: 'A deposit address made for paying one intent from another network, and how it went.',
+  });
+
+const paymentDepositListSchema = z
+  .object({ data: z.array(paymentDepositSchema) })
+  .openapi('PaymentDepositList', { description: "An intent's deposits, newest first." });
+
+const paymentPayerEmailListSchema = z
+  .object({
+    data: z.array(
+      z.object({
+        email: z.string().openapi({ example: 'payer@example.com' }),
+        lang: z.string().openapi({ example: 'es', description: 'The language of that checkout.' }),
+        sentAt: z.string().nullable().openapi({ example: null, description: 'The last time that session reported its wallet sent the payment; null if it never did.' }),
+        recordedAt: z.string().openapi({ example: '2026-11-17T12:00:00.000Z' }),
+      }),
+    ),
+  })
+  .openapi('PaymentPayerEmailList');
+
+const paymentRouteCheckListSchema = z
+  .object({
+    data: z.array(
+      z.object({
+        chain: z.enum(SWAP_NETWORKS).openapi({ example: 'tron' }),
+        asset: z.string().openapi({ example: 'USDT' }),
+        available: z.boolean().openapi({ example: false, description: 'True when the route quoted the amount.' }),
+        reason: z.string().nullable().openapi({
+          example: 'The cross-chain route refused the request: Temporary swap limits: minimum swap amount is $100',
+          description: "Why not, in the route's words; null when available.",
+        }),
+        amount: z.string().nullable().openapi({ example: null, description: 'What the payer would send from there; null when not available.' }),
+      }),
+    ),
+  })
+  .openapi('PaymentRouteCheckList', {
+    description: "How the main origins fare for a payment link's amount: the ones that cannot pay it now, and why.",
   });
 
 const paymentIntentListSchema = z
@@ -129,11 +248,11 @@ registerRoutes([
         env: envQuery,
         status: statusQuery,
         chain: z
-          .enum(CHAINS)
+          .enum(NETWORKS)
           .optional()
           .openapi({
             param: { name: 'chain', in: 'query' },
-            description: 'Only intents on this chain; every chain when omitted.',
+            description: 'Only intents on this network; every network when omitted.',
             example: 'solana',
           }),
         createdFrom: z
@@ -166,7 +285,7 @@ registerRoutes([
     tags: [TAG],
     summary: 'Create a payment intent',
     description:
-      'Creates a SEP-7 `pay` link or a `tx` intent (unsigned XDR). Requires the `payments:create` permission in the organization the body names, and `destination` must be one of the wallets of that organization (`/api/organizations/{id}/wallets`; 400 otherwise).',
+      'Creates a payment link on any network (`pay`; on every network but Stellar, Solana, Monad and Arc through a deposit address, with or without an amount) or a Stellar `tx` intent (unsigned XDR). Requires the `payments:create` permission in the organization the body names, and `destination` must be one of the wallets of that organization (`/api/organizations/{id}/wallets`; 400 otherwise). A merchant fee goes to one of its wallets too: on a network paid through a deposit address, one of its NEAR wallets or EVM addresses, where the cross-chain route credits it.',
     security: sessionSecurity,
     request: {
       query: z.object({ env: envQuery }),
@@ -209,7 +328,7 @@ registerRoutes([
     path: '/api/payment-intents/{id}',
     tags: [TAG],
     summary: 'Update a payment intent',
-    description: 'Updates the status, transaction hash, merchant reference or checkout design of an intent.',
+    description: 'Updates the status, transaction hash, merchant reference, checkout design or the limits on payments from another network (`depositLimits`) of an intent.',
     security: sessionSecurity,
     request: {
       params: idParam,
@@ -242,6 +361,57 @@ registerRoutes([
         'DeletePaymentIntentResponse',
         'Payment intent deleted successfully',
       ),
+      400: errors.badRequest,
+      401: errors.unauthorized,
+      404: errors.notFound,
+      500: errors.internalError,
+    },
+  },
+  {
+    method: 'get',
+    path: '/api/payment-intents/{id}/deposits',
+    tags: [TAG],
+    summary: "List an intent's deposits from other networks",
+    description:
+      "The deposit addresses made for paying this intent from another network, newest first: what each payer chose to send, and how it went. An intent that is not the caller's reads as 404.",
+    security: sessionSecurity,
+    request: { params: idParam, query: z.object({ env: envQuery }) },
+    responses: {
+      200: jsonOk(paymentDepositListSchema, 'ListPaymentDepositsResponse', 'Deposits fetched successfully'),
+      400: errors.badRequest,
+      401: errors.unauthorized,
+      404: errors.notFound,
+      500: errors.internalError,
+    },
+  },
+  {
+    method: 'get',
+    path: '/api/payment-intents/{id}/payer-emails',
+    tags: [TAG],
+    summary: 'List the emails payers gave in the hosted checkout',
+    description:
+      "One per checkout session of this link, newest first, with the session's language and when it reported its wallet sent the payment. Unverified: whoever opened the payment page typed them. The receipt goes to one of them (`receiptTo`), or to none when the payer cannot be told apart (`receiptSkippedAt`). An intent that is not the caller's reads as 404.",
+    security: sessionSecurity,
+    request: { params: idParam, query: z.object({ env: envQuery }) },
+    responses: {
+      200: jsonOk(paymentPayerEmailListSchema, 'PaymentPayerEmailsResponse', 'Payer emails fetched successfully'),
+      400: errors.badRequest,
+      401: errors.unauthorized,
+      404: errors.notFound,
+      500: errors.internalError,
+    },
+  },
+  {
+    method: 'get',
+    path: '/api/payment-intents/{id}/route-check',
+    tags: [TAG],
+    summary: "Check a link's amount against the main origins",
+    description:
+      "Asks the cross-chain route whether the main origins (USDC and USDT on the networks most payers hold them on, and Bitcoin) can pay this link's amount, and why not when they cannot: routes have minimums of their own. A warning only, it never blocks the link; empty for a link without an amount or one that cannot be paid from another network. Budgeted by the Payments API (429). An intent that is not the caller's reads as 404.",
+    security: sessionSecurity,
+    request: { params: idParam, query: z.object({ env: envQuery }) },
+    responses: {
+      200: jsonOk(paymentRouteCheckListSchema, 'PaymentRouteCheckResponse', 'Route check fetched successfully'),
       400: errors.badRequest,
       401: errors.unauthorized,
       404: errors.notFound,
